@@ -1,0 +1,85 @@
+
+================================================================================
+🧪 NURSING RESEARCH AGENT SYSTEM - INTEGRATION TEST
+================================================================================
+This will test all 6 agents and system integration
+Estimated time: 3-5 minutes
+================================================================================
+
+================================================================================
+PHASE 1: ENVIRONMENT CHECK
+================================================================================
+[92m[PASS][0m Python version: 3.12
+[92m[PASS][0m OPENAI_API_KEY: sk-proj-...VIsA
+[92m[PASS][0m EXA_API_KEY: f786797a...f8ab
+[92m[PASS][0m SERPAPI_API_KEY: cf91e3f9...8a7b
+[92m[PASS][0m Virtual environment: ACTIVE
+
+================================================================================
+PHASE 2: AGENT IMPORT TEST
+================================================================================
+[92m[PASS][0m Agent imported: nursing_research_agent
+[92m[PASS][0m Agent imported: project_timeline_agent
+[92m[PASS][0m Agent imported: medical_research_agent
+[92m[PASS][0m Agent imported: academic_research_agent
+[92m[PASS][0m Agent imported: research_writing_agent
+[92m[PASS][0m Agent imported: data_analysis_agent
+
+================================================================================
+PHASE 3: AGENT FUNCTIONALITY TEST
+================================================================================
+
+  Testing nursing_research_agent with query: 'What is a PICOT question?...'
+INFO Successfully created table 'agno_sessions'                                 
+[92m[PASS][0m   nursing_research_agent responded: A PICOT question is a specific type of clinical question that is used to guide evidence-based practice in healthcare settings. It is an acronym that s...
+
+  Testing project_timeline_agent with query: 'What should I do in November 2025?...'
+[92m[PASS][0m   project_timeline_agent responded: ### Current Phase: November 2025 - Project Introduction and Topic Confirmation  #### Immediate Next Steps: 1. Attend the introductory meeting on **Nov...
+
+  Testing medical_research_agent with query: 'Search for one article about hand hygiene...'
+INFO Successfully created table 'agno_sessions'                                 
+[92m[PASS][0m   medical_research_agent responded: ### Article on Hand Hygiene  - **Title**: Knowledge of cholera, handwashing practice and its associated factors in Hayayaabe IDP camp, Borama, Somalil...
+
+  Testing academic_research_agent with query: 'Find a paper about research methodology...'
+INFO Successfully created table 'agno_sessions'                                 
+[92m[PASS][0m   academic_research_agent responded: Here are some recent papers on research methodology that might be of interest:  1. **Using Full-text Content of Academic Articles to Build a Methodolo...
+
+  Testing research_writing_agent with query: 'What are the components of a PICOT question?...'
+INFO Successfully created table 'agno_sessions'                                 
+[92m[PASS][0m   research_writing_agent responded: The components of a PICOT question are designed to help formulate a clear, focused, and researchable clinical question. Each component specifies a key...
+
+  Testing data_analysis_agent with query: 'What statistical test compares two groups?...'
+[92m[PASS][0m   data_analysis_agent responded: ```json {   "task": "test_selection",   "assumptions": ["two independent groups; outcome type and distribution not specified"],   "method": {     "nam...
+
+================================================================================
+PHASE 4: MENU SYSTEM TEST
+================================================================================
+[92m[PASS][0m Menu runner imported successfully
+[92m[PASS][0m Main function found
+
+================================================================================
+FINAL INTEGRATION TEST REPORT
+================================================================================
+Test Date: 2025-11-02 17:01:47
+================================================================================
+
+🔧 ENVIRONMENT:
+   Passed: 5/5
+
+📦 IMPORTS:
+   Passed: 6/6
+
+🤖 AGENT FUNCTIONALITY:
+   Passed: 6/6
+   [92m✓[0m nursing_research_agent
+   [92m✓[0m project_timeline_agent
+   [92m✓[0m medical_research_agent
+   [92m✓[0m academic_research_agent
+   [92m✓[0m research_writing_agent
+   [92m✓[0m data_analysis_agent
+
+📋 MENU SYSTEM:
+   [92m✓ PASS[0m
+
+================================================================================
+[92m✅ ALL TESTS PASSED - SYSTEM IS PRODUCTION READY[0m

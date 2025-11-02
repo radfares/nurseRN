@@ -41,6 +41,71 @@
 - "When is the poster due?"
 - "Who should I contact for literature search help?"
 
+### 3. **Medical Research Agent (PubMed)** (`medical_research_agent.py`) 🆕
+**Best for**: Peer-reviewed medical literature searches
+
+**What it helps with**:
+- ✅ **PubMed Database** - Search millions of medical articles
+- ✅ **Clinical Studies** - Find nursing research and trials
+- ✅ **Systematic Reviews** - Evidence-based medical literature
+- ✅ **Quality Research** - Peer-reviewed publications only
+
+**Example questions**:
+- "Find peer-reviewed studies about catheter-associated infections from 2020-2024"
+- "Search PubMed for nursing interventions to reduce patient falls"
+- "What are recent systematic reviews on medication errors?"
+- "Find clinical trials about early mobilization in ICU patients"
+
+### 4. **Academic Research Agent (ArXiv)** (`academic_research_agent.py`) 🆕
+**Best for**: Research methodologies and statistical methods
+
+**What it helps with**:
+- ✅ **ArXiv Database** - Academic papers and preprints
+- ✅ **Statistical Methods** - Advanced analysis techniques
+- ✅ **Research Design** - Methodology papers
+- ✅ **Theoretical Frameworks** - Academic foundations
+
+**Example questions**:
+- "Find papers about statistical methods for quality improvement studies"
+- "Search for research on data collection methodologies in healthcare"
+- "What are recent papers on quasi-experimental designs?"
+- "Find literature on mixed methods research in nursing"
+
+### 5. **Research Writing Agent** (`research_writing_agent.py`) 🆕
+**Best for**: Writing, synthesis, and organizing your project
+
+**What it helps with**:
+- ✅ **PICOT Writing** - Craft and refine your question
+- ✅ **Literature Synthesis** - Combine findings from multiple articles
+- ✅ **Intervention Planning** - Step-by-step action plans
+- ✅ **Poster Content** - Write professional presentation content
+- ✅ **Academic Writing** - Structure and organize your work
+
+**Example questions**:
+- "Help me write a PICOT question about reducing catheter infections"
+- "Synthesize these 3 articles into a literature review summary"
+- "Create a step-by-step intervention plan for fall prevention"
+- "Write the background section for my poster about hand hygiene"
+- "How should I structure my findings and recommendations?"
+
+### 6. **Data Analysis Planner** (`data_analysis_agent.py`) 🆕
+**Best for**: Statistical planning and data collection
+
+**What it helps with**:
+- ✅ **Sample Size Calculations** - How many patients do you need?
+- ✅ **Statistical Test Selection** - Which test is appropriate?
+- ✅ **Data Templates** - CSV collection forms with proper coding
+- ✅ **Analysis Planning** - Pre/post, group comparisons, trends
+- ✅ **Results Interpretation** - What do your results mean?
+- ✅ **Reproducible Code** - R/Python snippets with citations
+
+**Example questions**:
+- "Need sample size for catheter infection study, baseline 15%, target 8%"
+- "What statistical test should I use to compare pain scores between 2 units?"
+- "Create a data collection template for tracking fall rates monthly"
+- "How do I analyze pre/post intervention readmission data?"
+- "I have 12 infections in 100 patients pre, 5 in 100 post. What test?"
+
 ## 🚀 How to Use
 
 ### Quick Start:
@@ -52,8 +117,12 @@ python run_nursing_project.py
 ```
 
 ### Choose Your Assistant:
-1. **Research Agent** - When you need clinical information, research articles, standards
-2. **Timeline Assistant** - When you need project planning, deadlines, next steps
+1. **Research Agent** - General research, standards, web information
+2. **Timeline Assistant** - Project planning, deadlines, next steps
+3. **Medical Research (PubMed)** - Finding your 3 required articles!
+4. **Academic Research (ArXiv)** - Methods, statistics, frameworks
+5. **Research Writing** - Writing, synthesis, organizing content
+6. **Data Analysis Planner** - Statistics, sample size, data collection
 
 ## 📅 Month-by-Month Guide
 
@@ -98,6 +167,15 @@ python run_nursing_project.py
 - Analyze articles
 - Summarize findings
 
+**Ask the Medical Research Agent (PubMed)**:
+- "Find peer-reviewed studies about [your topic] from the last 5 years"
+- "Search for nursing research on [specific intervention]"
+- "What are systematic reviews about [your outcome]?"
+
+**Ask the Academic Research Agent (ArXiv)**:
+- "Find papers about statistical methods for pre/post studies"
+- "What are methodologies for quality improvement research?"
+
 **Ask the Research Agent**:
 - "Find recent research articles about [your topic]"
 - "Analyze this article: [paste title/link]"
@@ -113,6 +191,15 @@ python run_nursing_project.py
 - Invite stakeholders
 - Define success metrics
 - Touch base with Nurse Manager
+
+**Ask the Data Analysis Planner**:
+- "What sample size do I need for [your intervention study]?"
+- "Create a data collection template for [your outcome measures]"
+- "What statistical test for comparing [your groups]?"
+
+**Ask the Research Writing Agent**:
+- "Help me plan the intervention steps for [your topic]"
+- "Create a timeline for data collection"
 
 **Ask the Research Agent**:
 - "What interventions are effective for [your topic]?"

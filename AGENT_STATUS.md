@@ -76,9 +76,10 @@ nursing-research-agents/
 - [x] Code pushed to GitHub
 
 ### Pending (Optional):
-- [ ] Add Data Analysis Agent to `run_nursing_project.py` menu
-- [ ] Update `NURSING_PROJECT_GUIDE.md` with Agent 6 info
+- [x] Add Data Analysis Agent to `run_nursing_project.py` menu
+- [x] Update `NURSING_PROJECT_GUIDE.md` with Agent 6 info
 - [ ] Test Data Analysis Agent with more scenarios
+- [ ] Run comprehensive integration tests
 
 ---
 
@@ -89,15 +90,15 @@ nursing-research-agents/
 cd /path/to/nursing-research-agents
 source .venv/bin/activate
 ./start_nursing_project.sh
-# Choose from 5 agents (Agent 6 not in menu yet)
+# Choose from all 6 agents!
 ```
 
-### To Use Data Analysis Agent:
+### Or run any agent directly:
 ```bash
 cd /path/to/nursing-research-agents
 source .venv/bin/activate
 export OPENAI_API_KEY='your-key'
-python3 data_analysis_agent.py
+python3 data_analysis_agent.py  # Or any other agent file
 ```
 
 ---
