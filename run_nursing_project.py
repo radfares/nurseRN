@@ -8,6 +8,7 @@ from nursing_project_timeline_agent import project_timeline_agent
 from medical_research_agent import medical_research_agent
 from academic_research_agent import academic_research_agent
 from research_writing_agent import research_writing_agent
+from data_analysis_agent import data_analysis_agent
 
 def main():
     print("=" * 80)
@@ -52,11 +53,20 @@ def main():
     print("   - Academic writing help")
     print("   - Best for: Writing, organizing, structuring your project!")
     
+    print("\n6. Data Analysis Planner 🆕")
+    print("   - Sample size calculations")
+    print("   - Statistical test selection")
+    print("   - Data collection templates (CSV)")
+    print("   - Analysis planning (pre/post, comparisons)")
+    print("   - Results interpretation guidance")
+    print("   - Includes R/Python code + citations")
+    print("   - Best for: Planning statistics, sample sizes, data collection!")
+    
     print("\n" + "=" * 80)
     
     # Choose agent
     while True:
-        choice = input("\nChoose assistant (1/2/3/4/5) or 'exit': ").strip()
+        choice = input("\nChoose assistant (1/2/3/4/5/6) or 'exit': ").strip()
         
         if choice.lower() in ['exit', 'quit', 'q']:
             print("\n👋 Goodbye! Good luck with your project!")
@@ -87,8 +97,13 @@ def main():
             agent_name = "Research Writing Agent"
             print("\n💡 TIP: Ask 'Help me write...' or 'How do I structure...'")
             break
+        elif choice == '6':
+            agent = data_analysis_agent
+            agent_name = "Data Analysis Planner"
+            print("\n💡 TIP: Ask 'Need sample size for...' or 'What test should I use for...'")
+            break
         else:
-            print("❌ Invalid choice. Please enter 1, 2, 3, 4, or 5.")
+            print("❌ Invalid choice. Please enter 1, 2, 3, 4, 5, or 6.")
     
     # Interactive chat
     print(f"\n✅ Using: {agent_name}")
