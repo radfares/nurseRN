@@ -1,78 +1,51 @@
-# See https://help.github.com/ignore-files/ for more about ignoring files.
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
 
-.DS_Store
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
 
-# Python cache
-.mypy_cache
-*__pycache__*
-*.egg-info
-*.pyc
-*.pytest_cache
-*.ruff_cache
-*.cache*
-*.config*
-
-# Machine specific
-.idea
-.vscode
-*.code-workspace
-
-# Ignore .env files
+# Environment Variables (API KEYS - NEVER COMMIT!)
 .env
+.env.local
+.env.*.local
 
-# Ignore .envrc files (used by direnv: https://direnv.net/)
-.envrc
-
-certs/
-
-# ignore storage dir
-/storage
-.images
-/qdrant_storage
-
-# ignore wip dir
-wip
-
-# ignore dist dir
-dist
-
-# ignore virtualenvs
-.venv*
-.perfenv*
-.demoenv*
-venv*
-agnoenv*
-aienv*
-phienv*
-set-env.ps1
-
-# ignore tmp dirs
-scratch
-junk
-tmp
-agents.db
-data.db
-.ipynb_checkpoints
-build
-audio_generations
-
+# Database files (conversation history)
+tmp/
 *.db
+*.sqlite
+*.sqlite3
 
-# Google OAuth token
-token.json
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-.composio.lock
+# OS
+.DS_Store
+Thumbs.db
 
-# Coverage
-coverage_report
-.coverage
+# Logs
+*.log
+logs/
 
-# JSON files used as testing DB
-agno_json_data/
+# Test files created during testing
+test_research_agent.py
+test_research_agent_simple.py
+run_research_agent.sh
 
-# AI
-.claude/
-.cursor/
+# Documentation we created for learning (optional - you can remove these lines to include them)
+AGENT_SUMMARY.md
+RUNNING_AGENTS_GUIDE.md
+AGENT_SETUP_GUIDE.md
 
-# ignore pyrightconfig.json
-pyrightconfig.json
+# Large data directories
+libs/agno/agno/vectordb/*/data/
