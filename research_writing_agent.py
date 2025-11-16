@@ -197,10 +197,16 @@ def show_usage_examples():
     print('   Review this paragraph and suggest improvements:')
     print('   [paste your writing]""")')
 
+    print("\n8. With Streaming:")
+    print('   research_writing_agent.print_response("""')
+    print('   Help me write an abstract for my fall prevention study""",')
+    print('   stream=True)')
+
     print("\n" + "-" * 60)
     print("\n💡 TIP: This agent remembers your conversation!")
     print("Build your project iteratively - start with PICOT,")
     print("then literature review, then intervention, etc.")
+    print("Use stream=True for real-time response generation.")
 
 
 if __name__ == "__main__":

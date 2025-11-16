@@ -114,9 +114,14 @@ def show_usage_examples():
     print('   Find papers about data collection and analysis')
     print('   methods in clinical research""")')
 
+    print("\n4. With Streaming:")
+    print('   academic_research_agent.print_response("""')
+    print('   Find statistical methods papers""", stream=True)')
+
     print("\n" + "-" * 60)
     print("\n💡 TIP: Arxiv is great for theoretical and methodological research!")
     print("Use it when you need advanced analysis techniques.")
+    print("Use stream=True for real-time response generation.")
 
 
 if __name__ == "__main__":

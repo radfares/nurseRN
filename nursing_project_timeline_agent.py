@@ -137,7 +137,13 @@ def show_usage_examples():
     print('   response = project_timeline_agent.run("""')
     print('   I finished my PICOT statement, what should I do next?""")')
 
+    print("\n4. With Streaming:")
+    print('   project_timeline_agent.print_response("""')
+    print('   What deadlines are coming up this month?""", stream=True)')
+
     print("\n" + "-" * 60)
+    print("\n💡 TIP: This timeline is specific to Nov 2025 - June 2026!")
+    print("Use stream=True for real-time response generation.")
 
 
 if __name__ == "__main__":

@@ -165,7 +165,12 @@ def show_usage_examples():
     print('   What are the Joint Commission requirements for medication')
     print('   reconciliation?""")')
 
+    print("\n4. With Streaming (real-time responses):")
+    print('   nursing_research_agent.print_response("""')
+    print('   Find 3 recent studies on fall prevention""", stream=True)')
+
     print("\n" + "-" * 60)
+    print("\n💡 TIP: Use stream=True for real-time response generation")
 
 
 if __name__ == "__main__":
