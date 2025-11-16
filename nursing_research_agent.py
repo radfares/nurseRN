@@ -1,8 +1,13 @@
 """
 Nursing Research Agent - Specialized for Healthcare Improvement Projects
 Focused on PICOT development, literature review, evidence-based practice
+
+PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
+CRITICAL SECURITY FIX: Moved API keys to environment variables
 """
 
+import logging
+import os
 from datetime import datetime
 from textwrap import dedent
 
@@ -12,21 +17,47 @@ from agno.models.openai import OpenAIChat
 from agno.tools.exa import ExaTools
 from agno.tools.serpapi import SerpApiTools
 
+# PHASE 1: Import centralized configuration
+from agent_config import get_db_path
+
+# PHASE 1: Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# PHASE 1 SECURITY FIX: Get API keys from environment variables
+# Set these in your environment before running:
+#   export EXA_API_KEY="your-exa-key"
+#   export SERP_API_KEY="your-serp-api-key"
+# OR add to .env file (and add .env to .gitignore)
+EXA_API_KEY = os.getenv("EXA_API_KEY")
+SERP_API_KEY = os.getenv("SERP_API_KEY")
+
+# Validate API keys are set
+if not EXA_API_KEY:
+    logger.warning("EXA_API_KEY environment variable not set. Exa search will fail.")
+if not SERP_API_KEY:
+    logger.warning("SERP_API_KEY environment variable not set. SerpAPI search will fail.")
+
 # ************* Nursing Research Agent *************
 nursing_research_agent = Agent(
     name="Nursing Research Agent",
     role="Healthcare improvement project research specialist",
     model=OpenAIChat(id="gpt-4o"),
     tools=[
-        # Exa for recent healthcare articles and research
+        # PHASE 1 SECURITY FIX: Exa for recent healthcare articles and research
+        # API key now loaded from environment variable (line 25)
         ExaTools(
-            api_key="f786797a-3063-4869-ab3f-bb95b282f8ab",
+            api_key=EXA_API_KEY,  # From environment variable
             start_published_date="2020-01-01",  # Last 5 years of research
             type="neural",  # Better for academic/clinical content
         ),
-        # SerpAPI for general healthcare standards and guidelines
+        # PHASE 1 SECURITY FIX: SerpAPI for general healthcare standards and guidelines
+        # API key now loaded from environment variable (line 26)
         SerpApiTools(
-            api_key="cf91e3f9c1ba39340e3b4dc3a905215d78790c2f9004520209b35878921f8a7b"
+            api_key=SERP_API_KEY  # From environment variable
         ),
     ],
     description=dedent("""\
@@ -82,35 +113,75 @@ nursing_research_agent = Agent(
     add_datetime_to_context=True,
     enable_agentic_memory=True,
     markdown=True,
-    db=SqliteDb(db_file="tmp/nursing_research_agent.db"),
+    # PHASE 1: Database path using centralized config
+    # OLD (commented for reference): db=SqliteDb(db_file="tmp/nursing_research_agent.db")
+    db=SqliteDb(db_file=get_db_path("nursing_research")),
 )
+
+logger.info(f"Nursing Research Agent initialized: {get_db_path('nursing_research')}")
 
 # ************* Usage Examples *************
 if __name__ == "__main__":
-    print("🏥 Nursing Research Agent Ready!")
-    print("\nSpecialized for healthcare improvement projects:")
-    print("  ✓ PICOT question development")
-    print("  ✓ Literature searches (nursing research)")
-    print("  ✓ Evidence-based practice guidelines")
-    print("  ✓ Healthcare standards (Joint Commission, Patient Safety)")
-    print("  ✓ Quality improvement frameworks")
-    print("\nExample usage:")
-    print("-" * 60)
-    
-    print("\n1. PICOT Development:")
-    print('   response = nursing_research_agent.run("""')
-    print('   Help me develop a PICOT question for reducing patient falls')
-    print('   in a medical-surgical unit""")')
-    
-    print("\n2. Literature Search:")
-    print('   response = nursing_research_agent.run("""')
-    print('   Find 3 recent research articles about catheter-associated')
-    print('   urinary tract infection prevention""")')
-    
-    print("\n3. Standards Research:")
-    print('   response = nursing_research_agent.run("""')
-    print('   What are the Joint Commission requirements for medication')
-    print('   reconciliation?""")')
-    
-    print("\n" + "-" * 60)
+    # PHASE 1: Add error handling for agent execution
+    try:
+        logger.info("Starting Nursing Research Agent")
+
+        # PHASE 1 SECURITY: Validate API keys are set
+        if not EXA_API_KEY or not SERP_API_KEY:
+            print("\n⚠️  WARNING: API keys not configured!")
+            print("\nRequired environment variables:")
+            if not EXA_API_KEY:
+                print("  ❌ EXA_API_KEY - Not set")
+            else:
+                print("  ✓ EXA_API_KEY - Set")
+            if not SERP_API_KEY:
+                print("  ❌ SERP_API_KEY - Not set")
+            else:
+                print("  ✓ SERP_API_KEY - Set")
+            print("\nTo set API keys:")
+            print('  export EXA_API_KEY="your-exa-key"')
+            print('  export SERP_API_KEY="your-serp-api-key"')
+            print("\nThe agent will run but searches will fail without valid API keys.\n")
+            logger.error("API keys not configured. Agent functionality will be limited.")
+
+        print("🏥 Nursing Research Agent Ready!")
+        print("\nSpecialized for healthcare improvement projects:")
+        print("  ✓ PICOT question development")
+        print("  ✓ Literature searches (nursing research)")
+        print("  ✓ Evidence-based practice guidelines")
+        print("  ✓ Healthcare standards (Joint Commission, Patient Safety)")
+        print("  ✓ Quality improvement frameworks")
+        print("\nExample usage:")
+        print("-" * 60)
+
+        print("\n1. PICOT Development:")
+        print('   response = nursing_research_agent.run("""')
+        print('   Help me develop a PICOT question for reducing patient falls')
+        print('   in a medical-surgical unit""")')
+
+        print("\n2. Literature Search:")
+        print('   response = nursing_research_agent.run("""')
+        print('   Find 3 recent research articles about catheter-associated')
+        print('   urinary tract infection prevention""")')
+
+        print("\n3. Standards Research:")
+        print('   response = nursing_research_agent.run("""')
+        print('   What are the Joint Commission requirements for medication')
+        print('   reconciliation?""")')
+
+        print("\n" + "-" * 60)
+
+        logger.info("Nursing Research Agent ready")
+
+    except KeyboardInterrupt:
+        logger.info("Agent interrupted by user")
+        print("\n\nInterrupted by user. Goodbye!")
+
+    except Exception as e:
+        logger.error(f"Agent execution failed: {type(e).__name__}: {str(e)}", exc_info=True)
+        print(f"\n❌ Error: An unexpected error occurred.")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        print("\nPlease check the logs for details or contact support.")
+        raise  # Re-raise to preserve stack trace for debugging
 

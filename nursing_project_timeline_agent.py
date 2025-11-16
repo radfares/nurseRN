@@ -1,13 +1,26 @@
 """
 Nursing Project Timeline Assistant
 Helps track project milestones and provides month-specific guidance
+
+PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 """
 
+import logging
 from textwrap import dedent
 
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
+
+# PHASE 1: Import centralized configuration
+from agent_config import get_db_path
+
+# PHASE 1: Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # ************* Project Timeline Agent *************
 project_timeline_agent = Agent(
@@ -97,28 +110,50 @@ project_timeline_agent = Agent(
     add_history_to_context=True,
     add_datetime_to_context=True,
     markdown=True,
-    db=SqliteDb(db_file="tmp/project_timeline_agent.db"),
+    # PHASE 1: Database path using centralized config
+    # OLD (commented for reference): db=SqliteDb(db_file="tmp/project_timeline_agent.db")
+    db=SqliteDb(db_file=get_db_path("project_timeline")),
 )
+
+logger.info(f"Project Timeline Agent initialized: {get_db_path('project_timeline')}")
 
 # ************* Usage Examples *************
 if __name__ == "__main__":
-    print("📅 Project Timeline Assistant Ready!")
-    print("\nHelps you stay on track with monthly milestones")
-    print("Timeline: November 2025 - June 2026")
-    print("\nExample usage:")
-    print("-" * 60)
-    
-    print("\n1. Check current requirements:")
-    print('   response = project_timeline_agent.run("""')
-    print('   What do I need to complete this month?""")')
-    
-    print("\n2. Plan ahead:")
-    print('   response = project_timeline_agent.run("""')
-    print('   What are the key deliverables for January?""")')
-    
-    print("\n3. Get unstuck:")
-    print('   response = project_timeline_agent.run("""')
-    print('   I finished my PICOT statement, what should I do next?""")')
-    
-    print("\n" + "-" * 60)
+    # PHASE 1: Add error handling for agent execution
+    try:
+        logger.info("Starting Project Timeline Agent")
+
+        print("📅 Project Timeline Assistant Ready!")
+        print("\nHelps you stay on track with monthly milestones")
+        print("Timeline: November 2025 - June 2026")
+        print("\nExample usage:")
+        print("-" * 60)
+
+        print("\n1. Check current requirements:")
+        print('   response = project_timeline_agent.run("""')
+        print('   What do I need to complete this month?""")')
+
+        print("\n2. Plan ahead:")
+        print('   response = project_timeline_agent.run("""')
+        print('   What are the key deliverables for January?""")')
+
+        print("\n3. Get unstuck:")
+        print('   response = project_timeline_agent.run("""')
+        print('   I finished my PICOT statement, what should I do next?""")')
+
+        print("\n" + "-" * 60)
+
+        logger.info("Project Timeline Agent ready")
+
+    except KeyboardInterrupt:
+        logger.info("Agent interrupted by user")
+        print("\n\nInterrupted by user. Goodbye!")
+
+    except Exception as e:
+        logger.error(f"Agent execution failed: {type(e).__name__}: {str(e)}", exc_info=True)
+        print(f"\n❌ Error: An unexpected error occurred.")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        print("\nPlease check the logs for details or contact support.")
+        raise  # Re-raise to preserve stack trace for debugging
 

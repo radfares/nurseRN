@@ -1,14 +1,27 @@
 """
 Data Analysis Planning Agent - Statistical Expert for Nursing Research
-Uses Mistral AI for structured statistical reasoning and analysis planning.
+Statistical reasoning and analysis planning for nursing quality improvement research.
+
+PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 """
 
 import os
+import logging
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.db.sqlite import SqliteDb
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, Any
+
+# PHASE 1: Import centralized configuration
+from agent_config import get_db_path, DATA_ANALYSIS_TEMPERATURE, DATA_ANALYSIS_MAX_TOKENS
+
+# PHASE 1: Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Pydantic schema for JSON validation
 class DataAnalysisOutput(BaseModel):
@@ -27,8 +40,10 @@ class DataAnalysisOutput(BaseModel):
     citations: list[str]
     confidence: float = Field(ge=0.0, le=1.0, description="Self-rated confidence 0-1")
 
-# Database for session persistence
-db = SqliteDb(db_file="tmp/data_analysis_agent.db")
+# PHASE 1: Database for session persistence (using centralized config)
+# OLD (commented for reference): db = SqliteDb(db_file="tmp/data_analysis_agent.db")
+db = SqliteDb(db_file=get_db_path("data_analysis"))
+logger.info(f"Database initialized: {get_db_path('data_analysis')}")
 
 # The statistical expert prompt (user's design with minimal nursing QI context)
 STATISTICAL_EXPERT_PROMPT = """You are **Data Analysis Planner**, a statistical expert for nursing and health research.
@@ -190,36 +205,58 @@ JSON:
 }
 """
 
-# Create the Data Analysis Agent
-# Note: Using OpenAI instead of Mistral due to SDK compatibility issues
-# Can switch to Mistral once Agno updates their integration
+# PHASE 1: Create the Data Analysis Agent (using centralized config)
+# Note: Using OpenAI GPT-4o for statistical reliability
 data_analysis_agent = Agent(
     name="Data Analysis Planner",
     role="Statistical expert for nursing and healthcare research",
     model=OpenAIChat(
         id="gpt-4o",  # Can use gpt-4o-mini for cost savings
-        temperature=0.2,         # Low for math reliability
-        max_tokens=1600,         # JSON + short prose
+        temperature=DATA_ANALYSIS_TEMPERATURE,  # From config: 0.2 for math reliability
+        max_tokens=DATA_ANALYSIS_MAX_TOKENS,    # From config: 1600 for JSON + prose
     ),
     instructions=STATISTICAL_EXPERT_PROMPT,
-    # Note: output_schema commented out for initial testing to see raw output
+    # Note: output_schema will be enabled in Phase 3 (Testing & Production Readiness)
     # output_schema=DataAnalysisOutput,
     markdown=True,
     db=db,
     description="Expert in statistical analysis planning, sample size calculations, test selection, and data template design for nursing quality improvement research.",
 )
 
+logger.info("Data Analysis Agent initialized successfully")
+
 if __name__ == "__main__":
-    print("=" * 70)
-    print("DATA ANALYSIS PLANNING AGENT")
-    print("Statistical Expert for Nursing Research")
-    print("=" * 70)
-    print("\nAgent ready. Example queries:")
-    print("- 'Catheter infection rate: baseline 15%, target 8%. Need sample size.'")
-    print("- 'Compare pain scores between 2 units, n≈25 per group.'")
-    print("- 'Need data template for tracking fall rates monthly.'")
-    print("\n" + "=" * 70)
-    
-    # Interactive mode
-    data_analysis_agent.print_response("Hello! I'm ready to help with statistical analysis planning for your nursing research project.", stream=True)
+    # PHASE 1: Add error handling for agent execution
+    try:
+        logger.info("Starting Data Analysis Agent in interactive mode")
+
+        print("=" * 70)
+        print("DATA ANALYSIS PLANNING AGENT")
+        print("Statistical Expert for Nursing Research")
+        print("=" * 70)
+        print("\nAgent ready. Example queries:")
+        print("- 'Catheter infection rate: baseline 15%, target 8%. Need sample size.'")
+        print("- 'Compare pain scores between 2 units, n≈25 per group.'")
+        print("- 'Need data template for tracking fall rates monthly.'")
+        print("\n" + "=" * 70)
+
+        # Interactive mode
+        data_analysis_agent.print_response(
+            "Hello! I'm ready to help with statistical analysis planning for your nursing research project.",
+            stream=True
+        )
+
+        logger.info("Agent session completed successfully")
+
+    except KeyboardInterrupt:
+        logger.info("Agent session interrupted by user")
+        print("\n\nSession interrupted by user. Goodbye!")
+
+    except Exception as e:
+        logger.error(f"Agent execution failed: {type(e).__name__}: {str(e)}", exc_info=True)
+        print(f"\n❌ Error: An unexpected error occurred.")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        print("\nPlease check the logs for details or contact support.")
+        raise  # Re-raise to preserve stack trace for debugging
 

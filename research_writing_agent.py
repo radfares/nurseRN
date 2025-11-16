@@ -2,13 +2,26 @@
 Research Writing & Planning Agent
 Specialized for academic writing, research organization, and poster preparation
 Helps structure papers, write sections, and plan research methodology
+
+PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 """
 
+import logging
 from textwrap import dedent
 
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
+
+# PHASE 1: Import centralized configuration
+from agent_config import get_db_path
+
+# PHASE 1: Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # ************* Research Writing & Planning Agent *************
 research_writing_agent = Agent(
@@ -134,54 +147,76 @@ research_writing_agent = Agent(
     add_history_to_context=True,
     add_datetime_to_context=True,
     markdown=True,
-    db=SqliteDb(db_file="tmp/research_writing_agent.db"),
+    # PHASE 1: Database path using centralized config
+    # OLD (commented for reference): db=SqliteDb(db_file="tmp/research_writing_agent.db")
+    db=SqliteDb(db_file=get_db_path("research_writing")),
 )
+
+logger.info(f"Research Writing Agent initialized: {get_db_path('research_writing')}")
 
 # ************* Usage Examples *************
 if __name__ == "__main__":
-    print("✍️ Research Writing & Planning Agent Ready!")
-    print("\nSpecialized for academic writing and research organization")
-    print("\nExample queries:")
-    print("-" * 60)
-    
-    print("\n1. PICOT Development:")
-    print('   response = research_writing_agent.run("""')
-    print('   Help me write a PICOT question about reducing')
-    print('   catheter-associated infections in ICU patients""")')
-    
-    print("\n2. Literature Review:")
-    print('   response = research_writing_agent.run("""')
-    print('   I have 3 articles about fall prevention. Help me')
-    print('   synthesize their findings into a cohesive literature')
-    print('   review section""")')
-    
-    print("\n3. Intervention Planning:")
-    print('   response = research_writing_agent.run("""')
-    print('   Help me write a step-by-step intervention plan')
-    print('   for implementing a fall prevention program""")')
-    
-    print("\n4. Poster Section Writing:")
-    print('   response = research_writing_agent.run("""')
-    print('   Write a background/problem statement for my')
-    print('   poster about pressure ulcer prevention""")')
-    
-    print("\n5. Data Collection Plan:")
-    print('   response = research_writing_agent.run("""')
-    print('   What data should I collect before and after my')
-    print('   intervention? How should I measure success?""")')
-    
-    print("\n6. Methodology Help:")
-    print('   response = research_writing_agent.run("""')
-    print('   What research design should I use for a quality')
-    print('   improvement project on medication errors?""")')
-    
-    print("\n7. Writing Review:")
-    print('   response = research_writing_agent.run("""')
-    print('   Review this paragraph and suggest improvements:')
-    print('   [paste your writing]""")')
-    
-    print("\n" + "-" * 60)
-    print("\n💡 TIP: This agent remembers your conversation!")
-    print("Build your project iteratively - start with PICOT,")
-    print("then literature review, then intervention, etc.")
+    # PHASE 1: Add error handling for agent execution
+    try:
+        logger.info("Starting Research Writing Agent")
+
+        print("✍️ Research Writing & Planning Agent Ready!")
+        print("\nSpecialized for academic writing and research organization")
+        print("\nExample queries:")
+        print("-" * 60)
+
+        print("\n1. PICOT Development:")
+        print('   response = research_writing_agent.run("""')
+        print('   Help me write a PICOT question about reducing')
+        print('   catheter-associated infections in ICU patients""")')
+
+        print("\n2. Literature Review:")
+        print('   response = research_writing_agent.run("""')
+        print('   I have 3 articles about fall prevention. Help me')
+        print('   synthesize their findings into a cohesive literature')
+        print('   review section""")')
+
+        print("\n3. Intervention Planning:")
+        print('   response = research_writing_agent.run("""')
+        print('   Help me write a step-by-step intervention plan')
+        print('   for implementing a fall prevention program""")')
+
+        print("\n4. Poster Section Writing:")
+        print('   response = research_writing_agent.run("""')
+        print('   Write a background/problem statement for my')
+        print('   poster about pressure ulcer prevention""")')
+
+        print("\n5. Data Collection Plan:")
+        print('   response = research_writing_agent.run("""')
+        print('   What data should I collect before and after my')
+        print('   intervention? How should I measure success?""")')
+
+        print("\n6. Methodology Help:")
+        print('   response = research_writing_agent.run("""')
+        print('   What research design should I use for a quality')
+        print('   improvement project on medication errors?""")')
+
+        print("\n7. Writing Review:")
+        print('   response = research_writing_agent.run("""')
+        print('   Review this paragraph and suggest improvements:')
+        print('   [paste your writing]""")')
+
+        print("\n" + "-" * 60)
+        print("\n💡 TIP: This agent remembers your conversation!")
+        print("Build your project iteratively - start with PICOT,")
+        print("then literature review, then intervention, etc.")
+
+        logger.info("Research Writing Agent ready")
+
+    except KeyboardInterrupt:
+        logger.info("Agent interrupted by user")
+        print("\n\nInterrupted by user. Goodbye!")
+
+    except Exception as e:
+        logger.error(f"Agent execution failed: {type(e).__name__}: {str(e)}", exc_info=True)
+        print(f"\n❌ Error: An unexpected error occurred.")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        print("\nPlease check the logs for details or contact support.")
+        raise  # Re-raise to preserve stack trace for debugging
 

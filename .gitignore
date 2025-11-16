@@ -49,3 +49,6 @@ AGENT_SETUP_GUIDE.md
 
 # Large data directories
 libs/agno/agno/vectordb/*/data/
+
+# Isolated testing folder (analysis reports, status docs)
+project agents status check/
