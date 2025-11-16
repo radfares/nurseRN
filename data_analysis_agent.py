@@ -3,10 +3,10 @@ Data Analysis Planning Agent - Statistical Expert for Nursing Research
 Statistical reasoning and analysis planning for nursing quality improvement research.
 
 PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
+PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
 """
 
 import os
-import logging
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.db.sqlite import SqliteDb
@@ -16,12 +16,11 @@ from typing import Literal, Optional, Any
 # PHASE 1: Import centralized configuration
 from agent_config import get_db_path, DATA_ANALYSIS_TEMPERATURE, DATA_ANALYSIS_MAX_TOKENS
 
-# PHASE 1: Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# PHASE 2: Use base_agent utilities
+from base_agent import setup_agent_logging, run_agent_with_error_handling
+
+# Setup logging using shared utility
+logger = setup_agent_logging("Data Analysis Agent")
 
 # Pydantic schema for JSON validation
 class DataAnalysisOutput(BaseModel):
@@ -225,38 +224,30 @@ data_analysis_agent = Agent(
 
 logger.info("Data Analysis Agent initialized successfully")
 
+def show_usage_examples():
+    """Display usage examples and start interactive mode for Data Analysis Agent."""
+    print("=" * 70)
+    print("DATA ANALYSIS PLANNING AGENT")
+    print("Statistical Expert for Nursing Research")
+    print("=" * 70)
+    print("\nAgent ready. Example queries:")
+    print("- 'Catheter infection rate: baseline 15%, target 8%. Need sample size.'")
+    print("- 'Compare pain scores between 2 units, n≈25 per group.'")
+    print("- 'Need data template for tracking fall rates monthly.'")
+    print("\n" + "=" * 70)
+
+    # Interactive mode
+    data_analysis_agent.print_response(
+        "Hello! I'm ready to help with statistical analysis planning for your nursing research project.",
+        stream=True
+    )
+
+
 if __name__ == "__main__":
-    # PHASE 1: Add error handling for agent execution
-    try:
-        logger.info("Starting Data Analysis Agent in interactive mode")
-
-        print("=" * 70)
-        print("DATA ANALYSIS PLANNING AGENT")
-        print("Statistical Expert for Nursing Research")
-        print("=" * 70)
-        print("\nAgent ready. Example queries:")
-        print("- 'Catheter infection rate: baseline 15%, target 8%. Need sample size.'")
-        print("- 'Compare pain scores between 2 units, n≈25 per group.'")
-        print("- 'Need data template for tracking fall rates monthly.'")
-        print("\n" + "=" * 70)
-
-        # Interactive mode
-        data_analysis_agent.print_response(
-            "Hello! I'm ready to help with statistical analysis planning for your nursing research project.",
-            stream=True
-        )
-
-        logger.info("Agent session completed successfully")
-
-    except KeyboardInterrupt:
-        logger.info("Agent session interrupted by user")
-        print("\n\nSession interrupted by user. Goodbye!")
-
-    except Exception as e:
-        logger.error(f"Agent execution failed: {type(e).__name__}: {str(e)}", exc_info=True)
-        print(f"\n❌ Error: An unexpected error occurred.")
-        print(f"Error type: {type(e).__name__}")
-        print(f"Error message: {str(e)}")
-        print("\nPlease check the logs for details or contact support.")
-        raise  # Re-raise to preserve stack trace for debugging
+    # PHASE 2: Use shared error handling utility
+    run_agent_with_error_handling(
+        "Data Analysis Agent",
+        logger,
+        show_usage_examples
+    )
 
