@@ -4,9 +4,9 @@ Specialized for academic papers across all scientific fields
 Great for finding theoretical research and cutting-edge studies
 
 PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
+PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
 """
 
-import logging
 from textwrap import dedent
 
 from agno.agent import Agent
@@ -17,12 +17,11 @@ from agno.tools.arxiv import ArxivTools
 # PHASE 1: Import centralized configuration
 from agent_config import get_db_path
 
-# PHASE 1: Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# PHASE 2: Use base_agent utilities
+from base_agent import setup_agent_logging, run_agent_with_error_handling
+
+# Setup logging using shared utility
+logger = setup_agent_logging("Academic Research Agent")
 
 # ************* Academic Research Agent (Arxiv) *************
 academic_research_agent = Agent(
@@ -93,46 +92,38 @@ academic_research_agent = Agent(
 logger.info(f"Academic Research Agent initialized: {get_db_path('academic_research')}")
 
 # ************* Usage Examples *************
+def show_usage_examples():
+    """Display usage examples for the Academic Research Agent."""
+    print("📚 Academic Research Agent (Arxiv) Ready!")
+    print("\nSpecialized for academic and theoretical research")
+    print("\nExample queries:")
+    print("-" * 60)
+
+    print("\n1. Find statistical methods:")
+    print('   response = academic_research_agent.run("""')
+    print('   Find papers on statistical analysis methods for')
+    print('   healthcare quality improvement""")')
+
+    print("\n2. Search for AI/ML applications:")
+    print('   response = academic_research_agent.run("""')
+    print('   Find research on machine learning for predicting')
+    print('   patient outcomes""")')
+
+    print("\n3. Methodological papers:")
+    print('   response = academic_research_agent.run("""')
+    print('   Find papers about data collection and analysis')
+    print('   methods in clinical research""")')
+
+    print("\n" + "-" * 60)
+    print("\n💡 TIP: Arxiv is great for theoretical and methodological research!")
+    print("Use it when you need advanced analysis techniques.")
+
+
 if __name__ == "__main__":
-    # PHASE 1: Add error handling for agent execution
-    try:
-        logger.info("Starting Academic Research Agent")
-
-        print("📚 Academic Research Agent (Arxiv) Ready!")
-        print("\nSpecialized for academic and theoretical research")
-        print("\nExample queries:")
-        print("-" * 60)
-
-        print("\n1. Find statistical methods:")
-        print('   response = academic_research_agent.run("""')
-        print('   Find papers on statistical analysis methods for')
-        print('   healthcare quality improvement""")')
-
-        print("\n2. Search for AI/ML applications:")
-        print('   response = academic_research_agent.run("""')
-        print('   Find research on machine learning for predicting')
-        print('   patient outcomes""")')
-
-        print("\n3. Methodological papers:")
-        print('   response = academic_research_agent.run("""')
-        print('   Find papers about data collection and analysis')
-        print('   methods in clinical research""")')
-
-        print("\n" + "-" * 60)
-        print("\n💡 TIP: Arxiv is great for theoretical and methodological research!")
-        print("Use it when you need advanced analysis techniques.")
-
-        logger.info("Academic Research Agent ready")
-
-    except KeyboardInterrupt:
-        logger.info("Agent interrupted by user")
-        print("\n\nInterrupted by user. Goodbye!")
-
-    except Exception as e:
-        logger.error(f"Agent execution failed: {type(e).__name__}: {str(e)}", exc_info=True)
-        print(f"\n❌ Error: An unexpected error occurred.")
-        print(f"Error type: {type(e).__name__}")
-        print(f"Error message: {str(e)}")
-        print("\nPlease check the logs for details or contact support.")
-        raise  # Re-raise to preserve stack trace for debugging
+    # PHASE 2: Use shared error handling utility
+    run_agent_with_error_handling(
+        "Academic Research Agent",
+        logger,
+        show_usage_examples
+    )
 
