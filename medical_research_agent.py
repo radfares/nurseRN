@@ -5,8 +5,10 @@ Perfect for finding peer-reviewed clinical studies
 
 PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
+PHASE 3 UPDATE (2025-11-20): Enhanced PubMed configuration for full metadata
 """
 
+import os
 from textwrap import dedent
 
 from agno.agent import Agent
@@ -30,6 +32,9 @@ medical_research_agent = Agent(
     model=OpenAIChat(id="gpt-4o"),
     tools=[
         PubmedTools(
+            email=os.getenv("PUBMED_EMAIL", "nursing.research@example.com"),  # Required by NCBI
+            max_results=10,  # Default max results per search
+            results_expanded=True,  # CRITICAL: Full metadata (DOI, URLs, MeSH, full abstracts)
             enable_search_pubmed=True,  # Search medical literature
         )
     ],
@@ -57,14 +62,29 @@ medical_research_agent = Agent(
         - Case studies and cohort studies
         
         RESPONSE FORMAT:
-        For each article found:
-        - Title and authors
+        For each article found, provide:
+        - Title and authors (first author provided)
         - Publication year and journal
-        - PubMed ID (PMID)
-        - Abstract summary
+        - PubMed ID (PMID) and PubMed URL
+        - DOI link (for citations)
+        - Full-text access link (when available via PMC or DOI)
+        - Keywords and MeSH terms (Medical Subject Headings)
+        - Publication type (research article, review, clinical trial, etc.)
+        - Full structured abstract with sections:
+          * OBJECTIVE/BACKGROUND
+          * METHODS
+          * RESULTS
+          * CONCLUSIONS
         - Key findings relevant to the query
         - Study design and methodology
         - Clinical implications
+        
+        NOTE: With results_expanded=True, you have access to comprehensive metadata:
+        - Direct links for immediate access and citation
+        - MeSH terms for deeper literature searches
+        - Keywords for finding related research
+        - Complete structured abstracts (not truncated)
+        - Publication types for filtering study designs
         
         QUALITY INDICATORS:
         - Peer-reviewed journals
@@ -95,6 +115,7 @@ def show_usage_examples():
     """Display usage examples for the Medical Research Agent."""
     print("🏥 Medical Research Agent (PubMed) Ready!")
     print("\nSpecialized for biomedical and nursing literature")
+    print("✨ Enhanced with full metadata (DOI, URLs, MeSH terms, full abstracts)")
     print("\nExample queries:")
     print("-" * 60)
 
@@ -121,6 +142,7 @@ def show_usage_examples():
     print("\n💡 TIP: PubMed has millions of biomedical articles!")
     print("Be specific about your topic for best results.")
     print("Use stream=True for real-time response generation.")
+    print("\n📚 Full metadata includes: DOI, URLs, MeSH terms, keywords, structured abstracts")
 
 
 if __name__ == "__main__":

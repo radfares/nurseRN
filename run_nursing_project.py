@@ -3,6 +3,9 @@ Nursing Research Project Assistant
 Complete system for healthcare improvement project support
 """
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from nursing_research_agent import nursing_research_agent
 from nursing_project_timeline_agent import project_timeline_agent
 from medical_research_agent import medical_research_agent
