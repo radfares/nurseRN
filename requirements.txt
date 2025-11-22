@@ -1,0 +1,21 @@
+# Core runtime dependencies (minimum safe versions)
+python-dotenv>=1.0.0
+httpx>=0.24.0
+requests>=2.31.0
+pydantic>=2.1.0
+pydantic-settings>=0.1.0
+numpy>=1.26.0
+openai>=1.0.0
+
+# Common optional dependencies used in the cookbook/examples
+pandas>=2.2.0    # used by some examples (optional)
+sentence-transformers>=2.2.0  # embedding models (optional)
+typing-extensions>=4.0.0
+
+# Notes:
+# - The repository contains a vendored `libs/agno` package. You must ensure
+#   Python can import it (see README notes below). Do not include `agno`
+#   here because it is provided in `libs/` inside the repo.
+# - The cookbook contains optional examples that reference many other
+#   packages (fastapi, uvicorn, sqlalchemy, pgvector, ddgs, yfinance, pypdf,
+#   newspaper3k, lxml, etc.). Add them if you plan to run those examples.
