@@ -6,15 +6,18 @@ Perfect for finding peer-reviewed clinical studies
 PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
 PHASE 3 UPDATE (2025-11-20): Enhanced PubMed configuration for full metadata
+WEEK 1 REFACTORING (2025-11-22): Added circuit breaker protection and resilience
+  - Safe tool creation with graceful degradation
+  - Enhanced error handling and logging
 """
 
 import os
+import sys
 from textwrap import dedent
 
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
-from agno.tools.pubmed import PubmedTools
 
 # PHASE 1: Import centralized configuration
 from agent_config import get_db_path
@@ -22,22 +25,39 @@ from agent_config import get_db_path
 # PHASE 2: Use base_agent utilities
 from base_agent import setup_agent_logging, run_agent_with_error_handling
 
+# WEEK 1 REFACTORING: Import resilience infrastructure
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from src.services.api_tools import (
+    create_pubmed_tools_safe,
+    build_tools_list,
+    get_api_status
+)
+
 # Setup logging using shared utility
 logger = setup_agent_logging("Medical Research Agent")
+
+# WEEK 1 REFACTORING: Create tools with resilience
+# PubMed doesn't require API keys (just email), so it's generally available
+pubmed_tool = create_pubmed_tools_safe(required=False)
+
+# Build tools list, filtering out None values
+available_tools = build_tools_list(pubmed_tool)
+
+# Log tool availability
+if pubmed_tool:
+    logger.info("✅ PubMed search available")
+else:
+    logger.warning("⚠️  PubMed search unavailable (tool creation failed)")
+
+if not available_tools:
+    logger.error("❌ No search tools available! Agent will have limited functionality.")
 
 # ************* Medical Research Agent (PubMed) *************
 medical_research_agent = Agent(
     name="Medical Research Agent",
     role="Search PubMed for biomedical and nursing research",
     model=OpenAIChat(id="gpt-4o"),
-    tools=[
-        PubmedTools(
-            email=os.getenv("PUBMED_EMAIL", "nursing.research@example.com"),  # Required by NCBI
-            max_results=10,  # Default max results per search
-            results_expanded=True,  # CRITICAL: Full metadata (DOI, URLs, MeSH, full abstracts)
-            enable_search_pubmed=True,  # Search medical literature
-        )
-    ],
+    tools=available_tools,  # Use safely-created tools
     description=dedent("""\
         You are a Medical Literature Search Specialist with access to PubMed,
         the premier database for biomedical and healthcare research. You help
@@ -113,7 +133,34 @@ logger.info(f"Medical Research Agent initialized: {get_db_path('medical_research
 # ************* Usage Examples *************
 def show_usage_examples():
     """Display usage examples for the Medical Research Agent."""
-    print("🏥 Medical Research Agent (PubMed) Ready!")
+    # WEEK 1 REFACTORING: Enhanced API status reporting
+    api_status = get_api_status()
+
+    print("\n📊 API Configuration Status:")
+    print("-" * 60)
+
+    # Check OpenAI (required)
+    if api_status["openai"]["key_set"]:
+        print("  ✅ OpenAI API - Configured (REQUIRED)")
+    else:
+        print("  ❌ OpenAI API - NOT configured (REQUIRED)")
+        print("     Set OPENAI_API_KEY environment variable")
+
+    # Check PubMed (optional email)
+    if api_status["pubmed"]["email_set"]:
+        print("  ✅ PubMed - Email configured (recommended)")
+    else:
+        print("  ⚠️  PubMed - Using default email (set PUBMED_EMAIL for better tracking)")
+
+    print("-" * 60)
+
+    # Warning if no search tools available
+    if not available_tools:
+        print("\n⚠️  WARNING: PubMed tool not available!")
+        print("   This is unusual - check logs for errors.")
+        print()
+
+    print("\n🏥 Medical Research Agent (PubMed) Ready!")
     print("\nSpecialized for biomedical and nursing literature")
     print("✨ Enhanced with full metadata (DOI, URLs, MeSH terms, full abstracts)")
     print("\nExample queries:")

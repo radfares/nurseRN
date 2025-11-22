@@ -5,14 +5,18 @@ Great for finding theoretical research and cutting-edge studies
 
 PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
+WEEK 1 REFACTORING (2025-11-22): Added circuit breaker protection and resilience
+  - Safe tool creation with graceful degradation
+  - Enhanced error handling and logging
 """
 
+import os
+import sys
 from textwrap import dedent
 
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
-from agno.tools.arxiv import ArxivTools
 
 # PHASE 1: Import centralized configuration
 from agent_config import get_db_path
@@ -20,19 +24,39 @@ from agent_config import get_db_path
 # PHASE 2: Use base_agent utilities
 from base_agent import setup_agent_logging, run_agent_with_error_handling
 
+# WEEK 1 REFACTORING: Import resilience infrastructure
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from src.services.api_tools import (
+    create_arxiv_tools_safe,
+    build_tools_list,
+    get_api_status
+)
+
 # Setup logging using shared utility
 logger = setup_agent_logging("Academic Research Agent")
+
+# WEEK 1 REFACTORING: Create tools with resilience
+# Arxiv is free and doesn't require authentication, so it's generally available
+arxiv_tool = create_arxiv_tools_safe(required=False)
+
+# Build tools list, filtering out None values
+available_tools = build_tools_list(arxiv_tool)
+
+# Log tool availability
+if arxiv_tool:
+    logger.info("✅ Arxiv search available")
+else:
+    logger.warning("⚠️  Arxiv search unavailable (tool creation failed)")
+
+if not available_tools:
+    logger.error("❌ No search tools available! Agent will have limited functionality.")
 
 # ************* Academic Research Agent (Arxiv) *************
 academic_research_agent = Agent(
     name="Academic Research Agent",
     role="Search Arxiv for academic research papers",
     model=OpenAIChat(id="gpt-4o"),
-    tools=[
-        ArxivTools(
-            enable_search_arxiv=True,  # Search academic papers
-        )
-    ],
+    tools=available_tools,  # Use safely-created tools
     description=dedent("""\
         You are an Academic Research Specialist with access to Arxiv,
         a repository of academic papers across science, mathematics, computer science,
@@ -94,7 +118,31 @@ logger.info(f"Academic Research Agent initialized: {get_db_path('academic_resear
 # ************* Usage Examples *************
 def show_usage_examples():
     """Display usage examples for the Academic Research Agent."""
-    print("📚 Academic Research Agent (Arxiv) Ready!")
+    # WEEK 1 REFACTORING: Enhanced API status reporting
+    api_status = get_api_status()
+
+    print("\n📊 API Configuration Status:")
+    print("-" * 60)
+
+    # Check OpenAI (required)
+    if api_status["openai"]["key_set"]:
+        print("  ✅ OpenAI API - Configured (REQUIRED)")
+    else:
+        print("  ❌ OpenAI API - NOT configured (REQUIRED)")
+        print("     Set OPENAI_API_KEY environment variable")
+
+    # Arxiv info
+    print("  ✅ Arxiv - No authentication required (free access)")
+
+    print("-" * 60)
+
+    # Warning if no search tools available
+    if not available_tools:
+        print("\n⚠️  WARNING: Arxiv tool not available!")
+        print("   This is unusual - check logs for errors.")
+        print()
+
+    print("\n📚 Academic Research Agent (Arxiv) Ready!")
     print("\nSpecialized for academic and theoretical research")
     print("\nExample queries:")
     print("-" * 60)
