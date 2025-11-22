@@ -21,15 +21,41 @@ from typing import Callable, Any, Optional
 from functools import wraps
 
 try:
-    from pybreaker import CircuitBreaker, CircuitBreakerError
+    from pybreaker import CircuitBreaker, CircuitBreakerError, CircuitBreakerListener
 except ImportError:
     # Graceful degradation if pybreaker not installed
     logging.warning("pybreaker not installed. Circuit breakers disabled. Run: pip install pybreaker")
     CircuitBreaker = None
     CircuitBreakerError = Exception
+    CircuitBreakerListener = None
 
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Circuit Breaker Listener for Logging
+# ============================================================================
+
+class LoggingListener(CircuitBreakerListener):
+    """Listener that logs circuit breaker events."""
+
+    def __init__(self, timeout: int):
+        self.timeout = timeout
+
+    def success(self, cb):
+        logger.debug(f"Circuit breaker '{cb.name}' - successful call")
+
+    def failure(self, cb, exc):
+        logger.warning(f"Circuit breaker '{cb.name}' - failure: {exc}")
+
+    def state_change(self, cb, old_state, new_state):
+        logger.warning(f"Circuit breaker '{cb.name}' - state change: {old_state} → {new_state}")
+        if str(new_state) == "open":
+            logger.error(
+                f"🔴 API '{cb.name}' circuit OPEN - too many failures. "
+                f"Will retry in {self.timeout} seconds."
+            )
 
 
 # ============================================================================
@@ -57,29 +83,14 @@ def create_circuit_breaker(name: str, failure_threshold: int = 5, timeout: int =
 
     breaker = CircuitBreaker(
         fail_max=failure_threshold,
-        timeout_duration=timeout,
+        reset_timeout=timeout,
         name=name,
         exclude=[KeyboardInterrupt],  # Don't count user interrupts as failures
     )
 
-    # Add listeners for logging
-    def log_success(cb):
-        logger.debug(f"Circuit breaker '{cb.name}' - successful call")
-
-    def log_failure(cb, exc):
-        logger.warning(f"Circuit breaker '{cb.name}' - failure: {exc}")
-
-    def log_state_change(cb, old_state, new_state):
-        logger.warning(f"Circuit breaker '{cb.name}' - state change: {old_state} → {new_state}")
-        if new_state == "open":
-            logger.error(
-                f"🔴 API '{cb.name}' circuit OPEN - too many failures. "
-                f"Will retry in {timeout} seconds."
-            )
-
-    breaker.add_listener("success", log_success)
-    breaker.add_listener("failure", log_failure)
-    breaker.add_listener("state_change", log_state_change)
+    # Add logging listener
+    if CircuitBreakerListener is not None:
+        breaker.add_listener(LoggingListener(timeout))
 
     return breaker
 
@@ -161,7 +172,7 @@ def call_with_breaker(
         *args, **kwargs: Arguments to pass to func
 
     Returns:
-        Result of func() or fallback dict if circuit open
+        Result of func() or fallback dict if circuit open or error
 
     Example:
         result = call_with_breaker(
@@ -173,19 +184,25 @@ def call_with_breaker(
     """
     if breaker is None:
         # No circuit breaker available, call directly
-        return func(*args, **kwargs)
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error calling function (no breaker): {e}")
+            return {"error": "api_error", "message": fallback_message}
 
     try:
         return breaker.call(func, *args, **kwargs)
     except CircuitBreakerError:
+        # Circuit is OPEN - return fallback
         logger.error(
             f"Circuit breaker '{breaker.name}' is OPEN. "
             f"Returning fallback."
         )
         return {"error": "service_unavailable", "message": fallback_message}
     except Exception as e:
-        logger.error(f"Error in circuit-protected call: {e}", exc_info=True)
-        raise
+        # API call failed but circuit not yet open - return fallback
+        logger.error(f"Error in circuit-protected call to '{breaker.name}': {e}")
+        return {"error": "api_error", "message": fallback_message}
 
 
 def get_breaker_status(breaker: Optional[CircuitBreaker]) -> dict:
