@@ -7,6 +7,11 @@ pydantic-settings>=0.1.0
 numpy>=1.26.0
 openai>=1.0.0
 
+# Resilience and reliability (Week 1 refactoring)
+pybreaker>=1.0.0        # Circuit breakers for API failure protection
+tenacity>=8.0.0         # Retry logic with exponential backoff
+requests-cache>=1.0.0   # HTTP response caching
+
 # Common optional dependencies used in the cookbook/examples
 pandas>=2.2.0    # used by some examples (optional)
 sentence-transformers>=2.2.0  # embedding models (optional)

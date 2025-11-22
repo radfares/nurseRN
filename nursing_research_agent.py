@@ -5,17 +5,20 @@ Focused on PICOT development, literature review, evidence-based practice
 PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 CRITICAL SECURITY FIX: Moved API keys to environment variables
 PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
+WEEK 1 REFACTORING (2025-11-22): Added circuit breaker protection and resilience
+  - Safe tool creation with graceful degradation
+  - API status reporting and validation
+  - Circuit breaker infrastructure for API calls
 """
 
 import os
+import sys
 from datetime import datetime
 from textwrap import dedent
 
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
-from agno.tools.exa import ExaTools
-from agno.tools.serpapi import SerpApiTools
 
 # PHASE 1: Import centralized configuration
 from agent_config import get_db_path
@@ -23,42 +26,47 @@ from agent_config import get_db_path
 # PHASE 2: Use base_agent utilities
 from base_agent import setup_agent_logging, run_agent_with_error_handling
 
+# WEEK 1 REFACTORING: Import resilience infrastructure
+# Add parent directory to path to import src modules
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from src.services.api_tools import (
+    create_exa_tools_safe,
+    create_serp_tools_safe,
+    build_tools_list,
+    get_api_status
+)
+
 # Setup logging using shared utility
 logger = setup_agent_logging("Nursing Research Agent")
 
-# PHASE 1 SECURITY FIX: Get API keys from environment variables
-# Set these in your environment before running:
-#   export EXA_API_KEY="your-exa-key"
-#   export SERP_API_KEY="your-serp-api-key"
-# OR add to .env file (and add .env to .gitignore)
-EXA_API_KEY = os.getenv("EXA_API_KEY")
-SERP_API_KEY = os.getenv("SERP_API_KEY")
+# WEEK 1 REFACTORING: Create tools with resilience
+# Tools are created safely with fallback behavior if API keys missing
+exa_tool = create_exa_tools_safe(required=False)
+serp_tool = create_serp_tools_safe(required=False)
 
-# Validate API keys are set
-if not EXA_API_KEY:
-    logger.warning("EXA_API_KEY environment variable not set. Exa search will fail.")
-if not SERP_API_KEY:
-    logger.warning("SERP_API_KEY environment variable not set. SerpAPI search will fail.")
+# Build tools list, filtering out None values
+available_tools = build_tools_list(exa_tool, serp_tool)
+
+# Log tool availability
+if exa_tool:
+    logger.info("✅ Exa search available")
+else:
+    logger.warning("⚠️  Exa search unavailable (EXA_API_KEY not set)")
+
+if serp_tool:
+    logger.info("✅ SerpAPI search available")
+else:
+    logger.warning("⚠️  SerpAPI search unavailable (SERP_API_KEY not set)")
+
+if not available_tools:
+    logger.error("❌ No search tools available! Agent will have limited functionality.")
 
 # ************* Nursing Research Agent *************
 nursing_research_agent = Agent(
     name="Nursing Research Agent",
     role="Healthcare improvement project research specialist",
     model=OpenAIChat(id="gpt-4o"),
-    tools=[
-        # PHASE 1 SECURITY FIX: Exa for recent healthcare articles and research
-        # API key now loaded from environment variable (line 25)
-        ExaTools(
-            api_key=EXA_API_KEY,  # From environment variable
-            start_published_date="2020-01-01",  # Last 5 years of research
-            type="neural",  # Better for academic/clinical content
-        ),
-        # PHASE 1 SECURITY FIX: SerpAPI for general healthcare standards and guidelines
-        # API key now loaded from environment variable (line 26)
-        SerpApiTools(
-            api_key=SERP_API_KEY  # From environment variable
-        ),
-    ],
+    tools=available_tools,  # Use safely-created tools
     description=dedent("""\
         You are a specialized Nursing Research Assistant focused on healthcare improvement projects.
         You help with PICOT development, literature searches, evidence-based practice research,
@@ -122,23 +130,47 @@ logger.info(f"Nursing Research Agent initialized: {get_db_path('nursing_research
 # ************* Usage Examples *************
 def show_usage_examples():
     """Display usage examples for the Nursing Research Agent."""
-    # PHASE 1 SECURITY: Validate API keys are set
-    if not EXA_API_KEY or not SERP_API_KEY:
-        print("\n⚠️  WARNING: API keys not configured!")
-        print("\nRequired environment variables:")
-        if not EXA_API_KEY:
-            print("  ❌ EXA_API_KEY - Not set")
-        else:
-            print("  ✓ EXA_API_KEY - Set")
-        if not SERP_API_KEY:
-            print("  ❌ SERP_API_KEY - Not set")
-        else:
-            print("  ✓ SERP_API_KEY - Set")
-        print("\nTo set API keys:")
-        print('  export EXA_API_KEY="your-exa-key"')
-        print('  export SERP_API_KEY="your-serp-api-key"')
-        print("\nThe agent will run but searches will fail without valid API keys.\n")
-        logger.error("API keys not configured. Agent functionality will be limited.")
+    # WEEK 1 REFACTORING: Enhanced API status reporting
+    api_status = get_api_status()
+
+    print("\n📊 API Configuration Status:")
+    print("-" * 60)
+
+    # Check OpenAI (required)
+    if api_status["openai"]["key_set"]:
+        print("  ✅ OpenAI API - Configured (REQUIRED)")
+    else:
+        print("  ❌ OpenAI API - NOT configured (REQUIRED)")
+        print("     Set OPENAI_API_KEY environment variable")
+
+    # Check Exa (optional)
+    if api_status["exa"]["key_set"]:
+        print("  ✅ Exa API - Configured (literature search)")
+    else:
+        print("  ⚠️  Exa API - NOT configured (optional, limits search capability)")
+        print("     Set EXA_API_KEY for recent article searches")
+
+    # Check SERP (optional)
+    if api_status["serp"]["key_set"]:
+        print("  ✅ SerpAPI - Configured (web search)")
+    else:
+        print("  ⚠️  SerpAPI - NOT configured (optional, limits search capability)")
+        print("     Set SERP_API_KEY for standards/guidelines search")
+
+    print("-" * 60)
+
+    # Warning if no search tools available
+    if not available_tools:
+        print("\n⚠️  WARNING: No search tools configured!")
+        print("   Agent can still help with PICOT development and guidance,")
+        print("   but cannot perform literature or web searches.")
+        print("\n   To enable full functionality:")
+        print('   export EXA_API_KEY="your-exa-key"')
+        print('   export SERP_API_KEY="your-serp-key"')
+        print()
+    elif len(available_tools) < 2:
+        print("\n⚠️  NOTE: Some search capabilities are limited.")
+        print("   Consider setting all API keys for full functionality.\n")
 
     print("🏥 Nursing Research Agent Ready!")
     print("\nSpecialized for healthcare improvement projects:")
