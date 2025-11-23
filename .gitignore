@@ -37,6 +37,12 @@ Thumbs.db
 *.log
 logs/
 
+# Test coverage reports
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
 # Test files created during testing
 test_research_agent.py
 test_research_agent_simple.py

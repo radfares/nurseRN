@@ -17,6 +17,12 @@ pandas>=2.2.0    # used by some examples (optional)
 sentence-transformers>=2.2.0  # embedding models (optional)
 typing-extensions>=4.0.0
 
+# Testing dependencies (Phase 1)
+pytest>=7.4.0           # Testing framework
+pytest-cov>=4.1.0       # Coverage reporting
+pytest-mock>=3.12.0     # Mocking support
+pytest-asyncio>=0.21.0  # Async test support
+
 # Notes:
 # - The repository contains a vendored `libs/agno` package. You must ensure
 #   Python can import it (see README notes below). Do not include `agno`
