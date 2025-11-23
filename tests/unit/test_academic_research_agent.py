@@ -80,3 +80,185 @@ class TestAcademicResearchAgentIntegration:
         agent = AcademicResearchAgent()
 
         assert isinstance(agent, BaseAgent)
+
+    @patch('academic_research_agent.Agent')
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_agent_has_required_methods(self, mock_build, mock_arxiv, mock_agent):
+        """Test that agent has all required methods"""
+        mock_build.return_value = []
+        agent = AcademicResearchAgent()
+
+        assert hasattr(agent, '_create_tools')
+        assert hasattr(agent, '_create_agent')
+        assert hasattr(agent, 'show_usage_examples')
+
+
+class TestShowUsageExamples:
+    """Test the show_usage_examples method"""
+
+    @patch('academic_research_agent.get_api_status')
+    @patch('academic_research_agent.Agent')
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_show_usage_examples_with_openai_configured(
+        self, mock_build, mock_arxiv, mock_agent, mock_api_status, capsys
+    ):
+        """Test show_usage_examples when OpenAI is configured"""
+        mock_build.return_value = [Mock(name="arxiv_tool")]
+        mock_api_status.return_value = {
+            "openai": {"key_set": True},
+            "arxiv": {"available": True}
+        }
+
+        agent = AcademicResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        assert "Academic Research Agent (Arxiv) Ready!" in captured.out
+        assert "OpenAI API - Configured (REQUIRED)" in captured.out
+        assert "Arxiv - No authentication required" in captured.out
+
+    @patch('academic_research_agent.get_api_status')
+    @patch('academic_research_agent.Agent')
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_show_usage_examples_without_openai(
+        self, mock_build, mock_arxiv, mock_agent, mock_api_status, capsys
+    ):
+        """Test show_usage_examples when OpenAI is not configured"""
+        mock_build.return_value = [Mock(name="arxiv_tool")]
+        mock_api_status.return_value = {
+            "openai": {"key_set": False}
+        }
+
+        agent = AcademicResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        assert "OpenAI API - NOT configured (REQUIRED)" in captured.out
+        assert "Set OPENAI_API_KEY environment variable" in captured.out
+
+    @patch('academic_research_agent.get_api_status')
+    @patch('academic_research_agent.Agent')
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_show_usage_examples_no_tools_warning(
+        self, mock_build, mock_arxiv, mock_agent, mock_api_status, capsys
+    ):
+        """Test show_usage_examples warning when no tools available"""
+        mock_build.return_value = []  # No tools
+        mock_api_status.return_value = {
+            "openai": {"key_set": True}
+        }
+
+        agent = AcademicResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        assert "WARNING: Arxiv tool not available!" in captured.out
+
+    @patch('academic_research_agent.get_api_status')
+    @patch('academic_research_agent.Agent')
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_show_usage_examples_includes_examples(
+        self, mock_build, mock_arxiv, mock_agent, mock_api_status, capsys
+    ):
+        """Test that usage examples include code examples"""
+        mock_build.return_value = [Mock(name="arxiv_tool")]
+        mock_api_status.return_value = {
+            "openai": {"key_set": True}
+        }
+
+        agent = AcademicResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        # Check for example queries
+        assert "Find statistical methods:" in captured.out
+        assert "Search for AI/ML applications:" in captured.out
+        assert "Methodological papers:" in captured.out
+        assert "With Streaming:" in captured.out
+        assert "academic_research_agent.run(" in captured.out
+
+    @patch('academic_research_agent.get_api_status')
+    @patch('academic_research_agent.Agent')
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_show_usage_examples_includes_tips(
+        self, mock_build, mock_arxiv, mock_agent, mock_api_status, capsys
+    ):
+        """Test that usage examples include helpful tips"""
+        mock_build.return_value = [Mock(name="arxiv_tool")]
+        mock_api_status.return_value = {
+            "openai": {"key_set": True}
+        }
+
+        agent = AcademicResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        assert "TIP:" in captured.out
+        assert "Arxiv is great for theoretical and methodological research" in captured.out
+        assert "stream=True" in captured.out
+
+
+class TestGlobalInstance:
+    """Test global instance creation"""
+
+    @patch('academic_research_agent.Agent')
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_global_instance_exists(self, mock_build, mock_arxiv, mock_agent):
+        """Test that global instance is created"""
+        mock_build.return_value = []
+
+        # The module creates a global instance
+        from academic_research_agent import _academic_research_agent_instance, academic_research_agent
+
+        assert _academic_research_agent_instance is not None
+        assert academic_research_agent is not None
+
+    @patch('academic_research_agent.Agent')
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_global_instance_is_academic_research_agent(self, mock_build, mock_arxiv, mock_agent):
+        """Test that global instance is an AcademicResearchAgent"""
+        mock_build.return_value = []
+
+        from academic_research_agent import _academic_research_agent_instance
+
+        assert isinstance(_academic_research_agent_instance, AcademicResearchAgent)
+
+
+class TestCreateTools:
+    """Test the _create_tools method"""
+
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_create_tools_with_arxiv(self, mock_build_tools, mock_arxiv, capsys):
+        """Test tool creation when Arxiv is available"""
+        arxiv_tool = Mock(name="arxiv")
+        mock_arxiv.return_value = arxiv_tool
+        mock_build_tools.return_value = [arxiv_tool]
+
+        agent = AcademicResearchAgent()
+
+        assert len(agent.tools) == 1
+        captured = capsys.readouterr()
+        assert "✅ Arxiv search available" in captured.out
+
+    @patch('academic_research_agent.create_arxiv_tools_safe')
+    @patch('academic_research_agent.build_tools_list')
+    def test_create_tools_without_arxiv(self, mock_build_tools, mock_arxiv, capsys):
+        """Test tool creation when Arxiv is not available"""
+        mock_arxiv.return_value = None
+        mock_build_tools.return_value = []
+
+        agent = AcademicResearchAgent()
+
+        assert len(agent.tools) == 0
+        captured = capsys.readouterr()
+        assert "⚠️ Arxiv search unavailable" in captured.out
+        assert "❌ No search tools available" in captured.out

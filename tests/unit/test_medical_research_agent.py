@@ -155,3 +155,166 @@ class TestMedicalResearchAgentIntegration:
         assert hasattr(agent, '_create_tools')
         assert hasattr(agent, '_create_agent')
         assert hasattr(agent, 'show_usage_examples')
+
+
+class TestShowUsageExamples:
+    """Test the show_usage_examples method"""
+
+    @patch('medical_research_agent.get_api_status')
+    @patch('medical_research_agent.Agent')
+    @patch('medical_research_agent.create_pubmed_tools_safe')
+    @patch('medical_research_agent.build_tools_list')
+    def test_show_usage_examples_with_openai_configured(
+        self, mock_build, mock_pubmed, mock_agent, mock_api_status, capsys
+    ):
+        """Test show_usage_examples when OpenAI is configured"""
+        mock_build.return_value = [Mock(name="pubmed_tool")]
+        mock_api_status.return_value = {
+            "openai": {"key_set": True},
+            "pubmed": {"email_set": True}
+        }
+
+        agent = MedicalResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        assert "Medical Research Agent (PubMed) Ready!" in captured.out
+        assert "OpenAI API - Configured (REQUIRED)" in captured.out
+        assert "PubMed - Email configured" in captured.out
+
+    @patch('medical_research_agent.get_api_status')
+    @patch('medical_research_agent.Agent')
+    @patch('medical_research_agent.create_pubmed_tools_safe')
+    @patch('medical_research_agent.build_tools_list')
+    def test_show_usage_examples_without_openai(
+        self, mock_build, mock_pubmed, mock_agent, mock_api_status, capsys
+    ):
+        """Test show_usage_examples when OpenAI is not configured"""
+        mock_build.return_value = [Mock(name="pubmed_tool")]
+        mock_api_status.return_value = {
+            "openai": {"key_set": False},
+            "pubmed": {"email_set": False}
+        }
+
+        agent = MedicalResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        assert "OpenAI API - NOT configured (REQUIRED)" in captured.out
+        assert "Set OPENAI_API_KEY environment variable" in captured.out
+
+    @patch('medical_research_agent.get_api_status')
+    @patch('medical_research_agent.Agent')
+    @patch('medical_research_agent.create_pubmed_tools_safe')
+    @patch('medical_research_agent.build_tools_list')
+    def test_show_usage_examples_without_pubmed_email(
+        self, mock_build, mock_pubmed, mock_agent, mock_api_status, capsys
+    ):
+        """Test show_usage_examples when PubMed email is not set"""
+        mock_build.return_value = [Mock(name="pubmed_tool")]
+        mock_api_status.return_value = {
+            "openai": {"key_set": True},
+            "pubmed": {"email_set": False}
+        }
+
+        agent = MedicalResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        assert "PubMed - Using default email" in captured.out
+        assert "set PUBMED_EMAIL" in captured.out
+
+    @patch('medical_research_agent.get_api_status')
+    @patch('medical_research_agent.Agent')
+    @patch('medical_research_agent.create_pubmed_tools_safe')
+    @patch('medical_research_agent.build_tools_list')
+    def test_show_usage_examples_no_tools_warning(
+        self, mock_build, mock_pubmed, mock_agent, mock_api_status, capsys
+    ):
+        """Test show_usage_examples warning when no tools available"""
+        mock_build.return_value = []  # No tools
+        mock_api_status.return_value = {
+            "openai": {"key_set": True},
+            "pubmed": {"email_set": True}
+        }
+
+        agent = MedicalResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        assert "WARNING: PubMed tool not available!" in captured.out
+
+    @patch('medical_research_agent.get_api_status')
+    @patch('medical_research_agent.Agent')
+    @patch('medical_research_agent.create_pubmed_tools_safe')
+    @patch('medical_research_agent.build_tools_list')
+    def test_show_usage_examples_includes_examples(
+        self, mock_build, mock_pubmed, mock_agent, mock_api_status, capsys
+    ):
+        """Test that usage examples include code examples"""
+        mock_build.return_value = [Mock(name="pubmed_tool")]
+        mock_api_status.return_value = {
+            "openai": {"key_set": True},
+            "pubmed": {"email_set": True}
+        }
+
+        agent = MedicalResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        # Check for example queries
+        assert "Find clinical studies:" in captured.out
+        assert "Search for specific conditions:" in captured.out
+        assert "Literature review:" in captured.out
+        assert "With Streaming:" in captured.out
+        assert "medical_research_agent.run(" in captured.out
+
+    @patch('medical_research_agent.get_api_status')
+    @patch('medical_research_agent.Agent')
+    @patch('medical_research_agent.create_pubmed_tools_safe')
+    @patch('medical_research_agent.build_tools_list')
+    def test_show_usage_examples_includes_tips(
+        self, mock_build, mock_pubmed, mock_agent, mock_api_status, capsys
+    ):
+        """Test that usage examples include helpful tips"""
+        mock_build.return_value = [Mock(name="pubmed_tool")]
+        mock_api_status.return_value = {
+            "openai": {"key_set": True},
+            "pubmed": {"email_set": True}
+        }
+
+        agent = MedicalResearchAgent()
+        agent.show_usage_examples()
+
+        captured = capsys.readouterr()
+        assert "TIP:" in captured.out
+        assert "PubMed has millions of biomedical articles" in captured.out
+        assert "Full metadata includes: DOI, URLs, MeSH terms" in captured.out
+
+
+class TestGlobalInstance:
+    """Test global instance creation"""
+
+    @patch('medical_research_agent.Agent')
+    @patch('medical_research_agent.create_pubmed_tools_safe')
+    @patch('medical_research_agent.build_tools_list')
+    def test_global_instance_exists(self, mock_build, mock_pubmed, mock_agent):
+        """Test that global instance is created"""
+        mock_build.return_value = []
+
+        # The module creates a global instance
+        from medical_research_agent import _medical_research_agent_instance, medical_research_agent
+
+        assert _medical_research_agent_instance is not None
+        assert medical_research_agent is not None
+
+    @patch('medical_research_agent.Agent')
+    @patch('medical_research_agent.create_pubmed_tools_safe')
+    @patch('medical_research_agent.build_tools_list')
+    def test_global_instance_is_medical_research_agent(self, mock_build, mock_pubmed, mock_agent):
+        """Test that global instance is a MedicalResearchAgent"""
+        mock_build.return_value = []
+
+        from medical_research_agent import _medical_research_agent_instance
+
+        assert isinstance(_medical_research_agent_instance, MedicalResearchAgent)
