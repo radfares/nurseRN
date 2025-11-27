@@ -1,6 +1,8 @@
 # Core runtime dependencies (minimum safe versions)
 python-dotenv>=1.0.0
-httpx>=0.24.0
+# Pin httpx/httpcore to versions compatible with Python 3.14
+httpx>=0.27.2
+httpcore>=1.0.5
 requests>=2.31.0
 pydantic>=2.1.0
 pydantic-settings>=0.1.0
@@ -11,6 +13,24 @@ openai>=1.0.0
 pybreaker>=1.0.0        # Circuit breakers for API failure protection
 tenacity>=8.0.0         # Retry logic with exponential backoff
 requests-cache>=1.0.0   # HTTP response caching
+
+# Agno framework dependencies (required for vendored libs/agno)
+rich>=13.0.0              # Terminal formatting and logging
+typer>=0.15.0             # CLI framework
+python-multipart>=0.0.20  # Form data handling
+docstring-parser>=0.16    # Docstring parsing
+gitpython>=3.1.0          # Git operations
+sqlalchemy>=2.0.0         # Database ORM (required for agno.db.sqlite)
+
+# Search tool dependencies (for agent research capabilities)
+# Tool Policy: PubMed (healthcare) > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SerpAPI > ArXiv/Exa (restricted)
+# Note: ArXiv and Exa are RESTRICTED - not for healthcare research
+# Free APIs: ClinicalTrials.gov, medRxiv, Semantic Scholar, CORE, DOAJ (no additional packages needed - use httpx)
+exa_py>=2.0.0             # Exa search API (RESTRICTED: tech/AI topics only)
+arxiv>=2.3.0              # ArXiv paper search (RESTRICTED: tech/AI only)
+pypdf>=5.0.0              # PDF parsing for ArXiv papers
+google-search-results>=2.4.0  # SerpAPI (standards/guidelines search)
+biopython>=1.80           # PubMed search (PRIMARY for healthcare research)
 
 # Common optional dependencies used in the cookbook/examples
 pandas>=2.2.0    # used by some examples (optional)

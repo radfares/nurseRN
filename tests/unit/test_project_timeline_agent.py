@@ -15,7 +15,7 @@ sys.modules['agno.db.sqlite'] = MagicMock()
 sys.modules['agno.models'] = MagicMock()
 sys.modules['agno.models.openai'] = MagicMock()
 
-import nursing_project_timeline_agent
+import agents.nursing_project_timeline_agent as nursing_project_timeline_agent
 
 
 class TestProjectTimelineAgentConfiguration:
@@ -108,7 +108,7 @@ class TestMainExecution:
     @patch('nursing_project_timeline_agent.run_agent_with_error_handling')
     def test_main_calls_error_handler(self, mock_error_handler):
         """Test that main block calls run_agent_with_error_handling"""
-        import nursing_project_timeline_agent as pta
+        import agents.nursing_project_timeline_agent as pta
 
         # Verify the function exists and is callable
         usage_func = pta.show_usage_examples

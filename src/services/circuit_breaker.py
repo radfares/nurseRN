@@ -101,6 +101,11 @@ EXA_BREAKER = create_circuit_breaker("Exa API", failure_threshold=5, timeout=60)
 SERP_BREAKER = create_circuit_breaker("SerpAPI", failure_threshold=5, timeout=60)
 PUBMED_BREAKER = create_circuit_breaker("PubMed API", failure_threshold=5, timeout=60)
 ARXIV_BREAKER = create_circuit_breaker("Arxiv API", failure_threshold=5, timeout=60)
+CLINICALTRIALS_BREAKER = create_circuit_breaker("ClinicalTrials.gov API", failure_threshold=5, timeout=60)
+MEDRXIV_BREAKER = create_circuit_breaker("medRxiv API", failure_threshold=5, timeout=60)
+SEMANTIC_SCHOLAR_BREAKER = create_circuit_breaker("Semantic Scholar API", failure_threshold=5, timeout=60)
+CORE_BREAKER = create_circuit_breaker("CORE API", failure_threshold=5, timeout=60)
+DOAJ_BREAKER = create_circuit_breaker("DOAJ API", failure_threshold=5, timeout=60)
 
 
 # ============================================================================
@@ -267,6 +272,11 @@ def get_all_breaker_status() -> dict:
         "serp": get_breaker_status(SERP_BREAKER),
         "pubmed": get_breaker_status(PUBMED_BREAKER),
         "arxiv": get_breaker_status(ARXIV_BREAKER),
+        "clinicaltrials": get_breaker_status(CLINICALTRIALS_BREAKER),
+        "medrxiv": get_breaker_status(MEDRXIV_BREAKER),
+        "semantic_scholar": get_breaker_status(SEMANTIC_SCHOLAR_BREAKER),
+        "core": get_breaker_status(CORE_BREAKER),
+        "doaj": get_breaker_status(DOAJ_BREAKER),
     }
 
 

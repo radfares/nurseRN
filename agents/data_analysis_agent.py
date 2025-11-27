@@ -17,7 +17,7 @@ from typing import Literal, Optional, Any
 from agent_config import get_db_path, DATA_ANALYSIS_TEMPERATURE, DATA_ANALYSIS_MAX_TOKENS
 
 # PHASE 2: Use base_agent utilities
-from base_agent import setup_agent_logging, run_agent_with_error_handling
+from .base_agent import setup_agent_logging, run_agent_with_error_handling
 
 # Setup logging using shared utility
 logger = setup_agent_logging("Data Analysis Agent")

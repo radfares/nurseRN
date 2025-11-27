@@ -8,7 +8,7 @@
 
 ## 🤖 Your AI Assistants
 
-### 1. **Research Agent** (`nursing_research_agent.py`)
+### 1. **Research Agent** (`agents/nursing_research_agent.py`)
 **Best for**: Clinical research and evidence-based practice
 
 **What it helps with**:
@@ -41,7 +41,7 @@
 - "When is the poster due?"
 - "Who should I contact for literature search help?"
 
-### 3. **Medical Research Agent (PubMed)** (`medical_research_agent.py`) 🆕
+### 3. **Medical Research Agent (PubMed)** (`agents/medical_research_agent.py`) 🆕
 **Best for**: Peer-reviewed medical literature searches
 
 **What it helps with**:

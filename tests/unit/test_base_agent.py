@@ -17,7 +17,7 @@ sys.modules['agno.db.sqlite'] = MagicMock()
 sys.modules['agno.models'] = MagicMock()
 sys.modules['agno.models.openai'] = MagicMock()
 
-from base_agent import (
+from agents.base_agent import (
     setup_agent_logging,
     run_agent_with_error_handling,
     BaseAgent

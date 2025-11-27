@@ -96,10 +96,10 @@ Each agent can be run standalone:
 
 ```bash
 # Agent 1: Nursing Research (PICOT, literature, standards)
-python3 nursing_research_agent.py
+python3 -m agents.nursing_research_agent
 
 # Agent 2: Medical Research (PubMed searches)
-python3 medical_research_agent.py
+python3 -m agents.medical_research_agent
 
 # Agent 3: Academic Research (ArXiv searches)
 python3 academic_research_agent.py
@@ -182,14 +182,15 @@ Streaming provides a better user experience for longer responses.
 
 ```
 nursing-research-agents/
+├── agents/                      # All AI agents (organized)
+│   ├── base_agent.py            # Shared utilities (logging, error handling)
+│   ├── nursing_research_agent.py    # Agent 1
+│   ├── medical_research_agent.py    # Agent 2
+│   ├── academic_research_agent.py   # Agent 3
+│   ├── research_writing_agent.py    # Agent 4
+│   ├── nursing_project_timeline_agent.py  # Agent 5
+│   └── data_analysis_agent.py   # Agent 6
 ├── agent_config.py              # Centralized configuration
-├── base_agent.py                # Shared utilities (logging, error handling)
-├── nursing_research_agent.py    # Agent 1
-├── medical_research_agent.py    # Agent 2
-├── academic_research_agent.py   # Agent 3
-├── research_writing_agent.py    # Agent 4
-├── nursing_project_timeline_agent.py  # Agent 5
-├── data_analysis_agent.py       # Agent 6
 ├── main_menu.py                 # Interactive menu
 ├── .env.example                 # Environment template
 ├── .env                         # Your API keys (not in git)

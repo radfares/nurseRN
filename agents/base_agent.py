@@ -159,7 +159,7 @@ if __name__ == "__main__":
     print("  - run_agent_with_error_handling(): Wrap agent execution with error handling")
     print("  - BaseAgent: Base class for agent inheritance pattern")
     print("\nExample:")
-    print("  from base_agent import BaseAgent")
+    print("  from agents.base_agent import BaseAgent")
     print("")
     print("  class MyAgent(BaseAgent):")
     print("      def __init__(self):")

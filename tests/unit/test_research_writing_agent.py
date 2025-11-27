@@ -15,7 +15,7 @@ sys.modules['agno.db.sqlite'] = MagicMock()
 sys.modules['agno.models'] = MagicMock()
 sys.modules['agno.models.openai'] = MagicMock()
 
-import research_writing_agent
+import agents.research_writing_agent as research_writing_agent
 
 
 class TestResearchWritingAgentConfiguration:
@@ -173,7 +173,7 @@ class TestMainExecution:
         """Test that main block calls run_agent_with_error_handling"""
         # Simulate running the main block
         import importlib
-        import research_writing_agent as rwa
+        import agents.research_writing_agent as rwa
 
         # Get the show_usage_examples function
         usage_func = rwa.show_usage_examples

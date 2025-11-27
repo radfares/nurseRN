@@ -22,7 +22,7 @@ from agno.models.openai import OpenAIChat
 from agent_config import get_db_path
 
 # Import BaseAgent for inheritance pattern
-from base_agent import BaseAgent
+from .base_agent import BaseAgent
 
 # Import resilience infrastructure
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

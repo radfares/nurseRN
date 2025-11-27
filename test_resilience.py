@@ -141,7 +141,7 @@ def test_agents_with_missing_keys():
         # Test Medical Research Agent (PubMed - doesn't require API key)
         print("\n1. Medical Research Agent (PubMed):")
         try:
-            from medical_research_agent import medical_research_agent
+            from agents.medical_research_agent import medical_research_agent
             print("   ✅ Agent initialized successfully (PubMed doesn't require API key)")
         except Exception as e:
             print(f"   ⚠️  Agent initialization issue: {e}")
@@ -149,7 +149,7 @@ def test_agents_with_missing_keys():
         # Test Academic Research Agent (Arxiv - doesn't require API key)
         print("\n2. Academic Research Agent (Arxiv):")
         try:
-            from academic_research_agent import academic_research_agent
+            from agents.academic_research_agent import academic_research_agent
             print("   ✅ Agent initialized successfully (Arxiv doesn't require API key)")
         except Exception as e:
             print(f"   ⚠️  Agent initialization issue: {e}")
@@ -157,7 +157,7 @@ def test_agents_with_missing_keys():
         # Test Nursing Research Agent (Exa/SerpAPI - requires keys)
         print("\n3. Nursing Research Agent (Exa/SerpAPI):")
         try:
-            from nursing_research_agent import nursing_research_agent
+            from agents.nursing_research_agent import nursing_research_agent
             print("   ✅ Agent initialized with graceful degradation (limited functionality)")
         except Exception as e:
             print(f"   ⚠️  Agent initialization issue: {e}")

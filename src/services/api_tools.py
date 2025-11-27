@@ -27,6 +27,11 @@ try:
         SERP_BREAKER,
         PUBMED_BREAKER,
         ARXIV_BREAKER,
+        CLINICALTRIALS_BREAKER,
+        MEDRXIV_BREAKER,
+        SEMANTIC_SCHOLAR_BREAKER,
+        CORE_BREAKER,
+        DOAJ_BREAKER,
         call_with_breaker
     )
 except ImportError:
@@ -35,6 +40,11 @@ except ImportError:
     SERP_BREAKER = None
     PUBMED_BREAKER = None
     ARXIV_BREAKER = None
+    CLINICALTRIALS_BREAKER = None
+    MEDRXIV_BREAKER = None
+    SEMANTIC_SCHOLAR_BREAKER = None
+    CORE_BREAKER = None
+    DOAJ_BREAKER = None
     def call_with_breaker(breaker, func, fallback_message, *args, **kwargs):
         return func(*args, **kwargs)
 
@@ -272,6 +282,184 @@ def create_arxiv_tools_safe(required: bool = False) -> Optional[Any]:
         return None
 
 
+def create_clinicaltrials_tools_safe(required: bool = False) -> Optional[Any]:
+    """
+    Safely create ClinicalTrialsTools with circuit breaker protection and error handling.
+
+    Args:
+        required: If True, raises error on failure
+
+    Returns:
+        Circuit-protected ClinicalTrialsTools instance or None on failure
+    """
+    try:
+        from agno.tools.clinicaltrials import ClinicalTrialsTools
+    except ImportError:
+        logger.error("agno.tools.clinicaltrials not available")
+        if required:
+            raise
+        return None
+
+    try:
+        # Create the base tool (no API key required for ClinicalTrials.gov)
+        clinicaltrials_tool = ClinicalTrialsTools(
+            enable_search_clinicaltrials=True,
+            max_results=10,
+        )
+        # Wrap with circuit breaker protection
+        wrapped_tool = CircuitProtectedToolWrapper(clinicaltrials_tool, CLINICALTRIALS_BREAKER, "ClinicalTrials.gov API")
+        logger.info("✅ Created ClinicalTrials.gov tool with circuit breaker protection")
+        return wrapped_tool
+    except Exception as e:
+        logger.error(f"Failed to create ClinicalTrialsTools: {e}", exc_info=True)
+        if required:
+            raise
+        return None
+
+
+def create_medrxiv_tools_safe(required: bool = False) -> Optional[Any]:
+    """
+    Safely create MedRxivTools with circuit breaker protection and error handling.
+
+    Args:
+        required: If True, raises error on failure
+
+    Returns:
+        Circuit-protected MedRxivTools instance or None on failure
+    """
+    try:
+        from agno.tools.medrxiv import MedRxivTools
+    except ImportError:
+        logger.error("agno.tools.medrxiv not available")
+        if required:
+            raise
+        return None
+
+    try:
+        # Create the base tool (no API key required for medRxiv/bioRxiv)
+        medrxiv_tool = MedRxivTools(
+            enable_search_medrxiv=True,
+            enable_search_biorxiv=True,
+            max_results=10,
+        )
+        # Wrap with circuit breaker protection
+        wrapped_tool = CircuitProtectedToolWrapper(medrxiv_tool, MEDRXIV_BREAKER, "medRxiv API")
+        logger.info("✅ Created medRxiv tool with circuit breaker protection")
+        return wrapped_tool
+    except Exception as e:
+        logger.error(f"Failed to create MedRxivTools: {e}", exc_info=True)
+        if required:
+            raise
+        return None
+
+
+def create_semantic_scholar_tools_safe(required: bool = False) -> Optional[Any]:
+    """
+    Safely create SemanticScholarTools with circuit breaker protection and error handling.
+
+    Args:
+        required: If True, raises error on failure
+
+    Returns:
+        Circuit-protected SemanticScholarTools instance or None on failure
+    """
+    try:
+        from agno.tools.semantic_scholar import SemanticScholarTools
+    except ImportError:
+        logger.error("agno.tools.semantic_scholar not available")
+        if required:
+            raise
+        return None
+
+    try:
+        # Create the base tool (API key optional but recommended for higher rate limits)
+        semantic_scholar_tool = SemanticScholarTools(
+            enable_search_semantic_scholar=True,
+            max_results=10,
+            api_key=os.getenv("SEMANTIC_SCHOLAR_API_KEY"),
+        )
+        # Wrap with circuit breaker protection
+        wrapped_tool = CircuitProtectedToolWrapper(semantic_scholar_tool, SEMANTIC_SCHOLAR_BREAKER, "Semantic Scholar API")
+        logger.info("✅ Created Semantic Scholar tool with circuit breaker protection")
+        return wrapped_tool
+    except Exception as e:
+        logger.error(f"Failed to create SemanticScholarTools: {e}", exc_info=True)
+        if required:
+            raise
+        return None
+
+
+def create_core_tools_safe(required: bool = False) -> Optional[Any]:
+    """
+    Safely create CoreTools with circuit breaker protection and error handling.
+
+    Args:
+        required: If True, raises error on failure
+
+    Returns:
+        Circuit-protected CoreTools instance or None on failure
+    """
+    try:
+        from agno.tools.core import CoreTools
+    except ImportError:
+        logger.error("agno.tools.core not available")
+        if required:
+            raise
+        return None
+
+    try:
+        # Create the base tool (API key optional but recommended for higher rate limits)
+        core_tool = CoreTools(
+            enable_search_core=True,
+            max_results=10,
+            api_key=os.getenv("CORE_API_KEY"),
+        )
+        # Wrap with circuit breaker protection
+        wrapped_tool = CircuitProtectedToolWrapper(core_tool, CORE_BREAKER, "CORE API")
+        logger.info("✅ Created CORE tool with circuit breaker protection")
+        return wrapped_tool
+    except Exception as e:
+        logger.error(f"Failed to create CoreTools: {e}", exc_info=True)
+        if required:
+            raise
+        return None
+
+
+def create_doaj_tools_safe(required: bool = False) -> Optional[Any]:
+    """
+    Safely create DoajTools with circuit breaker protection and error handling.
+
+    Args:
+        required: If True, raises error on failure
+
+    Returns:
+        Circuit-protected DoajTools instance or None on failure
+    """
+    try:
+        from agno.tools.doaj import DoajTools
+    except ImportError:
+        logger.error("agno.tools.doaj not available")
+        if required:
+            raise
+        return None
+
+    try:
+        # Create the base tool (no API key required for DOAJ)
+        doaj_tool = DoajTools(
+            enable_search_doaj=True,
+            max_results=10,
+        )
+        # Wrap with circuit breaker protection
+        wrapped_tool = CircuitProtectedToolWrapper(doaj_tool, DOAJ_BREAKER, "DOAJ API")
+        logger.info("✅ Created DOAJ tool with circuit breaker protection")
+        return wrapped_tool
+    except Exception as e:
+        logger.error(f"Failed to create DoajTools: {e}", exc_info=True)
+        if required:
+            raise
+        return None
+
+
 # ============================================================================
 # Tool List Builder
 # ============================================================================
@@ -344,6 +532,31 @@ def get_api_status() -> dict:
             "required": False,
             "note": "Arxiv doesn't require authentication"
         },
+        "clinicaltrials": {
+            "key_set": True,  # ClinicalTrials.gov doesn't require key
+            "required": False,
+            "note": "ClinicalTrials.gov is free and public"
+        },
+        "medrxiv": {
+            "key_set": True,  # medRxiv/bioRxiv don't require key
+            "required": False,
+            "note": "medRxiv/bioRxiv are free and public"
+        },
+        "semantic_scholar": {
+            "key_set": bool(os.getenv("SEMANTIC_SCHOLAR_API_KEY")),
+            "required": False,
+            "note": "API key optional but recommended for higher rate limits"
+        },
+        "core": {
+            "key_set": bool(os.getenv("CORE_API_KEY")),
+            "required": False,
+            "note": "API key optional but recommended for higher rate limits"
+        },
+        "doaj": {
+            "key_set": True,  # DOAJ doesn't require key
+            "required": False,
+            "note": "DOAJ is free and public"
+        },
     }
     return status
 
@@ -393,5 +606,20 @@ if __name__ == "__main__":
     arxiv = create_arxiv_tools_safe()
     print(f"ArxivTools: {'✅ created' if arxiv else '❌ failed'}")
 
-    tools_list = build_tools_list(exa, serp, pubmed, arxiv)
+    clinicaltrials = create_clinicaltrials_tools_safe()
+    print(f"ClinicalTrialsTools: {'✅ created' if clinicaltrials else '❌ failed'}")
+
+    medrxiv = create_medrxiv_tools_safe()
+    print(f"MedRxivTools: {'✅ created' if medrxiv else '❌ failed'}")
+
+    semantic_scholar = create_semantic_scholar_tools_safe()
+    print(f"SemanticScholarTools: {'✅ created' if semantic_scholar else '❌ failed'}")
+
+    core = create_core_tools_safe()
+    print(f"CoreTools: {'✅ created' if core else '❌ failed'}")
+
+    doaj = create_doaj_tools_safe()
+    print(f"DoajTools: {'✅ created' if doaj else '❌ failed'}")
+
+    tools_list = build_tools_list(exa, serp, pubmed, arxiv, clinicaltrials, medrxiv, semantic_scholar, core, doaj)
     print(f"\n✅ Built tools list with {len(tools_list)} available tools")

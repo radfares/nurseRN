@@ -19,7 +19,7 @@ sys.modules['src'] = MagicMock()
 sys.modules['src.services'] = MagicMock()
 sys.modules['src.services.api_tools'] = MagicMock()
 
-from nursing_research_agent import NursingResearchAgent
+from agents.nursing_research_agent import NursingResearchAgent
 
 
 class TestNursingResearchAgentInitialization:
@@ -286,7 +286,7 @@ class TestNursingResearchAgentIntegration:
         self, mock_build, mock_serp, mock_exa, mock_agent
     ):
         """Test that NursingResearchAgent inherits from BaseAgent"""
-        from base_agent import BaseAgent
+        from agents.base_agent import BaseAgent
 
         mock_build.return_value = []
         agent = NursingResearchAgent()

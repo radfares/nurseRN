@@ -1,231 +1,400 @@
-<div align="center" id="top">
-  <a href="https://agno.com">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://agno-public.s3.us-east-1.amazonaws.com/assets/logo-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://agno-public.s3.us-east-1.amazonaws.com/assets/logo-light.svg">
-      <img src="https://agno-public.s3.us-east-1.amazonaws.com/assets/logo-light.svg" alt="Agno">
-    </picture>
-  </a>
-</div>
+# Nursing Research Project Assistant
+
+A comprehensive multi-agent AI system designed to support nursing residents through their healthcare improvement projects (November 2025 - June 2026). Built with the Agno framework, this system provides specialized AI agents for research, writing, planning, and statistical analysis.
 
 <div align="center">
-  <a href="https://docs.agno.com">Documentation</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://docs.agno.com/examples/introduction">Examples</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.agno.com/?utm_source=github&utm_medium=readme&utm_campaign=agno-github">Website</a>
-  <br />
+
+![Status](https://img.shields.io/badge/status-production--ready-success)
+![Agents](https://img.shields.io/badge/agents-6-blue)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+![License](https://img.shields.io/badge/license-MPL--2.0-green)
+
 </div>
 
-## What is Agno?
+---
 
-Agno is a multi-agent framework, runtime and control plane. Built for speed, privacy, and scale.
+## 🎯 Overview
 
-It provides a rich set of primitives for building:
+The Nursing Research Project Assistant is a project-centric multi-agent system that helps nursing residents:
 
-- **Agents** with persistent state, knowledge retrieval, memory, and advanced features like human-in-the-loop, guardrails, dynamic context management and best-in-class MCP support.
-- **Multi-Agent Teams** that operate autonomously under a team leader that maintains shared state and context.
-- **Step-based Workflows** for controlled, deterministic execution. Steps can be Agents, Teams, or a regular python functions and can run sequentially, in parallel, in loops, branches, or conditionally.
+- **Develop PICOT questions** for quality improvement projects
+- **Search literature** across PubMed, ClinicalTrials.gov, medRxiv, Semantic Scholar, CORE, DOAJ, and web sources
+- **Write and organize** research content
+- **Track project milestones** and deadlines
+- **Plan statistical analysis** and data collection
+- **Manage multiple projects** with dedicated databases
 
-Agno also provides a FastAPI-powered runtime for serving multi-agent systems in production, covering the entire {build → run → deploy} lifecycle. Building Agents is easy, running them is hard, and that's where Agno shines.
+---
 
-## Getting started
+## ✨ Features
 
-If you're new to Agno, follow our [quickstart](https://docs.agno.com/introduction/quickstart) to build your first Agent and chat with it using the AgentOS UI.
+### 🤖 Six Specialized AI Agents
 
-After that, checkout the [examples gallery](https://docs.agno.com/examples/introduction) and build real-world applications with Agno.
+1. **Nursing Research Agent** - PICOT development, healthcare standards, evidence-based practice
+2. **Medical Research Agent** - PubMed searches for peer-reviewed clinical studies
+3. **Academic Research Agent** - ArXiv searches for theoretical and methodological research
+4. **Research Writing Agent** - Academic writing, literature synthesis, poster content
+5. **Project Timeline Agent** - Milestone tracking and deadline management
+6. **Data Analysis Planner** - Statistical test selection, sample size calculations, data templates
 
-## Documentation, Community & More Examples
+### 📁 Project Management
 
-- Docs: <a href="https://docs.agno.com" target="_blank" rel="noopener noreferrer">docs.agno.com</a>
-- Cookbook: <a href="https://github.com/agno-agi/agno/tree/main/cookbook" target="_blank" rel="noopener noreferrer">Cookbook</a>
-- Community forum: <a href="https://community.agno.com/" target="_blank" rel="noopener noreferrer">community.agno.com</a>
-- Discord: <a href="https://discord.gg/4MtYHHrgA8" target="_blank" rel="noopener noreferrer">discord</a>
+- **Create Projects**: Initialize new projects with default milestones
+- **Switch Projects**: Seamlessly switch between multiple projects
+- **Archive Projects**: Archive completed projects
+- **Project Databases**: Each project has its own SQLite database with 7 core tables:
+  - PICOT versions
+  - Literature findings
+  - Analysis plans
+  - Milestones
+  - Writing drafts
+  - Conversations
+  - Documents
 
-## Example
+### 🛡️ Resilience & Reliability
 
-Here’s an example of an Agent that connects to an MCP server, manages conversation state in a database, and is served using a FastAPI application that you can interact with using the [AgentOS UI](https://os.agno.com).
+- **Circuit Breakers**: Protect against API failures
+- **Retry Logic**: Exponential backoff for transient failures
+- **API Caching**: 24-hour TTL for API responses
+- **Safe Tool Creation**: Graceful fallback when API keys are missing
+- **Error Handling**: Comprehensive logging and error recovery
 
-```python agno_agent.py
-from agno.agent import Agent
-from agno.db.sqlite import SqliteDb
-from agno.models.anthropic import Claude
-from agno.os import AgentOS
-from agno.tools.mcp import MCPTools
+---
 
-# ************* Create Agent *************
-agno_agent = Agent(
-    name="Agno Agent",
-    model=Claude(id="claude-sonnet-4-5"),
-    # Add a database to the Agent
-    db=SqliteDb(db_file="agno.db"),
-    # Add the Agno MCP server to the Agent
-    tools=[MCPTools(transport="streamable-http", url="https://docs.agno.com/mcp")],
-    # Add the previous session history to the context
-    add_history_to_context=True,
-    markdown=True,
-)
+## 🚀 Quick Start
 
+### Prerequisites
 
-# ************* Create AgentOS *************
-agent_os = AgentOS(agents=[agno_agent])
-# Get the FastAPI app for the AgentOS
-app = agent_os.get_app()
+- **Python 3.8+** (tested with Python 3.14.0)
+- **OpenAI API Key** (required for all agents)
+- **Optional API Keys**:
+  - Exa API Key (for Nursing Research Agent)
+  - SerpAPI Key (for Nursing Research Agent)
+  - PubMed Email (for Medical Research Agent)
 
-# ************* Run AgentOS *************
-if __name__ == "__main__":
-    agent_os.serve(app="agno_agent:app", reload=True)
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd nurseRN
+   ```
+
+2. **Create virtual environment**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your API keys
+   ```
+
+5. **Verify setup**
+   ```bash
+   python3 verify_setup.py
+   ```
+
+### Running the System
+
+**Option 1: Use the start script (recommended)**
+```bash
+./start_nursing_project.sh
 ```
 
-## AgentOS - Production Runtime for Multi-Agent Systems
-
-AgentOS is Agno's high-performance runtime for serving multi-agent systems in production. Key features include:
-
-1. **Pre-built FastAPI Runtime**: AgentOS ships with a ready-to-use FastAPI app for orchestrating your agents, teams, and workflows. This provides a major head start when building an AI product.
-
-2. **Integrated Control Plane**: The [AgentOS UI](https://os.agno.com) connects directly to your runtime, letting you test, monitor, and manage your system in real time. This gives you unmatched visibility and control over your system.
-
-3. **Private by Design**: AgentOS runs entirely in your cloud, ensuring complete data privacy. No data ever leaves your system. This is ideal for security-conscious enterprises.
-
-Here's what the [AgentOS UI](https://os.agno.com) looks like in action:
-
-https://github.com/user-attachments/assets/feb23db8-15cc-4e88-be7c-01a21a03ebf6
-
-## The Complete Agentic Solution
-
-For companies building agents, Agno provides the complete agentic solution:
-
-- The fastest framework for building agents, multi-agent teams and agentic workflows.
-- A ready-to-use FastAPI app that gets you building AI products on day one.
-- A control plane for testing, monitoring and managing your system.
-
-Agno brings a novel architecture that no other framework provides, your AgentOS runs securely in your cloud, and the control plane connects directly to it from your browser. You don't need to send data to any external services or pay retention costs, you get complete privacy and control.
-
-## Designed for Agent Engineering
-
-Agno is a remarkably feature-rich framework, purpose-built for large-scale multi-agent deployments.
-
-| **Category** | **Feature** | **Description** |
-|---------------|-------------|-----------------|
-| **Core Intelligence** | **Model Agnostic** | Works with any model provider so you can use your favorite LLMs. |
-|  | **Type Safe** | Enforce structured I/O through `input_schema` and `output_schema` for predictable, composable behavior. |
-|  | **Dynamic Context Engineering** | Inject variables, state, and retrieved data on the fly into context. Perfect for dependency-driven agents. |
-| **Memory, Knowledge, and Persistence** | **Persistent Storage** | Give your Agents, Teams, and Workflows a database to persist session history, state, and messages. |
-|  | **User Memory** | Built-in memory system that allows Agents to recall user-specific context across sessions. |
-|  | **Agentic RAG** | Connect to 20+ vector stores (called **Knowledge** in Agno) with hybrid search + reranking out of the box. |
-|  | **Culture (Collective Memory)** | Shared knowledge that compounds across agents and time. |
-| **Execution & Control** | **Human-in-the-Loop** | Native support for confirmations, manual overrides, and external tool execution. |
-|  | **Guardrails** | Built-in safeguards for validation, security, and prompt protection. |
-|  | **Agent Lifecycle Hooks** | Pre- and post-hooks to validate or transform inputs and outputs. |
-|  | **MCP Integration** | First-class support for the Model Context Protocol (MCP) to connect Agents with external systems. |
-|  | **Toolkits** | 100+ built-in toolkits with thousands of tools, ready for use across data, code, web, and enterprise APIs. |
-| **Runtime & Evaluation** | **Runtime** | Pre-built FastAPI based runtime with SSE compatible endpoints, ready for production on day 1. |
-|  | **Control Plane (UI)** | Integrated interface to visualize, monitor, and debug agent activity in real time. |
-|  | **Natively Multimodal** | Agents can process and generate text, images, audio, video, and files. |
-|  | **Evals** | Measure your Agents' Accuracy, Performance, and Reliability. |
-| **Security & Privacy** | **Private by Design** | Runs entirely in your cloud. The UI connects directly to your AgentOS from your browser, no data is ever sent externally. |
-|  | **Data Governance** | Your data lives securely in your Agent database, no external data sharing or vendor lock-in. |
-|  | **Access Control** | Role-based access (RBAC) and per-agent permissions to protect sensitive contexts and tools. |
-
-Every part of Agno is built for real-world deployment — where developer experience meets production performance.
-
-## Setup Your Coding Agent to Use Agno
-
-For LLMs and AI assistants to understand and navigate Agno's documentation, we provide an [llms.txt](https://docs.agno.com/llms.txt) or [llms-full.txt](https://docs.agno.com/llms-full.txt) file. This file is built for AI systems to efficiently parse and reference our documentation.
-
-### IDE Integration
-
-When building Agno agents, using Agno documentation as a source in your IDE is a great way to speed up your development. Here's how to integrate with Cursor:
-
-1. In Cursor, go to the "Cursor Settings" menu.
-2. Find the "Indexing & Docs" section.
-3. Add `https://docs.agno.com/llms-full.txt` to the list of documentation URLs.
-4. Save the changes.
-
-Now, Cursor will have access to the Agno documentation. You can do the same with other IDEs like VSCode, Windsurf etc.
-
-## Performance
-
-If you're building with Agno, you're guaranteed best-in-class performance by default. Our obsession with performance is necessary because even simple AI workflows can spawn hundreds of Agents and because many tasks are long-running -- stateless, horizontal scalability is key for success.
-
-At Agno, we optimize performance across 3 dimensions:
-
-1. **Agent performance:** We optimize static operations (instantiation, memory footprint) and runtime operations (tool calls, memory updates, history management).
-2. **System performance:** The AgentOS API is async by default and has a minimal memory footprint. The system is stateless and horizontally scalable, with a focus on preventing memory leaks. It handles parallel and batch embedding generation during knowledge ingestion, metrics collection in background tasks, and other system-level optimizations.
-3. **Agent reliability and accuracy:** Monitored through evals, which we’ll explore later.
-
-### Agent Performance
-
-Let's measure the time it takes to instantiate an Agent and the memory footprint of an Agent. Here are the numbers (last measured in Oct 2025, on an Apple M4 MacBook Pro):
-
-- **Agent instantiation:** ~3μs on average
-- **Memory footprint:** ~6.6Kib on average
-
-We'll show below that Agno Agents instantiate **529× faster than Langgraph**, **57× faster than PydanticAI**, and **70× faster than CrewAI**. Agno Agents also use **24× lower memory than Langgraph**, **4× lower than PydanticAI**, and **10× lower than CrewAI**.
-
-> [!NOTE]
-> Run time performance is bottlenecked by inference and hard to benchmark accurately, so we focus on minimizing overhead, reducing memory usage, and parallelizing tool calls.
-
-### Instantiation Time
-
-Let's measure instantiation time for an Agent with 1 tool. We'll run the evaluation 1000 times to get a baseline measurement. We'll compare Agno to LangGraph, CrewAI and Pydantic AI.
-
-> [!NOTE]
-> The code for this benchmark is available [here](https://github.com/agno-agi/agno/tree/main/cookbook/evals/performance). You should run the evaluation yourself on your own machine, please, do not take these results at face value.
-
-```shell
-# Setup virtual environment
-./scripts/perf_setup.sh
-source .venvs/perfenv/bin/activate
-
-# Agno
-python cookbook/evals/performance/instantiate_agent_with_tool.py
-
-# LangGraph
-python cookbook/evals/performance/comparison/langgraph_instantiation.py
-# CrewAI
-python cookbook/evals/performance/comparison/crewai_instantiation.py
-# Pydantic AI
-python cookbook/evals/performance/comparison/pydantic_ai_instantiation.py
+**Option 2: Manual start**
+```bash
+source .venv/bin/activate
+export PYTHONPATH="${PYTHONPATH}:$(pwd)/libs/agno"
+python3 run_nursing_project.py
 ```
 
-LangGraph is on the right, **let's start it first and give it a head start**. Then CrewAI and Pydantic AI follow, and finally Agno. Agno obviously finishes first, but let's see by how much.
+---
 
-https://github.com/user-attachments/assets/54b98576-1859-4880-9f2d-15e1a426719d
+## 📖 Usage Guide
 
-### Memory Usage
+### Project Management
 
-To measure memory usage, we use the `tracemalloc` library. We first calculate a baseline memory usage by running an empty function, then run the Agent 1000x times and calculate the difference. This gives a (reasonably) isolated measurement of the memory usage of the Agent.
+When you start the system, you'll see the project management menu:
 
-We recommend running the evaluation yourself on your own machine, and digging into the code to see how it works. If we've made a mistake, please let us know.
+```
+PROJECT MANAGEMENT
+================================================================================
 
-### Results
+★ ACTIVE PROJECT: my_project
 
-Taking Agno as the baseline, we can see that:
+Project Commands:
+  new <project_name>     - Create new project
+  list                   - List all projects
+  switch <project_name>  - Switch to project
+  archive <project_name> - Archive project
+  agents                 - Launch agents (requires active project)
+  exit                   - Exit program
+```
 
-| Metric             | Agno | Langgraph   | PydanticAI | CrewAI     |
-| ------------------ | ---- | ----------- | ---------- | ---------- |
-| **Time (seconds)** | 1×   | 529× slower | 57× slower | 70× slower |
-| **Memory (MiB)**   | 1×   | 24× higher  | 4× higher  | 10× higher |
+### Using Agents
 
-Exact numbers from the benchmark:
+1. **Create or switch to a project**: `new my_project` or `switch my_project`
+2. **Launch agents**: `agents`
+3. **Select an agent**: Choose 1-6 from the menu
+4. **Chat with agent**: Ask questions naturally
+5. **Switch agents**: Type `switch` to return to agent menu
+6. **Return to projects**: Type `back` to return to project menu
 
-| Metric             | Agno     | Langgraph | PydanticAI | CrewAI   |
-| ------------------ | -------- | --------- | ---------- | -------- |
-| **Time (seconds)** | 0.000003 | 0.001587  | 0.000170   | 0.000210 |
-| **Memory (MiB)**   | 0.006642 | 0.161435  | 0.028712   | 0.065652 |
+### Example Queries
 
-> [!NOTE]
-> Agno agents are designed for performance and while we share benchmarks against other frameworks, we should be mindful that accuracy and reliability are more important than speed.
+**Nursing Research Agent:**
+```
+Help me develop a PICOT question for reducing patient falls in a medical-surgical unit
+```
 
-## Contributions
+**Medical Research Agent:**
+```
+Find 3 recent peer-reviewed articles about catheter-associated urinary tract infection prevention
+```
 
-We welcome contributions, read our [contributing guide](https://github.com/agno-agi/agno/blob/v2.0/CONTRIBUTING.md) to get started.
+**Research Writing Agent:**
+```
+Help me write a PICOT question about reducing CAUTI in ICU patients
+```
 
-## Telemetry
+**Data Analysis Planner:**
+```
+Catheter infection rate: baseline 15%, target 8%. Need sample size calculation.
+```
 
-Agno logs which model an agent used so we can prioritize updates to the most popular providers. You can disable this by setting `AGNO_TELEMETRY=false` in your environment.
+---
 
-<p align="left">
-  <a href="#top">⬆️ Back to Top</a>
-</p>
+## 🏗️ Architecture
+
+### Project Structure
+
+```
+nurseRN/
+├── agents/                            # All AI agents (organized)
+│   ├── base_agent.py                  # Base class for all agents
+│   ├── nursing_research_agent.py      # Agent 1: Nursing Research
+│   ├── medical_research_agent.py      # Agent 2: Medical Research (PubMed)
+│   ├── academic_research_agent.py     # Agent 3: Academic Research (ArXiv)
+│   ├── research_writing_agent.py      # Agent 4: Research Writing
+│   ├── nursing_project_timeline_agent.py  # Agent 5: Project Timeline
+│   └── data_analysis_agent.py         # Agent 6: Data Analysis
+├── run_nursing_project.py             # Main entry point
+├── start_nursing_project.sh           # Quick start script
+├── project_manager.py                 # Project management system
+├── agent_config.py                    # Centralized configuration
+├── src/services/
+│   ├── api_tools.py                   # Safe API tool creation
+│   └── circuit_breaker.py             # Circuit breaker protection
+├── data/
+│   ├── projects/                      # Project databases
+│   └── archives/                      # Archived projects
+├── tmp/                               # Agent session databases
+├── libs/agno/                         # Vendored Agno framework
+└── requirements.txt                   # Python dependencies
+```
+
+### Key Components
+
+**BaseAgent Class** (`agents/base_agent.py`)
+- Abstract base class for all agents
+- Provides logging, error handling, and agent creation
+- Ensures consistent architecture across agents
+
+**Agent Configuration** (`agent_config.py`)
+- Centralized database paths
+- Model configuration
+- Logging settings
+- Helper functions
+
+**Project Manager** (`project_manager.py`)
+- Project creation and management
+- Database initialization with schema
+- Default milestones (Nov 2025 - June 2026)
+- Project switching and archival
+
+**API Tools** (`src/services/api_tools.py`)
+- Safe tool creation with fallback
+- Circuit breaker protection
+- API status reporting
+- HTTP response caching
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+# Required
+OPENAI_API_KEY=your-openai-api-key-here
+
+# Optional (for enhanced functionality)
+EXA_API_KEY=your-exa-api-key-here
+SERP_API_KEY=your-serpapi-key-here
+PUBMED_EMAIL=your-email@example.com
+
+# Optional configuration
+AGENT_LOG_LEVEL=INFO
+```
+
+### Model Configuration
+
+Default models can be overridden via environment variables:
+
+```bash
+AGENT_NURSING_RESEARCH_MODEL=gpt-4o
+AGENT_MEDICAL_RESEARCH_MODEL=gpt-4o
+AGENT_ACADEMIC_RESEARCH_MODEL=gpt-4o
+AGENT_RESEARCH_WRITING_MODEL=gpt-4o
+AGENT_PROJECT_TIMELINE_MODEL=gpt-4o-mini
+AGENT_DATA_ANALYSIS_MODEL=gpt-4o
+```
+
+---
+
+## 📚 Documentation
+
+- **[AGENT_STATUS.md](AGENT_STATUS.md)** - Detailed agent status and capabilities
+- **[NURSING_PROJECT_GUIDE.md](NURSING_PROJECT_GUIDE.md)** - Comprehensive usage guide
+- **[NEW_AGENTS_GUIDE.md](NEW_AGENTS_GUIDE.md)** - PubMed/ArXiv agent guide
+- **[SETUP.md](SETUP.md)** - Detailed setup instructions
+- **[GITHUB_SETUP_GUIDE.md](GITHUB_SETUP_GUIDE.md)** - GitHub repository setup
+
+---
+
+## 🧪 Testing
+
+### Verify Setup
+
+```bash
+python3 verify_setup.py
+```
+
+This checks:
+- Python version
+- Project structure
+- Core dependencies
+- Agno library import
+- Environment file and API keys
+
+### Run Individual Agents
+
+Each agent can be run standalone for testing:
+
+```bash
+python3 -m agents.nursing_research_agent
+python3 -m agents.medical_research_agent
+python3 -m agents.academic_research_agent
+python3 -m agents.research_writing_agent
+python3 -m agents.nursing_project_timeline_agent
+python3 -m agents.data_analysis_agent
+```
+
+---
+
+## 💰 Cost Estimates
+
+| Agent | Model | Cost per Query | Typical Session |
+|-------|-------|----------------|-----------------|
+| Nursing Research | GPT-4o | ~$0.03 | $0.30-0.60 |
+| Medical Research | GPT-4o | ~$0.02 | $0.20-0.40 |
+| Academic Research | GPT-4o | ~$0.02 | $0.20-0.40 |
+| Research Writing | GPT-4o | ~$0.04 | $0.40-0.80 |
+| Timeline Agent | GPT-4o-mini | ~$0.001 | $0.01-0.05 |
+| Data Analysis | GPT-4o | ~$0.02 | $0.20-0.40 |
+
+**Total monthly budget (moderate use)**: $10-20
+
+---
+
+## 🔐 Security
+
+- ✅ API keys stored in `.env` file (not committed to git)
+- ✅ `.env` file is in `.gitignore`
+- ✅ No hardcoded credentials
+- ✅ Safe tool creation with fallback patterns
+- ✅ Circuit breakers prevent API abuse
+
+---
+
+## 🛠️ Development
+
+### Adding a New Agent
+
+1. Create a new file: `my_new_agent.py`
+2. Inherit from `BaseAgent`:
+   ```python
+   from base_agent import BaseAgent
+   
+   class MyNewAgent(BaseAgent):
+       def __init__(self):
+           super().__init__(
+               agent_name="My New Agent",
+               agent_key="my_new_agent",
+               tools=[]  # Add tools if needed
+           )
+       
+       def _create_agent(self):
+           # Create and return Agent instance
+           pass
+       
+       def show_usage_examples(self):
+           # Display usage examples
+           pass
+   ```
+3. Add database path to `agent_config.py`
+4. Add to `run_nursing_project.py` agent menu
+
+### Project Structure Guidelines
+
+- **Agents**: One file per agent in project root
+- **Services**: Shared utilities in `src/services/`
+- **Configuration**: Centralized in `agent_config.py`
+- **Databases**: Agent sessions in `tmp/`, projects in `data/projects/`
+
+---
+
+## 📝 License
+
+This project uses the Agno framework (vendored in `libs/agno/`). See [LICENSE](LICENSE) for details.
+
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+## 📞 Support
+
+For issues, questions, or contributions:
+- Check existing documentation files
+- Review `AGENT_STATUS.md` for agent capabilities
+- Run `verify_setup.py` to diagnose setup issues
+
+---
+
+## 🎉 Acknowledgments
+
+Built with:
+- **[Agno Framework](https://agno.com)** - Multi-agent framework and runtime
+- **OpenAI GPT-4o** - Primary language model
+- **PubMed API** - Biomedical literature database
+- **ArXiv API** - Academic paper repository
+
+---
+
+**Status**: Production-ready ✅  
+**Last Updated**: November 23, 2025  
+**Version**: 1.0.0

@@ -6,7 +6,16 @@ UPDATED: 2025-11-23 - Added project-centric database architecture
 """
 
 from dotenv import load_dotenv
-load_dotenv()
+# Ensure .env values override any existing shell values so the app uses the keys you set in .env
+load_dotenv(override=True)
+
+# Ensure vendored agno library is importable
+import sys
+from pathlib import Path
+_project_root = Path(__file__).parent
+_agno_path = _project_root / "libs" / "agno"
+if _agno_path.exists() and str(_agno_path) not in sys.path:
+    sys.path.insert(0, str(_agno_path))
 
 from project_manager import (
     get_project_manager,
@@ -16,13 +25,13 @@ from project_manager import (
     cli_archive_project
 )
 
-# Legacy imports (will be updated to use project paths)
-from nursing_research_agent import nursing_research_agent
-from nursing_project_timeline_agent import project_timeline_agent
-from medical_research_agent import medical_research_agent
-from academic_research_agent import academic_research_agent
-from research_writing_agent import research_writing_agent
-from data_analysis_agent import data_analysis_agent
+# Agent imports from agents/ module
+from agents.nursing_research_agent import nursing_research_agent
+from agents.nursing_project_timeline_agent import project_timeline_agent
+from agents.medical_research_agent import medical_research_agent
+from agents.academic_research_agent import academic_research_agent
+from agents.research_writing_agent import research_writing_agent
+from agents.data_analysis_agent import data_analysis_agent
 
 
 def show_welcome():
