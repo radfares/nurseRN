@@ -353,7 +353,9 @@ agno/tools/calcom.py
 agno/tools/calculator.py
 agno/tools/cartesia.py
 agno/tools/clickup.py
+agno/tools/clinicaltrials.py
 agno/tools/confluence.py
+agno/tools/core.py
 agno/tools/crawl4ai.py
 agno/tools/csv_toolkit.py
 agno/tools/dalle.py
@@ -361,6 +363,7 @@ agno/tools/daytona.py
 agno/tools/decorator.py
 agno/tools/desi_vocal.py
 agno/tools/discord.py
+agno/tools/doaj.py
 agno/tools/docker.py
 agno/tools/duckdb.py
 agno/tools/duckduckgo.py
@@ -393,6 +396,7 @@ agno/tools/linkup.py
 agno/tools/local_file_system.py
 agno/tools/lumalab.py
 agno/tools/mcp_toolbox.py
+agno/tools/medrxiv.py
 agno/tools/mem0.py
 agno/tools/memori.py
 agno/tools/memory.py
@@ -417,6 +421,7 @@ agno/tools/replicate.py
 agno/tools/resend.py
 agno/tools/scrapegraph.py
 agno/tools/searxng.py
+agno/tools/semantic_scholar.py
 agno/tools/serpapi.py
 agno/tools/serper.py
 agno/tools/shell.py

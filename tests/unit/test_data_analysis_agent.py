@@ -91,7 +91,7 @@ class TestDataAnalysisOutputSchema:
         assert 'limitations' in fields
         assert 'citations' in fields
 
-        # Check dict fields
+        # Check nested Pydantic model fields (replaced dict[str, Any])
         assert 'method' in fields
         assert 'parameters' in fields
         assert 'sample_size' in fields
@@ -103,6 +103,173 @@ class TestDataAnalysisOutputSchema:
 
         # Check float field
         assert 'confidence' in fields
+
+    def test_nested_models_exist(self):
+        """Test that nested Pydantic models are defined"""
+        # Verify all nested models exist
+        assert hasattr(data_analysis_agent, 'EffectSize')
+        assert hasattr(data_analysis_agent, 'MethodInfo')
+        assert hasattr(data_analysis_agent, 'Parameters')
+        assert hasattr(data_analysis_agent, 'SampleSize')
+        assert hasattr(data_analysis_agent, 'DataColumn')
+        assert hasattr(data_analysis_agent, 'DataTemplate')
+        assert hasattr(data_analysis_agent, 'ReproCode')
+
+        # Verify they are Pydantic models
+        from pydantic import BaseModel
+        assert issubclass(data_analysis_agent.EffectSize, BaseModel)
+        assert issubclass(data_analysis_agent.MethodInfo, BaseModel)
+        assert issubclass(data_analysis_agent.Parameters, BaseModel)
+        assert issubclass(data_analysis_agent.SampleSize, BaseModel)
+        assert issubclass(data_analysis_agent.DataColumn, BaseModel)
+        assert issubclass(data_analysis_agent.DataTemplate, BaseModel)
+        assert issubclass(data_analysis_agent.ReproCode, BaseModel)
+
+    def test_schema_uses_nested_models(self):
+        """Test that DataAnalysisOutput uses nested models instead of dict[str, Any]"""
+        schema = data_analysis_agent.DataAnalysisOutput
+        fields = schema.model_fields
+
+        # Verify method field is MethodInfo, not dict
+        method_field = fields['method']
+        assert hasattr(method_field, 'annotation')
+        # Check that annotation is MethodInfo (not dict)
+        assert method_field.annotation != dict
+        assert method_field.annotation == data_analysis_agent.MethodInfo
+
+        # Verify parameters field is Parameters, not dict
+        parameters_field = fields['parameters']
+        assert parameters_field.annotation == data_analysis_agent.Parameters
+
+        # Verify sample_size field is SampleSize, not dict
+        sample_size_field = fields['sample_size']
+        assert sample_size_field.annotation == data_analysis_agent.SampleSize
+
+        # Verify data_template field is DataTemplate, not dict
+        data_template_field = fields['data_template']
+        assert data_template_field.annotation == data_analysis_agent.DataTemplate
+
+        # Verify repro_code field is ReproCode, not dict
+        repro_code_field = fields['repro_code']
+        assert repro_code_field.annotation == data_analysis_agent.ReproCode
+
+    def test_nested_model_validation(self):
+        """Test that nested models can be instantiated and validated"""
+        # Test EffectSize
+        effect_size = data_analysis_agent.EffectSize(
+            type="Cohen_d",
+            value=0.5,
+            how_estimated="literature"
+        )
+        assert effect_size.type == "Cohen_d"
+        assert effect_size.value == 0.5
+
+        # Test MethodInfo
+        method = data_analysis_agent.MethodInfo(
+            name="Welch t-test",
+            justification="Robust to unequal variances",
+            alternatives=["Mann-Whitney U"]
+        )
+        assert method.name == "Welch t-test"
+        assert len(method.alternatives) == 1
+
+        # Test Parameters
+        params = data_analysis_agent.Parameters(
+            effect_size=effect_size,
+            design="parallel"
+        )
+        assert params.design == "parallel"
+        assert params.alpha == 0.05  # Default value
+        assert params.tails == "two"  # Default value
+
+        # Test SampleSize
+        sample_size = data_analysis_agent.SampleSize(
+            per_group=30,
+            total=60,
+            formula_or_reference="G*Power"
+        )
+        assert sample_size.per_group == 30
+
+        # Test DataColumn
+        column = data_analysis_agent.DataColumn(
+            name="participant_id",
+            type="string"
+        )
+        assert column.name == "participant_id"
+
+        # Test DataTemplate
+        template = data_analysis_agent.DataTemplate(
+            columns=[column],
+            id_key="participant_id",
+            long_vs_wide="long"
+        )
+        assert len(template.columns) == 1
+        assert template.file_format == "CSV"  # Default value
+
+        # Test ReproCode
+        repro_code = data_analysis_agent.ReproCode(
+            language="R",
+            snippet="t.test(...)"
+        )
+        assert repro_code.language == "R"
+
+    def test_full_schema_validation(self):
+        """Test that DataAnalysisOutput can be instantiated with nested models"""
+        # Create nested model instances
+        effect_size = data_analysis_agent.EffectSize(
+            type="Cohen_d",
+            value=0.5,
+            how_estimated="literature"
+        )
+        method = data_analysis_agent.MethodInfo(
+            name="Welch t-test",
+            justification="Robust to unequal variances"
+        )
+        params = data_analysis_agent.Parameters(
+            effect_size=effect_size,
+            design="parallel"
+        )
+        sample_size = data_analysis_agent.SampleSize(
+            formula_or_reference="G*Power"
+        )
+        column = data_analysis_agent.DataColumn(
+            name="participant_id",
+            type="string"
+        )
+        data_template = data_analysis_agent.DataTemplate(
+            columns=[column],
+            id_key="participant_id",
+            long_vs_wide="long"
+        )
+        repro_code = data_analysis_agent.ReproCode(
+            language="R",
+            snippet="t.test(...)"
+        )
+
+        # Create full DataAnalysisOutput instance
+        output = data_analysis_agent.DataAnalysisOutput(
+            task="test_selection",
+            assumptions=["independent samples"],
+            method=method,
+            parameters=params,
+            sample_size=sample_size,
+            data_template=data_template,
+            analysis_steps=["step 1"],
+            diagnostics=["normality check"],
+            interpretation_notes="Test interpretation",
+            limitations=["small sample"],
+            repro_code=repro_code,
+            citations=["Cohen 1988"],
+            confidence=0.85
+        )
+
+        # Verify the nested models are properly assigned
+        assert isinstance(output.method, data_analysis_agent.MethodInfo)
+        assert isinstance(output.parameters, data_analysis_agent.Parameters)
+        assert isinstance(output.sample_size, data_analysis_agent.SampleSize)
+        assert isinstance(output.data_template, data_analysis_agent.DataTemplate)
+        assert isinstance(output.repro_code, data_analysis_agent.ReproCode)
+        assert output.confidence == 0.85
 
 
 class TestShowUsageExamples:

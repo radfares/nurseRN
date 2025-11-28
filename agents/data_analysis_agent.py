@@ -15,7 +15,7 @@ from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.db.sqlite import SqliteDb
 from pydantic import BaseModel, Field
-from typing import Literal, Optional, Any
+from typing import Literal, Optional
 
 # PHASE 1: Import centralized configuration
 from agent_config import get_db_path, DATA_ANALYSIS_TEMPERATURE, DATA_ANALYSIS_MAX_TOKENS
@@ -23,20 +23,72 @@ from agent_config import get_db_path, DATA_ANALYSIS_TEMPERATURE, DATA_ANALYSIS_M
 # PHASE 2: Import BaseAgent for inheritance pattern
 from .base_agent import BaseAgent
 
+# Nested Pydantic models for structured output (replaces dict[str, Any] fields)
+class EffectSize(BaseModel):
+    """Effect size specification."""
+    type: str  # "Cohen_d", "OR", "RR", "r", "f", "Δ", "Absolute Δ"
+    value: Optional[float] = None
+    how_estimated: str  # "pilot", "literature", "MDE rationale"
+
+class MethodInfo(BaseModel):
+    """Method information for statistical analysis."""
+    name: str
+    justification: str
+    alternatives: list[str] = Field(default_factory=list)
+
+class Parameters(BaseModel):
+    """Statistical test parameters."""
+    alpha: float = 0.05
+    tails: Literal["one", "two"] = "two"
+    power: float = 0.80
+    effect_size: EffectSize
+    allocation_ratio: float = 1.0
+    covariates: list[str] = Field(default_factory=list)
+    design: str  # "parallel", "paired", "cluster", "crossover", "repeated-measures"
+    icc: Optional[float] = None
+    sphericity: Optional[str] = None  # "assumed", "corrected", None
+    missing_data: str = "MAR"  # "MAR", "MCAR", "MNAR"
+
+class SampleSize(BaseModel):
+    """Sample size calculation results."""
+    per_group: Optional[int] = None
+    total: Optional[int] = None
+    formula_or_reference: str
+
+class DataColumn(BaseModel):
+    """Data column definition."""
+    name: str
+    type: str  # "numeric", "integer", "string", "date", "categorical"
+    allowed: Optional[list[str]] = None
+    notes: Optional[str] = None
+
+class DataTemplate(BaseModel):
+    """Data collection template structure."""
+    columns: list[DataColumn]
+    id_key: str
+    long_vs_wide: Literal["long", "wide"]
+    file_format: str = "CSV"
+    example_rows: int = 2
+
+class ReproCode(BaseModel):
+    """Reproducible code snippet."""
+    language: Literal["R", "Python"]
+    snippet: str
+
 # Pydantic schema for JSON validation
 class DataAnalysisOutput(BaseModel):
     """Structured output schema for data analysis recommendations."""
     task: Literal["test_selection", "sample_size", "data_plan", "interpretation", "template"]
     assumptions: list[str]
-    method: dict[str, Any]
-    parameters: dict[str, Any]
-    sample_size: dict[str, Any]
-    data_template: dict[str, Any]
+    method: MethodInfo
+    parameters: Parameters
+    sample_size: SampleSize
+    data_template: DataTemplate
     analysis_steps: list[str]
     diagnostics: list[str]
     interpretation_notes: str
     limitations: list[str]
-    repro_code: dict[str, Any]
+    repro_code: ReproCode
     citations: list[str]
     confidence: float = Field(ge=0.0, le=1.0, description="Self-rated confidence 0-1")
 
