@@ -499,6 +499,44 @@ def validate_tools_list(tools: list, min_required: int = 1) -> bool:
 
 
 # ============================================================================
+# Milestone Tools (Database Access)
+# ============================================================================
+
+def create_milestone_tools_safe(required: bool = False) -> Optional[Any]:
+    """
+    Create MilestoneTools with safe fallback.
+
+    MilestoneTools doesn't require API keys - it queries the local project database.
+
+    Args:
+        required: If True, raises error on failure. If False, returns None.
+
+    Returns:
+        MilestoneTools instance or None if creation fails
+    """
+    try:
+        from src.tools.milestone_tools import MilestoneTools
+
+        # No circuit breaker needed - local database operation
+        tool = MilestoneTools()
+        logger.info("✅ Created MilestoneTools for database queries")
+        return tool
+
+    except ImportError as e:
+        msg = f"MilestoneTools not available: {e}"
+        logger.warning(msg)
+        if required:
+            raise ImportError(msg)
+        return None
+    except Exception as e:
+        msg = f"Failed to create MilestoneTools: {e}"
+        logger.error(msg)
+        if required:
+            raise RuntimeError(msg)
+        return None
+
+
+# ============================================================================
 # Status Reporting
 # ============================================================================
 

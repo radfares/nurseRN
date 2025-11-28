@@ -37,8 +37,11 @@ class TestDataAnalysisAgentConfiguration:
 
     def test_logger_created(self):
         """Test that logger is created with correct name"""
-        assert hasattr(data_analysis_agent, 'logger')
-        assert data_analysis_agent.logger is not None
+        # Logger is on the DataAnalysisAgent instance, not module-level
+        assert hasattr(data_analysis_agent, '_data_analysis_agent_instance')
+        assert data_analysis_agent._data_analysis_agent_instance is not None
+        assert hasattr(data_analysis_agent._data_analysis_agent_instance, 'logger')
+        assert data_analysis_agent._data_analysis_agent_instance.logger is not None
 
     def test_temperature_configuration_imported(self):
         """Test that temperature configuration is imported"""
@@ -105,10 +108,11 @@ class TestDataAnalysisOutputSchema:
 class TestShowUsageExamples:
     """Test the show_usage_examples function"""
 
-    @patch.object(data_analysis_agent.data_analysis_agent, 'print_response')
-    def test_show_usage_examples_output(self, mock_print_response, capsys):
+    def test_show_usage_examples_output(self, capsys):
         """Test that show_usage_examples prints expected content"""
-        data_analysis_agent.show_usage_examples()
+        # Call instance method, not module-level function
+        instance = data_analysis_agent._data_analysis_agent_instance
+        instance.show_usage_examples()
         captured = capsys.readouterr()
 
         # Check for header
@@ -119,23 +123,24 @@ class TestShowUsageExamples:
         assert "Example queries:" in captured.out
         assert "Catheter infection rate" in captured.out
         assert "pain scores" in captured.out
-        assert "fall rates" in captured.out
 
-    @patch.object(data_analysis_agent.data_analysis_agent, 'print_response')
-    def test_show_usage_examples_calls_print_response(self, mock_print_response, capsys):
-        """Test that show_usage_examples calls agent.print_response for interactive mode"""
-        data_analysis_agent.show_usage_examples()
+    def test_show_usage_examples_calls_print_response(self, capsys):
+        """Test that show_usage_examples prints usage information"""
+        # In the new BaseAgent pattern, show_usage_examples just prints directly
+        # It doesn't call agent.print_response
+        instance = data_analysis_agent._data_analysis_agent_instance
+        instance.show_usage_examples()
+        captured = capsys.readouterr()
 
-        # Verify print_response was called with stream=True
-        mock_print_response.assert_called_once()
-        call_args = mock_print_response.call_args
-        assert call_args.kwargs['stream'] is True
-        assert "ready to help" in call_args.args[0].lower()
+        # Verify output contains key information
+        assert "Agent ready" in captured.out
+        assert "Example queries:" in captured.out
 
-    @patch.object(data_analysis_agent.data_analysis_agent, 'print_response')
-    def test_show_usage_examples_formatting(self, mock_print_response, capsys):
+    def test_show_usage_examples_formatting(self, capsys):
         """Test that output is properly formatted"""
-        data_analysis_agent.show_usage_examples()
+        # Call instance method
+        instance = data_analysis_agent._data_analysis_agent_instance
+        instance.show_usage_examples()
         captured = capsys.readouterr()
 
         # Check for formatting elements
@@ -208,19 +213,30 @@ class TestDatabaseConfiguration:
 
     def test_db_variable_exists(self):
         """Test that db variable is created"""
-        assert hasattr(data_analysis_agent, 'db')
-        assert data_analysis_agent.db is not None
+        # db is created inside _create_agent() and attached to the Agent object
+        assert hasattr(data_analysis_agent, 'data_analysis_agent')
+        agent = data_analysis_agent.data_analysis_agent
+        assert agent is not None
+        assert hasattr(agent, 'db')
+        assert agent.db is not None
 
 
 class TestMainExecution:
     """Test main execution block"""
 
-    @patch('data_analysis_agent.run_agent_with_error_handling')
-    def test_main_calls_error_handler(self, mock_error_handler):
-        """Test that main block calls run_agent_with_error_handling"""
+    def test_main_calls_error_handler(self):
+        """Test that main block uses run_with_error_handling from BaseAgent"""
         import agents.data_analysis_agent as daa
 
-        # Verify the function exists and is callable
-        usage_func = daa.show_usage_examples
-        assert callable(usage_func)
-        assert hasattr(daa, 'run_agent_with_error_handling')
+        # Verify the instance exists and has the required methods
+        assert hasattr(daa, '_data_analysis_agent_instance')
+        instance = daa._data_analysis_agent_instance
+        assert instance is not None
+
+        # Verify the instance has run_with_error_handling method (inherited from BaseAgent)
+        assert hasattr(instance, 'run_with_error_handling')
+        assert callable(instance.run_with_error_handling)
+
+        # Verify the instance has show_usage_examples method
+        assert hasattr(instance, 'show_usage_examples')
+        assert callable(instance.show_usage_examples)

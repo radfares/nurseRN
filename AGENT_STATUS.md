@@ -59,13 +59,13 @@
 - **Status**: Production-ready
 
 ### 5. **Project Timeline Agent** ✅
-- **File**: `nursing_project_timeline_agent.py`
-- **Purpose**: Milestone tracking, deadline management, monthly guidance (Nov 2025 - June 2026)
-- **Tools**: None
+- **File**: `agents/nursing_project_timeline_agent.py`
+- **Purpose**: Database-driven milestone tracking, deadline management, timeline guidance
+- **Tools**: MilestoneTools (queries project database for milestones)
 - **Model**: GPT-4o-mini (`gpt-4o-mini`) - Cost-effective for timeline queries
-- **Database**: `tmp/project_timeline_agent.db`
-- **Features**: Timeline-specific guidance, deadline reminders
-- **Status**: Production-ready
+- **Database**: `tmp/project_timeline_agent.db` (session) + project DB (milestones)
+- **Features**: Dynamic milestone querying, status tracking, deadline calculations, custom milestone creation
+- **Status**: Production-ready (Updated 2025-11-27: Now database-driven)
 
 ### 6. **Data Analysis Planner** ✅
 - **File**: `data_analysis_agent.py`
@@ -222,15 +222,18 @@ python3 data_analysis_agent.py
 
 ### Project Timeline Agent
 **Ask about**:
-- "What do I need to complete this month?"
-- "What are the key deliverables for January?"
-- "I finished my PICOT statement, what should I do next?"
+- "What are my upcoming milestones?"
+- "What's my next deadline?"
+- "I finished my PICOT statement, mark it as completed"
+- "What milestones are due this month?"
+- "Show me the status of all my milestones"
 
 **Provides**:
-- Monthly milestone tracking (Nov 2025 - June 2026)
-- Deadline reminders
-- Next steps guidance
-- Contact recommendations (CNS, NM, librarian)
+- Database-driven milestone tracking (queries your project's milestones table)
+- Dynamic deadline calculations (days until due)
+- Milestone status updates (pending, in_progress, completed)
+- Custom milestone creation
+- Next steps guidance based on current progress
 
 ### Data Analysis Planner
 **Ask about**:

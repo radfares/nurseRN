@@ -4,7 +4,11 @@ Statistical reasoning and analysis planning for nursing quality improvement rese
 
 PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
+PHASE 2 COMPLETE (2025-11-26): Refactored to use BaseAgent inheritance
 """
+
+# Module exports
+__all__ = ['DataAnalysisAgent', 'data_analysis_agent']
 
 import os
 from agno.agent import Agent
@@ -16,11 +20,8 @@ from typing import Literal, Optional, Any
 # PHASE 1: Import centralized configuration
 from agent_config import get_db_path, DATA_ANALYSIS_TEMPERATURE, DATA_ANALYSIS_MAX_TOKENS
 
-# PHASE 2: Use base_agent utilities
-from .base_agent import setup_agent_logging, run_agent_with_error_handling
-
-# Setup logging using shared utility
-logger = setup_agent_logging("Data Analysis Agent")
+# PHASE 2: Import BaseAgent for inheritance pattern
+from .base_agent import BaseAgent
 
 # Pydantic schema for JSON validation
 class DataAnalysisOutput(BaseModel):
@@ -38,11 +39,6 @@ class DataAnalysisOutput(BaseModel):
     repro_code: dict[str, Any]
     citations: list[str]
     confidence: float = Field(ge=0.0, le=1.0, description="Self-rated confidence 0-1")
-
-# PHASE 1: Database for session persistence (using centralized config)
-# OLD (commented for reference): db = SqliteDb(db_file="tmp/data_analysis_agent.db")
-db = SqliteDb(db_file=get_db_path("data_analysis"))
-logger.info(f"Database initialized: {get_db_path('data_analysis')}")
 
 # The statistical expert prompt (user's design with minimal nursing QI context)
 STATISTICAL_EXPERT_PROMPT = """You are **Data Analysis Planner**, a statistical expert for nursing and health research.
@@ -204,50 +200,89 @@ JSON:
 }
 """
 
-# PHASE 1: Create the Data Analysis Agent (using centralized config)
-# Note: Using OpenAI GPT-4o for statistical reliability
-data_analysis_agent = Agent(
-    name="Data Analysis Planner",
-    role="Statistical expert for nursing and healthcare research",
-    model=OpenAIChat(
-        id="gpt-4o",  # Can use gpt-4o-mini for cost savings
-        temperature=DATA_ANALYSIS_TEMPERATURE,  # From config: 0.2 for math reliability
-        max_tokens=DATA_ANALYSIS_MAX_TOKENS,    # From config: 1600 for JSON + prose
-    ),
-    instructions=STATISTICAL_EXPERT_PROMPT,
-    # Note: output_schema will be enabled in Phase 3 (Testing & Production Readiness)
-    # output_schema=DataAnalysisOutput,
-    markdown=True,
-    db=db,
-    description="Expert in statistical analysis planning, sample size calculations, test selection, and data template design for nursing quality improvement research.",
-)
 
-logger.info("Data Analysis Agent initialized successfully")
+class DataAnalysisAgent(BaseAgent):
+    """
+    Data Analysis Planning Agent - Statistical Expert.
 
-def show_usage_examples():
-    """Display usage examples and start interactive mode for Data Analysis Agent."""
-    print("=" * 70)
-    print("DATA ANALYSIS PLANNING AGENT")
-    print("Statistical Expert for Nursing Research")
-    print("=" * 70)
-    print("\nAgent ready. Example queries:")
-    print("- 'Catheter infection rate: baseline 15%, target 8%. Need sample size.'")
-    print("- 'Compare pain scores between 2 units, n≈25 per group.'")
-    print("- 'Need data template for tracking fall rates monthly.'")
-    print("\n" + "=" * 70)
+    No external tools - pure statistical reasoning with Pydantic output validation.
+    Uses temperature=0.2 for mathematical reliability and max_tokens=1600 for JSON + prose.
+    Enables output_schema=DataAnalysisOutput for structured JSON validation.
+    """
 
-    # Interactive mode
-    data_analysis_agent.print_response(
-        "Hello! I'm ready to help with statistical analysis planning for your nursing research project.",
-        stream=True
-    )
+    def __init__(self):
+        # No tools for this agent (pure statistical reasoning)
+        tools = self._create_tools()
+        super().__init__(
+            agent_name="Data Analysis Planner",
+            agent_key="data_analysis",
+            tools=tools
+        )
+
+    def _create_tools(self) -> list:
+        """
+        Create tools for the data analysis agent.
+
+        This agent has no external tools - it relies on GPT-4o statistical
+        reasoning capabilities with temperature=0.2 for reliability.
+        """
+        # No tools needed for data analysis agent
+        return []
+
+    def _create_agent(self) -> Agent:
+        """Create and configure the Data Analysis Agent."""
+        # Create database for session persistence (inside method, not module-level)
+        db = SqliteDb(db_file=get_db_path("data_analysis"))
+
+        return Agent(
+            name="Data Analysis Planner",
+            role="Statistical expert for nursing and healthcare research",
+            model=OpenAIChat(
+                id="gpt-4o",
+                temperature=DATA_ANALYSIS_TEMPERATURE,  # 0.2 for math reliability
+                max_tokens=DATA_ANALYSIS_MAX_TOKENS,    # 1600 for JSON + prose
+            ),
+            tools=self.tools,
+            instructions=STATISTICAL_EXPERT_PROMPT,
+            output_schema=DataAnalysisOutput,  # CRITICAL: Enabled for JSON validation
+            markdown=True,
+            db=db,
+            description="Expert in statistical analysis planning, sample size calculations, test selection, and data template design for nursing quality improvement research.",
+            add_history_to_context=True,
+            add_datetime_to_context=True,
+        )
+
+    def show_usage_examples(self) -> None:
+        """Display usage examples for the Data Analysis Agent."""
+        print("=" * 70)
+        print("DATA ANALYSIS PLANNING AGENT")
+        print("Statistical Expert for Nursing Research")
+        print("=" * 70)
+        print("\nAgent ready. Example queries:")
+        print("- 'Catheter infection rate: baseline 15%, target 8%. Need sample size.'")
+        print("- 'Compare pain scores between 2 units, n≈25 per group.'")
+        print("- 'Need data template for tracking fall rates monthly.'")
+        print("\n" + "=" * 70)
+
+
+# Create global instance for backward compatibility
+# Wrapped in try/except for graceful degradation if initialization fails
+try:
+    _data_analysis_agent_instance = DataAnalysisAgent()
+    data_analysis_agent = _data_analysis_agent_instance.agent
+except Exception as _init_error:
+    import logging
+    logging.error(f"Failed to initialize DataAnalysisAgent: {_init_error}")
+    _data_analysis_agent_instance = None
+    data_analysis_agent = None
+    # Re-raise only if running as main module
+    if __name__ == "__main__":
+        raise
 
 
 if __name__ == "__main__":
-    # PHASE 2: Use shared error handling utility
-    run_agent_with_error_handling(
-        "Data Analysis Agent",
-        logger,
-        show_usage_examples
-    )
+    if _data_analysis_agent_instance is not None:
+        _data_analysis_agent_instance.run_with_error_handling()
+    else:
+        print("❌ Agent failed to initialize. Check logs for details.")
 

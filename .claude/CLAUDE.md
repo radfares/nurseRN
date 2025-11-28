@@ -217,9 +217,18 @@ def _create_tools(self) -> list:
 ### Agent-Specific Details
 
 **Nursing Research Agent** (Agent 1):
-- File: `agents/nursing_research_agent.py` (219 lines)
-- Tools: ExaTools (optional), SerpApiTools (optional)
-- Focus: PICOT development, healthcare standards, recent articles
+- File: `agents/nursing_research_agent.py` (335+ lines)
+- Tools: 
+  - PubmedTools (PRIMARY - peer-reviewed clinical studies) - Free
+  - ClinicalTrialsTools (clinical trial database) - Free
+  - MedRxivTools (medical preprints) - Free
+  - SemanticScholarTools (AI-powered paper discovery) - Free tier
+  - CoreTools (open-access research) - Free
+  - DoajTools (open-access journals) - Free
+  - SerpApiTools (standards/guidelines) - Optional, requires SERP_API_KEY
+  - ExaTools - DISABLED (not for healthcare)
+  - ArxivTools - DISABLED (not for healthcare)
+- Focus: PICOT development, healthcare standards, comprehensive literature search
 - Database: `tmp/nursing_research_agent.db` (session) + project DB
 - Model: GPT-4o
 
@@ -246,11 +255,12 @@ def _create_tools(self) -> list:
 - Model: GPT-4o
 
 **Project Timeline Agent** (Agent 5):
-- File: `agents/nursing_project_timeline_agent.py` (156 lines)
-- Tools: None
+- File: `agents/nursing_project_timeline_agent.py` (218 lines)
+- Tools: MilestoneTools (database query tools for project milestones)
 - Model: GPT-4o-mini (cost-effective for timeline queries)
-- Focus: Milestone tracking
+- Focus: Database-driven milestone tracking and timeline guidance
 - Database: `tmp/project_timeline_agent.db` (session) + project DB
+- **Updated (2025-11-27)**: Now queries milestones table instead of using hardcoded dates
 
 **Data Analysis Planner** (Agent 6):
 - File: `agents/data_analysis_agent.py` (253 lines)
@@ -1520,6 +1530,19 @@ conn.close()  # Always close connections when done
 ---
 
 ## What's New
+
+### Week 1 Day 3 (2025-11-27) - Agent 5 Database Integration
+- ✅ **Agent 5 Database Integration Complete** - Timeline agent now queries database instead of hardcoded dates
+  - Created `src/tools/milestone_tools.py` (327 lines) - MilestoneTools class with 5 database query methods
+  - Updated `src/services/api_tools.py` - Added `create_milestone_tools_safe()` function
+  - Refactored `agents/nursing_project_timeline_agent.py` - Replaced 74 lines of hardcoded dates with database-driven instructions
+  - Agent now queries milestones table for: get_all_milestones, get_next_milestone, get_milestones_by_date_range, update_milestone_status, add_milestone
+  - Added module-level wrappers (`logger`, `show_usage_examples()`) for backward compatibility
+- ✅ **Comprehensive Test Coverage** - 22 new tests added
+  - Created `tests/unit/test_milestone_tools.py` (299 lines) - 11 tests for MilestoneTools
+  - Updated `tests/unit/test_project_timeline_agent.py` - 11 tests updated/passing (100% pass rate)
+  - All tests validate database-driven behavior instead of hardcoded dates
+- ✅ **Documentation Updates** - CLAUDE.md, AGENT_STATUS.md updated to reflect database integration
 
 ### Week 1 Day 2 (2025-11-26) - Major Reorganization
 - ✅ **Agent Folder Reorganization** - All 7 agent files moved to `agents/` module

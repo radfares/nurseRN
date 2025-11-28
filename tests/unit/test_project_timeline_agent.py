@@ -55,18 +55,18 @@ class TestShowUsageExamples:
 
         # Check for key sections
         assert "Project Timeline Assistant Ready!" in captured.out
-        assert "November 2025 - June 2026" in captured.out
-        assert "Check current requirements:" in captured.out
-        assert "Plan ahead:" in captured.out
-        assert "Get unstuck:" in captured.out
+        assert "project database" in captured.out
+        assert "Check upcoming milestones:" in captured.out
+        assert "Get next deadline:" in captured.out
+        assert "Mark milestone complete:" in captured.out
         assert "With Streaming:" in captured.out
 
     def test_show_usage_examples_includes_timeline_info(self, capsys):
-        """Test that usage examples mention specific timeline"""
+        """Test that usage examples mention database-driven timeline"""
         nursing_project_timeline_agent.show_usage_examples()
         captured = capsys.readouterr()
 
-        assert "Nov 2025 - June 2026" in captured.out
+        assert "database" in captured.out.lower()
 
     def test_show_usage_examples_includes_tips(self, capsys):
         """Test that usage examples include helpful tips"""
@@ -105,15 +105,13 @@ class TestAgentInstructions:
 class TestMainExecution:
     """Test main execution block"""
 
-    @patch('nursing_project_timeline_agent.run_agent_with_error_handling')
-    def test_main_calls_error_handler(self, mock_error_handler):
-        """Test that main block calls run_agent_with_error_handling"""
+    def test_show_usage_examples_callable(self):
+        """Test that show_usage_examples exists and is callable"""
         import agents.nursing_project_timeline_agent as pta
 
         # Verify the function exists and is callable
         usage_func = pta.show_usage_examples
         assert callable(usage_func)
-        assert hasattr(pta, 'run_agent_with_error_handling')
 
     def test_logger_info_called(self, caplog):
         """Test that logger.info is called during initialization"""
