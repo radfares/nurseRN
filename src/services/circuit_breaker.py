@@ -23,11 +23,21 @@ from functools import wraps
 try:
     from pybreaker import CircuitBreaker, CircuitBreakerError, CircuitBreakerListener
 except ImportError:
-    # Graceful degradation if pybreaker not installed
+    # Graceful degradation if pybreaker not installed.
+    # We still need a base class for LoggingListener to inherit from;
+    # using a simple object subclass avoids TypeError when pybreaker is missing.
     logging.warning("pybreaker not installed. Circuit breakers disabled. Run: pip install pybreaker")
+
+    class _FallbackCircuitBreakerListener:
+        """Fallback no-op listener used when pybreaker is not available."""
+
+        def __init__(self, *args, **kwargs):
+            """Accept arbitrary args for compatibility; do nothing."""
+            return
+
     CircuitBreaker = None
     CircuitBreakerError = Exception
-    CircuitBreakerListener = None
+    CircuitBreakerListener = _FallbackCircuitBreakerListener
 
 
 logger = logging.getLogger(__name__)
