@@ -33,8 +33,6 @@ This is a **project-centric multi-agent AI system** designed to support nursing 
 
 **Project Status**: Production-ready with 94% test coverage, professional file organization, comprehensive documentation.
 
-📝 **UPDATE NEEDED**: Confirm actual project timeline dates - documentation shows "Nov 2025 - June 2026" which appears to be a template. Actual timeline may be Nov 2024 - June 2025 or needs clarification.
-
 ---
 
 ## Quick Start
@@ -132,9 +130,7 @@ myproject
 6. **conversations** - Tagged by agent_name with linking to created records
 7. **documents** - File metadata with text extraction support
 
-See `project_manager.py` constant `SCHEMA_DDL` (approximately lines 34-295) for complete schema DDL.
-
-⚠️ **IMPROVEMENT NEEDED**: Line numbers are fragile and change with code updates. Reference constant name instead.
+See `project_manager.py` constant `SCHEMA_DDL` for complete schema DDL.
 
 ---
 
@@ -199,8 +195,6 @@ def _create_tools(self) -> list:
     # Agent logs which tools are available
     return tools
 ```
-
-📝 **UPDATE NEEDED**: Add detailed documentation on HTTP cache location, cleanup strategy, and how to inspect cache.
 
 ---
 
@@ -552,10 +546,6 @@ agent_map = {
 }
 ```
 
-⚠️ **IMPROVEMENT NEEDED**: Line numbers are approximate and change with updates. Consider using function/class names instead.
-
-📝 **UPDATE NEEDED**: Add guide for integrating new agent with project database (not just session DB).
-
 ---
 
 ### Testing Patterns
@@ -639,8 +629,6 @@ def call_custom_api():
     # Your API call
     return response
 ```
-
-📝 **UPDATE NEEDED**: Add examples of how to debug circuit breaker states and reset them manually.
 
 ---
 
@@ -906,8 +894,6 @@ conn.close()
 4. Test with fresh project creation
 5. Update this documentation
 
-📝 **UPDATE NEEDED**: Create schema migration guide for upgrading existing project databases.
-
 ---
 
 ### Adding New Tools to Agents
@@ -1028,8 +1014,6 @@ conn.close()  # Always close connections when done
 **Cause**: `conftest.py` PYTHONPATH setup not working
 **Fix**: Run pytest from project root directory
 
-📝 **UPDATE NEEDED**: Add more common error scenarios and solutions based on actual usage.
-
 ---
 
 ## Performance Tuning
@@ -1073,8 +1057,6 @@ conn.close()  # Always close connections when done
 3. **Reduce Model Size**:
    - GPT-4o-mini is ~10x faster than GPT-4o
    - Use for simple, non-critical tasks
-
-⚠️ **IMPROVEMENT NEEDED**: Add benchmarks and actual performance measurements.
 
 ---
 
@@ -1184,8 +1166,6 @@ A: Wait 60 seconds for automatic reset, or manually: `reset_breaker(BREAKER_NAME
 **Q: What happens to archived projects?**
 A: They're moved to `data/archives/{project_name}_archived_{timestamp}/` and can be restored by moving back.
 
-📝 **UPDATE NEEDED**: Add more FAQs based on actual user questions.
-
 ---
 
 ## Version Information
@@ -1197,8 +1177,6 @@ A: They're moved to `data/archives/{project_name}_archived_{timestamp}/` and can
 - **Architecture Phase**: Week 1 Day 1 Complete (2025-11-26)
 - **Test Coverage**: 94% (Phase 2 Enhanced)
 - **Total Codebase**: 3,699 lines of Python
-
-⚠️ **IMPROVEMENT NEEDED**: Create `agent_config.__version__` as single source of truth for version info.
 
 ---
 
@@ -1217,8 +1195,6 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for full guidelines (if exists).
 
 **PR Targeting**:
 Always create PRs against `claude/refactor-week1-019tf9ApiyUDheGnY3Z396k5`, not `main`.
-
-📝 **UPDATE NEEDED**: Create CONTRIBUTING.md if it doesn't exist.
 
 ---
 
