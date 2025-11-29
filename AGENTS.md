@@ -1,5 +1,12 @@
 # Repository Guidelines
 
+## Repository & Branch Information
+- **Main branch**: `main` (active development and production)
+- **Local branches**: 3 total (main, claude/refactor-week1, show-current)
+- **Remote branches**: 6 total on origin
+- **Last updated**: 2025-11-29
+- **Latest commit**: 9c4f6440 - Excel template generator and implementation updates
+
 ## Project Structure & Module Organization
 - `agents/` — agent entry points and logic.
 - `src/services/`, `src/tools/` — shared utilities (API tools, circuit breakers).
@@ -39,4 +46,13 @@
 
 ## Agent‑Specific Notes
 - Adding an agent: create `agents/my_agent.py`, register in `run_nursing_project.py`, and update paths/config in `agent_config.py`. Reuse utilities from `src/services/`.
+
+## Recent Updates (Nov 2025)
+- **Excel Template Generator**: New script `scripts/template_to_excel.py` for generating data templates
+- **Circuit Breaker Enhancements**: Updated `src/services/circuit_breaker.py` with improved error handling
+- **Implementation Plans**: Added `.claude/NEW_SOURCES_IMPLEMENTATION_PLAN.md` for source integration
+- **Data Analysis Agent**: Enhanced query capabilities and schema validation
+- **Agent6 Query Scripts**: Multiple test scripts for validating agent6 queries
+- **CR3 Implementation**: Completed milestone tracking tools and API integration
+- **DIY Folder**: Instructions and documentation stored in `DIY_folder/`
 
