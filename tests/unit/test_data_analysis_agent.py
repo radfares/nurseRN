@@ -407,3 +407,287 @@ class TestMainExecution:
         # Verify the instance has show_usage_examples method
         assert hasattr(instance, 'show_usage_examples')
         assert callable(instance.show_usage_examples)
+
+
+class TestStructuredOutputValidation:
+    """Test structured output schema validation for DataAnalysisAgent"""
+
+    def test_valid_output_schema_parsing(self):
+        """Test that a valid response conforms to DataAnalysisOutput schema"""
+        from agents.data_analysis_agent import (
+            DataAnalysisOutput, EffectSize, MethodInfo,
+            Parameters, SampleSize, DataColumn, DataTemplate, ReproCode
+        )
+
+        # Create nested models
+        effect_size = EffectSize(
+            type="Cohen_d",
+            value=0.7,
+            how_estimated="literature review"
+        )
+
+        method = MethodInfo(
+            name="Two-proportion z-test",
+            justification="Comparing CAUTI rates pre/post intervention"
+        )
+
+        params = Parameters(
+            effect_size=effect_size,
+            design="parallel groups",
+            alpha=0.05,
+            power=0.80
+        )
+
+        sample_size = SampleSize(
+            per_group=196,
+            total=392,
+            formula_or_reference="n = (Z_α/2 + Z_β)² × [p1(1-p1) + p2(1-p2)] / (p1-p2)²"
+        )
+
+        col1 = DataColumn(name="patient_id", type="string")
+        col2 = DataColumn(name="group", type="categorical")
+        col3 = DataColumn(name="cauti_event", type="binary")
+
+        data_template = DataTemplate(
+            columns=[col1, col2, col3],
+            id_key="patient_id",
+            long_vs_wide="long"
+        )
+
+        repro_code = ReproCode(
+            language="R",
+            snippet="power.prop.test(n=196, p1=0.15, p2=0.08, sig.level=0.05)"
+        )
+
+        # Create complete output
+        output = DataAnalysisOutput(
+            task="sample_size",
+            assumptions=[
+                "Baseline infection rate: 15%",
+                "Target infection rate: 8%",
+                "Power: 80%"
+            ],
+            method=method,
+            parameters=params,
+            sample_size=sample_size,
+            data_template=data_template,
+            analysis_steps=[
+                "Collect 6 months baseline data",
+                "Implement intervention",
+                "Collect 6 months post data",
+                "Run two-proportion test"
+            ],
+            diagnostics=["Sample size adequacy", "Normality check"],
+            interpretation_notes="Sufficient power to detect clinically meaningful reduction",
+            limitations=["Assumes stable baseline", "No clustering effects"],
+            repro_code=repro_code,
+            citations=["Cohen 1988", "Fleiss 2003"],
+            confidence=0.90
+        )
+
+        # Verify key fields
+        assert output.task == "sample_size"
+        assert output.confidence == 0.90
+        assert output.sample_size.total == 392
+        assert output.parameters.alpha == 0.05
+        assert output.method.name == "Two-proportion z-test"
+
+    def test_confidence_boundary_values(self):
+        """Test confidence field enforces 0.0-1.0 constraints"""
+        from agents.data_analysis_agent import (
+            DataAnalysisOutput, EffectSize, MethodInfo,
+            Parameters, SampleSize, DataTemplate, ReproCode
+        )
+        from pydantic import ValidationError
+
+        # Create minimal nested models
+        effect_size = EffectSize(type="Cohen_d", value=0.5, how_estimated="assumed")
+        method = MethodInfo(name="t-test", justification="standard")
+        params = Parameters(effect_size=effect_size, design="parallel")
+        sample_size = SampleSize(formula_or_reference="G*Power")
+        data_template = DataTemplate(columns=[], id_key="id", long_vs_wide="long")
+        repro_code = ReproCode(language="R", snippet="t.test()")
+
+        # Test boundary: 0.0 should be valid
+        output = DataAnalysisOutput(
+            task="test_selection", assumptions=[], method=method, parameters=params,
+            sample_size=sample_size, data_template=data_template,
+            analysis_steps=[], diagnostics=[], interpretation_notes="",
+            limitations=[], repro_code=repro_code, citations=[],
+            confidence=0.0
+        )
+        assert output.confidence == 0.0
+
+        # Test boundary: 1.0 should be valid
+        output = DataAnalysisOutput(
+            task="test_selection", assumptions=[], method=method, parameters=params,
+            sample_size=sample_size, data_template=data_template,
+            analysis_steps=[], diagnostics=[], interpretation_notes="",
+            limitations=[], repro_code=repro_code, citations=[],
+            confidence=1.0
+        )
+        assert output.confidence == 1.0
+
+        # Below boundary: -0.1 should fail
+        with pytest.raises(ValidationError) as exc_info:
+            DataAnalysisOutput(
+                task="test_selection", assumptions=[], method=method, parameters=params,
+                sample_size=sample_size, data_template=data_template,
+                analysis_steps=[], diagnostics=[], interpretation_notes="",
+                limitations=[], repro_code=repro_code, citations=[],
+                confidence=-0.1
+            )
+        assert "confidence" in str(exc_info.value).lower()
+
+        # Above boundary: 1.1 should fail
+        with pytest.raises(ValidationError) as exc_info:
+            DataAnalysisOutput(
+                task="test_selection", assumptions=[], method=method, parameters=params,
+                sample_size=sample_size, data_template=data_template,
+                analysis_steps=[], diagnostics=[], interpretation_notes="",
+                limitations=[], repro_code=repro_code, citations=[],
+                confidence=1.1
+            )
+        assert "confidence" in str(exc_info.value).lower()
+
+    def test_missing_required_fields_validation(self):
+        """Test that missing required fields raise ValidationError"""
+        from agents.data_analysis_agent import (
+            DataAnalysisOutput, EffectSize, MethodInfo,
+            Parameters, SampleSize, DataTemplate, ReproCode
+        )
+        from pydantic import ValidationError
+
+        # Create nested models
+        effect_size = EffectSize(type="Cohen_d", value=0.5, how_estimated="lit")
+        method = MethodInfo(name="test", justification="reason")
+        params = Parameters(effect_size=effect_size, design="parallel")
+        sample_size = SampleSize(formula_or_reference="formula")
+        data_template = DataTemplate(columns=[], id_key="id", long_vs_wide="long")
+        repro_code = ReproCode(language="R", snippet="code()")
+
+        # Complete valid data
+        complete = {
+            "task": "data_plan",
+            "assumptions": [],
+            "method": method,
+            "parameters": params,
+            "sample_size": sample_size,
+            "data_template": data_template,
+            "analysis_steps": [],
+            "diagnostics": [],
+            "interpretation_notes": "Notes",
+            "limitations": [],
+            "repro_code": repro_code,
+            "citations": [],
+            "confidence": 0.8
+        }
+
+        # Should pass with all fields
+        output = DataAnalysisOutput(**complete)
+        assert output is not None
+
+        # Test missing critical fields
+        for field in ["task", "method", "parameters", "sample_size", "confidence"]:
+            incomplete = complete.copy()
+            del incomplete[field]
+            with pytest.raises(ValidationError) as exc_info:
+                DataAnalysisOutput(**incomplete)
+            assert field in str(exc_info.value).lower()
+
+    def test_invalid_nested_model_validation(self):
+        """Test that invalid nested models raise ValidationError"""
+        from agents.data_analysis_agent import (
+            DataAnalysisOutput, EffectSize, MethodInfo,
+            Parameters, SampleSize, DataTemplate, ReproCode
+        )
+        from pydantic import ValidationError
+
+        # Valid nested models for comparison
+        effect_size = EffectSize(type="Cohen_d", value=0.5, how_estimated="lit")
+        method = MethodInfo(name="test", justification="reason")
+        params = Parameters(effect_size=effect_size, design="parallel")
+        sample_size = SampleSize(formula_or_reference="formula")
+        data_template = DataTemplate(columns=[], id_key="id", long_vs_wide="long")
+        repro_code = ReproCode(language="R", snippet="code()")
+
+        # Try to pass plain dict instead of MethodInfo instance
+        with pytest.raises(ValidationError):
+            DataAnalysisOutput(
+                task="interpretation", assumptions=[],
+                method={"name": "test"},  # Should be MethodInfo instance
+                parameters=params, sample_size=sample_size,
+                data_template=data_template, analysis_steps=[],
+                diagnostics=[], interpretation_notes="", limitations=[],
+                repro_code=repro_code, citations=[], confidence=0.8
+            )
+
+        # Try to pass string instead of Parameters instance
+        with pytest.raises(ValidationError):
+            DataAnalysisOutput(
+                task="interpretation", assumptions=[], method=method,
+                parameters="invalid",  # Should be Parameters instance
+                sample_size=sample_size, data_template=data_template,
+                analysis_steps=[], diagnostics=[], interpretation_notes="",
+                limitations=[], repro_code=repro_code, citations=[], confidence=0.8
+            )
+
+    def test_empty_lists_allowed(self):
+        """Test that empty lists are allowed for list fields"""
+        from agents.data_analysis_agent import (
+            DataAnalysisOutput, EffectSize, MethodInfo,
+            Parameters, SampleSize, DataTemplate, ReproCode
+        )
+
+        # Create nested models
+        effect_size = EffectSize(type="descriptive", value=0.0, how_estimated="N/A")
+        method = MethodInfo(name="descriptive statistics", justification="exploratory")
+        params = Parameters(effect_size=effect_size, design="descriptive")
+        sample_size = SampleSize(formula_or_reference="convenience sample")
+        data_template = DataTemplate(columns=[], id_key="id", long_vs_wide="long")
+        repro_code = ReproCode(language="R", snippet="summary()")
+
+        # Response with empty lists
+        output = DataAnalysisOutput(
+            task="template",
+            assumptions=[],  # Empty allowed
+            method=method,
+            parameters=params,
+            sample_size=sample_size,
+            data_template=data_template,
+            analysis_steps=["Calculate descriptive statistics"],
+            diagnostics=[],  # Empty allowed
+            interpretation_notes="Exploratory only",
+            limitations=[],  # Empty allowed
+            repro_code=repro_code,
+            citations=[],  # Empty allowed
+            confidence=0.50
+        )
+
+        assert output.assumptions == []
+        assert output.diagnostics == []
+        assert output.limitations == []
+        assert output.citations == []
+
+    def test_repro_code_language_validation(self):
+        """Test that ReproCode validates language field (only R and Python allowed)"""
+        from agents.data_analysis_agent import ReproCode
+        from pydantic import ValidationError
+
+        # Valid languages should work (only R and Python per schema)
+        valid_languages = ["R", "Python"]
+        for lang in valid_languages:
+            code = ReproCode(language=lang, snippet="test()")
+            assert code.language == lang
+
+        # Invalid language should fail
+        with pytest.raises(ValidationError):
+            ReproCode(language="Stata", snippet="test()")
+
+        # Missing language should fail (required field)
+        with pytest.raises(ValidationError):
+            ReproCode(snippet="test()")
+
+        # Missing snippet should fail (required field)
+        with pytest.raises(ValidationError):
+            ReproCode(language="R")
