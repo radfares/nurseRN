@@ -45,6 +45,7 @@ from src.services.api_tools import (
     create_semantic_scholar_tools_safe,
     create_core_tools_safe,
     create_doaj_tools_safe,
+    create_safety_tools_safe,
     build_tools_list,
     get_api_status
 )
@@ -53,7 +54,7 @@ from src.services.api_tools import (
 class NursingResearchAgent(BaseAgent):
     """
     Nursing Research Agent - Healthcare-focused search capability.
-    
+
     ACTIVE Tools:
     1. PubMed - PRIMARY for all healthcare/nursing/medical research (peer-reviewed)
     2. ClinicalTrials.gov - Clinical trial database (public API)
@@ -61,12 +62,13 @@ class NursingResearchAgent(BaseAgent):
     4. Semantic Scholar - AI-powered paper recommendations (free tier)
     5. CORE - Open-access research aggregator (free API)
     6. DOAJ - Directory of Open Access Journals (free API)
-    7. SerpAPI - Google search for official standards/guidelines (CDC, WHO, Joint Commission)
-    
+    7. SafetyTools - OpenFDA device recalls and drug adverse events (public API)
+    8. SerpAPI - Google search for official standards/guidelines (CDC, WHO, Joint Commission)
+
     DISABLED Tools (not appropriate for healthcare research):
     - ArXiv - DISABLED (tech/AI preprints, not peer-reviewed clinical studies)
     - Exa - DISABLED (general web search, not healthcare-specific)
-    
+
     Note: ArXiv and Exa are intentionally disabled to prevent the agent from using
     non-healthcare sources for clinical research. To re-enable for a tech/AI agent,
     see the commented code in _create_tools().
@@ -112,7 +114,10 @@ class NursingResearchAgent(BaseAgent):
         semantic_scholar_tool = create_semantic_scholar_tools_safe(required=False)
         core_tool = create_core_tools_safe(required=False)
         doaj_tool = create_doaj_tools_safe(required=False)
-        
+
+        # Safety monitoring tools (OpenFDA - free public API)
+        safety_tool = create_safety_tools_safe(required=False)
+
         # SECONDARY: SerpAPI (Google) for official standards/guidelines searches
         # Good for: Joint Commission, CDC, WHO, CMS official websites
         serp_tool = create_serp_tools_safe(required=False)
@@ -135,7 +140,7 @@ class NursingResearchAgent(BaseAgent):
 
         # Build tools list - ONLY healthcare-appropriate tools
         # Note: ArXiv and Exa intentionally excluded to prevent misuse
-        # Tool priority: PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SerpAPI
+        # Tool priority: PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI
         tools = build_tools_list(
             pubmed_tool,
             clinicaltrials_tool,
@@ -143,6 +148,7 @@ class NursingResearchAgent(BaseAgent):
             semantic_scholar_tool,
             core_tool,
             doaj_tool,
+            safety_tool,
             serp_tool
         )
 
@@ -154,6 +160,7 @@ class NursingResearchAgent(BaseAgent):
             'semantic_scholar': semantic_scholar_tool is not None,
             'core': core_tool is not None,
             'doaj': doaj_tool is not None,
+            'safety': safety_tool is not None,
             'serp': serp_tool is not None,
             'arxiv': arxiv_tool is not None,  # Will be False (disabled)
             'exa': exa_tool is not None,      # Will be False (disabled)
@@ -192,7 +199,12 @@ class NursingResearchAgent(BaseAgent):
             print("✅ DOAJ - Available (open-access journals)")
         else:
             print("⚠️ DOAJ - Unavailable (tool creation failed)")
-            
+
+        if safety_tool:
+            print("✅ SafetyTools - Available (device recalls & drug events)")
+        else:
+            print("⚠️ SafetyTools - Unavailable (tool creation failed)")
+
         if serp_tool:
             print("✅ SerpAPI - Available (Google for standards/guidelines)")
         else:
@@ -268,7 +280,16 @@ class NursingResearchAgent(BaseAgent):
                 - Semantic Scholar: Use for AI-powered paper discovery, finding connections between papers
                 - CORE: Use for open-access full-text articles from repositories worldwide
                 - DOAJ: Use for high-quality open-access journal articles
-                
+
+                SAFETY MONITORING TOOL - SafetyTools (OpenFDA):
+                - Use SafetyTools when user asks about medical devices (catheters, pumps, monitors, IV equipment)
+                - Use SafetyTools when user asks about medications/drugs (check for adverse events)
+                - Use SafetyTools to check for FDA recalls on any medical equipment being used in projects
+                - Use SafetyTools when evaluating safety of interventions involving devices or medications
+                - Provides real-time FDA device recalls (Class I = most serious)
+                - Provides drug adverse event reports from FDA database
+                - IMPORTANT: Always check SafetyTools when a project involves medical devices or medications
+
                 TERTIARY TOOL - SerpAPI/Google (for standards):
                 - Use SerpAPI for official standards and guidelines
                 - Joint Commission, CDC, WHO, CMS official websites
@@ -351,6 +372,12 @@ class NursingResearchAgent(BaseAgent):
         else:
             print("  ⚠️ DOAJ - Unavailable (tool creation failed)")
 
+        # Check SafetyTools (OpenFDA)
+        if tool_status.get('safety', False):
+            print("  ✅ SafetyTools - Available (FDA device recalls & drug events)")
+        else:
+            print("  ⚠️ SafetyTools - Unavailable (tool creation failed)")
+
         # Check SerpAPI (secondary - standards/guidelines) - check actual tool status
         if tool_status.get('serp', False):
             print("  ✅ SerpAPI - Available (Google for standards/guidelines)")
@@ -376,6 +403,7 @@ class NursingResearchAgent(BaseAgent):
         print("  🤖 Semantic Scholar   → AI-powered paper discovery")
         print("  📚 CORE               → Open-access full-text articles")
         print("  📖 DOAJ               → High-quality open-access journals")
+        print("  ⚠️  SafetyTools        → FDA device recalls & drug adverse events")
         print("  🏛️ SerpAPI            → Official standards, guidelines, regulations (Google)")
         print("  🚫 ArXiv              → DISABLED (not for healthcare)")
         print("  🚫 Exa                → DISABLED (not for healthcare)")
@@ -396,6 +424,7 @@ class NursingResearchAgent(BaseAgent):
         print("  ✓ Latest medical preprints via medRxiv")
         print("  ✓ AI-powered paper discovery via Semantic Scholar")
         print("  ✓ Open-access research via CORE and DOAJ")
+        print("  ✓ FDA device recalls and drug safety monitoring via SafetyTools")
         print("  ✓ Evidence-based practice guidelines")
         print("  ✓ Healthcare standards via Google (Joint Commission, CDC, WHO)")
         print("  ✓ Quality improvement frameworks")
@@ -412,17 +441,22 @@ class NursingResearchAgent(BaseAgent):
         print('   Find 3 recent research articles about catheter-associated')
         print('   urinary tract infection prevention""")')
 
-        print("\n3. Standards Research (uses SerpAPI/Google):")
+        print("\n3. Device Safety Check (uses SafetyTools/OpenFDA):")
+        print('   response = nursing_research_agent.run("""')
+        print('   Check for any FDA recalls on urinary catheters""")')
+
+        print("\n4. Standards Research (uses SerpAPI/Google):")
         print('   response = nursing_research_agent.run("""')
         print('   What are the Joint Commission requirements for medication')
         print('   reconciliation?""")')
 
-        print("\n4. With Streaming (real-time responses):")
+        print("\n5. With Streaming (real-time responses):")
         print('   nursing_research_agent.print_response("""')
         print('   Find 3 recent studies on fall prevention""", stream=True)')
 
         print("\n" + "-" * 60)
         print("\n💡 TIP: Use stream=True for real-time response generation")
+        print("💡 TIP: SafetyTools automatically checks FDA recalls when you mention devices or drugs")
 
 
 # Create global instance for backward compatibility

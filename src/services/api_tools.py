@@ -537,6 +537,48 @@ def create_milestone_tools_safe(required: bool = False) -> Optional[Any]:
 
 
 # ============================================================================
+# Safety Tools (OpenFDA API)
+# ============================================================================
+
+def create_safety_tools_safe(required: bool = False) -> Optional[Any]:
+    """
+    Create SafetyTools with safe fallback.
+
+    SafetyTools doesn't require API keys - it queries the public OpenFDA API.
+    Used for device recalls and drug adverse events.
+
+    Args:
+        required: If True, raises error on failure. If False, returns None.
+
+    Returns:
+        SafetyTools instance or None if creation fails
+    """
+    try:
+        from src.services.safety_tools import SafetyTools
+
+        # No circuit breaker needed - public API with built-in error handling
+        tool = SafetyTools(
+            enable_device_recalls=True,
+            enable_drug_events=True
+        )
+        logger.info("✅ Created SafetyTools for OpenFDA queries")
+        return tool
+
+    except ImportError as e:
+        msg = f"SafetyTools not available: {e}"
+        logger.warning(msg)
+        if required:
+            raise ImportError(msg)
+        return None
+    except Exception as e:
+        msg = f"Failed to create SafetyTools: {e}"
+        logger.error(msg)
+        if required:
+            raise RuntimeError(msg)
+        return None
+
+
+# ============================================================================
 # Status Reporting
 # ============================================================================
 
@@ -594,6 +636,11 @@ def get_api_status() -> dict:
             "key_set": True,  # DOAJ doesn't require key
             "required": False,
             "note": "DOAJ is free and public"
+        },
+        "safety": {
+            "key_set": True,  # OpenFDA doesn't require key
+            "required": False,
+            "note": "OpenFDA is free and public (device recalls, drug events)"
         },
     }
     return status
