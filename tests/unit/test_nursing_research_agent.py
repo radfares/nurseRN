@@ -15,9 +15,7 @@ sys.modules['agno.db'] = MagicMock()
 sys.modules['agno.db.sqlite'] = MagicMock()
 sys.modules['agno.models'] = MagicMock()
 sys.modules['agno.models.openai'] = MagicMock()
-sys.modules['src'] = MagicMock()
-sys.modules['src.services'] = MagicMock()
-sys.modules['src.services.api_tools'] = MagicMock()
+# Don't mock src module globally - let real imports work
 
 from agents.nursing_research_agent import NursingResearchAgent
 

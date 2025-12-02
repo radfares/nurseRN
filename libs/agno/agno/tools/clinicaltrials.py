@@ -83,7 +83,9 @@ class ClinicalTrialsTools(Toolkit):
                 brief_summary = description.get("briefSummary", "No summary available")
 
                 # Sponsors
-                sponsor = protocol.get("sponsorCollaboratorsModule", {}).get("leadSponsor", {}).get("name", "Not specified")
+                sponsor = (
+                    protocol.get("sponsorCollaboratorsModule", {}).get("leadSponsor", {}).get("name", "Not specified")
+                )
 
                 # Locations
                 locations = protocol.get("contactsLocationsModule", {}).get("locations", [])
@@ -100,7 +102,9 @@ class ClinicalTrialsTools(Toolkit):
                     "Phases": ", ".join(phases) if phases else "Not specified",
                     "Sponsor": sponsor,
                     "Countries": ", ".join(set(location_countries)) if location_countries else "Not specified",
-                    "Eligibility_Criteria": eligibility_criteria[:500] + "..." if len(eligibility_criteria) > 500 else eligibility_criteria,
+                    "Eligibility_Criteria": eligibility_criteria[:500] + "..."
+                    if len(eligibility_criteria) > 500
+                    else eligibility_criteria,
                     "Summary": brief_summary,
                     "URL": f"https://clinicaltrials.gov/study/{nct_id}" if nct_id != "N/A" else "Not available",
                 }
@@ -113,11 +117,12 @@ class ClinicalTrialsTools(Toolkit):
 
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error searching ClinicalTrials.gov: {e}")
-            return json.dumps({"error": f"HTTP error: {e.response.status_code}", "message": "Could not fetch clinical trials."})
+            return json.dumps(
+                {"error": f"HTTP error: {e.response.status_code}", "message": "Could not fetch clinical trials."}
+            )
         except httpx.TimeoutException:
             logger.error("Timeout searching ClinicalTrials.gov")
             return json.dumps({"error": "timeout", "message": "Request to ClinicalTrials.gov timed out."})
         except Exception as e:
             logger.error(f"Error searching ClinicalTrials.gov: {e}", exc_info=True)
             return json.dumps({"error": str(e), "message": "Could not fetch clinical trials."})
-

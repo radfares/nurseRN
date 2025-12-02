@@ -1,3 +1,7 @@
+from agno.workflow import Condition, Loop, Parallel, Router, Step, Steps, Workflow
+from agno.workflow.types import StepInput, StepOutput
+from models import InvestmentAnalysisRequest, InvestmentType, RiskLevel
+
 from agents import (
     company_research_agent,
     database_setup_agent,
@@ -9,9 +13,6 @@ from agents import (
     risk_assessment_agent,
     valuation_agent,
 )
-from agno.workflow import Condition, Loop, Parallel, Router, Step, Steps, Workflow
-from agno.workflow.types import StepInput, StepOutput
-from models import InvestmentAnalysisRequest, InvestmentType, RiskLevel
 
 
 ### Evaluators

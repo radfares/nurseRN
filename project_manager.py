@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 
 INSERT OR IGNORE INTO schema_version (version, description) VALUES
-    (1, 'Initial schema with 7 core tables for project-centric architecture');
+    (1, 'Initial schema with 7 core tables for project-centric architecture'),
+    (2, 'Phase 1, Task 3: Added is_current flag to picot_versions table');
 
 -- ============================================================================
 -- 1. PICOT VERSIONS
@@ -69,6 +70,7 @@ CREATE TABLE IF NOT EXISTS picot_versions (
     approved BOOLEAN DEFAULT 0,
     approved_by TEXT,
     approval_date DATE,
+    is_current BOOLEAN DEFAULT 0,  -- Phase 1, Task 3: Track which PICOT version is active
 
     -- Metadata
     notes TEXT,
@@ -77,6 +79,7 @@ CREATE TABLE IF NOT EXISTS picot_versions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_picot_approved ON picot_versions(approved);
+CREATE INDEX IF NOT EXISTS idx_picot_current ON picot_versions(is_current);  -- Phase 1, Task 3
 
 -- ============================================================================
 -- 2. LITERATURE FINDINGS

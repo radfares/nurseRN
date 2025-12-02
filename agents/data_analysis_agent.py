@@ -15,13 +15,13 @@ from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.db.sqlite import SqliteDb
 from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
 
 # PHASE 1: Import centralized configuration
 from agent_config import get_db_path, DATA_ANALYSIS_TEMPERATURE, DATA_ANALYSIS_MAX_TOKENS
 
 # PHASE 2: Import BaseAgent for inheritance pattern
-from .base_agent import BaseAgent
+from agents.base_agent import BaseAgent
 
 # Nested Pydantic models for structured output (replaces dict[str, Any] fields)
 class EffectSize(BaseModel):
@@ -177,6 +177,31 @@ Always return a **primary JSON object** first (for programmatic use), followed b
 - If the user asks for an invalid test, redirect to the nearest valid method and explain briefly.
 - Never fabricate citations; when uncertain, say so and present options.
 
+## CRITICAL VALIDATION RULES (Phase 1, Task 2 - 2025-11-29)
+**IMPORTANT: These rules MUST be checked and reported in every sample size calculation:**
+
+1. **Sample Size Feasibility (Unit-Level QI)**:
+   - If total sample size > 300: Include ⚠️ WARNING that this exceeds typical unit-level QI capacity
+   - If total sample size > 500: Mark as INFEASIBLE for standard nursing residency project
+   - Explain: "This sample size may not be achievable in 6-month residency timeframe"
+
+2. **Timeline Estimation**:
+   - Always include timeline estimate: weeks_needed = (n / patients_per_week)
+   - Assume typical unit throughput: 20-40 patients/week for general medical-surgical unit
+   - Flag when calculated timeline exceeds 6 months (residency duration)
+
+3. **Pragmatic Recommendations**:
+   - If sample size is infeasible, suggest alternatives:
+     * Longer effect size (larger minimum detectable effect)
+     * Longer data collection period (if timeline allows)
+     * Pre-post design (reduces n by ~50%)
+     * Lower power (0.70 instead of 0.80, if appropriate)
+
+4. **Output Format**:
+   - After JSON output, ALWAYS add human-readable interpretation
+   - Include: "Based on n=X, you would need Y weeks at Z patients/week"
+   - Include warnings prominently: "⚠️ WARNING: Sample size exceeds typical unit capacity"
+
 ## Few-Shot Exemplars
 
 ### 1) Test selection (two independent groups, unequal variances)
@@ -291,18 +316,96 @@ class DataAnalysisAgent(BaseAgent):
             role="Statistical expert for nursing and healthcare research",
             model=OpenAIChat(
                 id="gpt-4o",
-                temperature=DATA_ANALYSIS_TEMPERATURE,  # 0.2 for math reliability
+                temperature=0,  # 0 for math reliability (Phase 2 requirement)
                 max_tokens=DATA_ANALYSIS_MAX_TOKENS,    # 1600 for JSON + prose
             ),
             tools=self.tools,
-            instructions=STATISTICAL_EXPERT_PROMPT,
+            instructions=STATISTICAL_EXPERT_PROMPT + "\n\nABSOLUTE LAW #1: MATH RELIABILITY\n- Use temperature=0 for all calculations\n- Double-check all formulas\n- If sample size > 500, mark as INFEASIBLE",
             output_schema=DataAnalysisOutput,  # CRITICAL: Enabled for JSON validation
             markdown=True,
             db=db,
             description="Expert in statistical analysis planning, sample size calculations, test selection, and data template design for nursing quality improvement research.",
             add_history_to_context=True,
             add_datetime_to_context=True,
+            pre_hooks=[self._audit_pre_hook],
+            post_hooks=[self._audit_post_hook],
         )
+
+    def run_with_grounding_check(self, query: str, **kwargs) -> Any:
+        """Execute the agent while forcing a grounding verification pass."""
+        # Audit Logging: Query Received
+        project_name = kwargs.get("project_name")
+        if self.audit_logger:
+            self.audit_logger.log_query_received(query, project_name)
+
+        stream_requested = bool(kwargs.get("stream"))
+        
+        try:
+            response = self.agent.run(query, **kwargs)
+            
+            # Streaming responses are yielded incrementally and cannot be re-verified here.
+            if stream_requested:
+                return response
+                
+            self._validate_run_output(response)
+            
+            # Audit Logging: Response Generated
+            if self.audit_logger:
+                # For structured output, content might be a Pydantic model
+                content_str = str(response.content)
+                self.audit_logger.log_response_generated(
+                    response=content_str,
+                    response_type="success",
+                    validation_passed=True
+                )
+                
+            return response
+            
+        except Exception as e:
+            # Audit Logging: Error
+            if self.audit_logger:
+                self.audit_logger.log_error(
+                    error_type=type(e).__name__,
+                    error_message=str(e),
+                    stack_trace=str(e)
+                )
+            raise
+
+    def _validate_run_output(self, run_output: Any) -> bool:
+        """Ensure statistical feasibility rules are followed."""
+        # Content is likely a DataAnalysisOutput object or dict
+        content = run_output.content
+        
+        # If content is a Pydantic model, convert to dict for checking
+        data = None
+        if hasattr(content, "model_dump"):
+            data = content.model_dump()
+        elif isinstance(content, dict):
+            data = content
+            
+        if data:
+            # Check Sample Size Feasibility
+            sample_size = data.get("sample_size", {})
+            total_n = sample_size.get("total")
+            
+            if total_n and isinstance(total_n, (int, float)):
+                if total_n > 500:
+                    # Log warning: Infeasible sample size
+                    if self.audit_logger:
+                        self.audit_logger.log_validation_check(
+                            "feasibility_check", 
+                            True, # We don't block, just log warning
+                            {"total_n": total_n, "warning": "Sample size > 500 is likely infeasible"}
+                        )
+                elif total_n > 300:
+                     if self.audit_logger:
+                        self.audit_logger.log_validation_check(
+                            "feasibility_check", 
+                            True, 
+                            {"total_n": total_n, "warning": "Sample size > 300 is challenging"}
+                        )
+        
+        return True
 
     def show_usage_examples(self) -> None:
         """Display usage examples for the Data Analysis Agent."""

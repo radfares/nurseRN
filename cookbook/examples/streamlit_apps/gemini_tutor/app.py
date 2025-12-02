@@ -1,6 +1,5 @@
 import nest_asyncio
 import streamlit as st
-from agents import EDUCATION_LEVELS, GEMINI_MODELS, get_gemini_tutor_agent
 from agno.utils.streamlit import (
     COMMON_CSS,
     about_section,
@@ -12,6 +11,8 @@ from agno.utils.streamlit import (
     reset_session_state,
     session_selector_widget,
 )
+
+from agents import EDUCATION_LEVELS, GEMINI_MODELS, get_gemini_tutor_agent
 
 nest_asyncio.apply()
 st.set_page_config(

@@ -26,9 +26,10 @@ from project_manager import (
 )
 
 # Agent imports from agents/ module
+from agents.base_agent import BaseAgent
 from agents.nursing_research_agent import nursing_research_agent
 from agents.nursing_project_timeline_agent import project_timeline_agent
-from agents.medical_research_agent import medical_research_agent
+from agents.medical_research_agent import get_medical_research_agent
 from agents.academic_research_agent import academic_research_agent
 from agents.research_writing_agent import research_writing_agent
 from agents.data_analysis_agent import data_analysis_agent
@@ -203,7 +204,7 @@ def agent_selection_loop():
         # Agent selection
         agent_map = {
             '1': (nursing_research_agent, "Nursing Research Agent"),
-            '2': (medical_research_agent, "Medical Research Agent (PubMed)"),
+            '2': (get_medical_research_agent(), "Medical Research Agent (PubMed)"),
             '3': (academic_research_agent, "Academic Research Agent (ArXiv)"),
             '4': (research_writing_agent, "Research Writing Agent"),
             '5': (project_timeline_agent, "Project Timeline Agent"),
@@ -242,6 +243,14 @@ def run_agent_interaction(agent, agent_name: str, project_name: str):
     print(f"CHAT WITH {agent_name.upper()}")
     print("="*80)
     print(f"\nProject: {project_name}")
+    
+    # Show agent-specific usage examples and capabilities
+    if hasattr(agent, 'show_usage_examples'):
+        try:
+            agent.show_usage_examples()
+        except Exception as e:
+            print(f"⚠️  Could not show usage examples: {e}")
+
     print("\nTips:")
     print("  - Type your questions naturally")
     print("  - Type 'exit' to stop chatting")
@@ -278,6 +287,9 @@ def run_agent_interaction(agent, agent_name: str, project_name: str):
                 print("\n💡 Make sure OPENAI_API_KEY is set in your environment")
                 print("   and all required API keys are configured.")
 
+            # Phase 1, Task 5 (2025-11-29): Print watermark after every agent response
+            BaseAgent.print_watermark()
+
             print("\n" + "-"*80)
 
         except KeyboardInterrupt:
@@ -291,8 +303,72 @@ def run_agent_interaction(agent, agent_name: str, project_name: str):
             break
 
 
+def show_clinical_disclaimer() -> bool:
+    """
+    Display clinical disclaimer and require acknowledgment.
+
+    Returns:
+        True if user acknowledges disclaimer, False otherwise
+
+    Created: Phase 1, Task 4 (2025-11-29)
+    Priority: CRITICAL - Liability protection
+    """
+    print("\n" + "=" * 80)
+    print("⚠️  CLINICAL DISCLAIMER ⚠️".center(80))
+    print("=" * 80)
+    print("""
+This system is a QUALITY IMPROVEMENT PLANNING TOOL for nursing professionals.
+
+IT IS NOT:
+  ❌ A substitute for clinical judgment
+  ❌ A replacement for institutional approvals
+  ❌ Medical advice or clinical decision support
+  ❌ A validated clinical decision tool
+
+ALL OUTPUTS MUST BE REVIEWED BY:
+  • Nurse Manager (workflow feasibility)
+  • Clinical experts (Infection Control, Safety, Quality Dept)
+  • Statistician (if using sample size calculations)
+  • IRB/Ethics Committee (for research classification)
+
+BY USING THIS TOOL YOU ACKNOWLEDGE:
+  1. You are a licensed healthcare professional
+  2. You will obtain appropriate institutional approvals
+  3. You will validate all recommendations with experts
+  4. You are solely responsible for project outcomes
+  5. This tool provides planning guidance, not clinical recommendations
+
+IMPORTANT:
+  • All statistical calculations are estimates and require expert review
+  • Budget estimates are rough approximations only
+  • Literature search results must be independently verified
+  • No guarantee of committee approval or project success
+""")
+    print("=" * 80)
+    print()
+
+    response = input("Type 'I UNDERSTAND AND AGREE' to continue (or 'exit' to quit): ").strip()
+
+    if response.upper() == "I UNDERSTAND AND AGREE":
+        print("\n✅ Disclaimer acknowledged. Proceeding to system...\n")
+        return True
+    elif response.lower() == "exit":
+        print("\n👋 Exiting. Goodbye!\n")
+        return False
+    else:
+        print("\n❌ You must type exactly 'I UNDERSTAND AND AGREE' to use this system.")
+        print("   (You typed: '{}')".format(response))
+        return False
+
+
 def main():
     """Main entry point."""
+    # CRITICAL: Display disclaimer and exit if not acknowledged
+    # Phase 1, Task 4 (2025-11-29) - Liability protection
+    if not show_clinical_disclaimer():
+        import sys
+        sys.exit(1)
+
     show_welcome()
 
     # Check if any projects exist

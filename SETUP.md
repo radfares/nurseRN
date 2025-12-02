@@ -90,39 +90,36 @@ python3 -c "import os; print('OpenAI:', 'SET' if os.getenv('OPENAI_API_KEY') els
 
 ## Running the Agents
 
-### Quick Start - Run Individual Agents
+### 1. Start the Project Assistant
 
-Each agent can be run standalone:
-
-```bash
-# Agent 1: Nursing Research (PICOT, literature, standards)
-python3 -m agents.nursing_research_agent
-
-# Agent 2: Medical Research (PubMed searches)
-python3 -m agents.medical_research_agent
-
-# Agent 3: Academic Research (ArXiv searches)
-python3 academic_research_agent.py
-
-# Agent 4: Research Writing (academic writing help)
-python3 research_writing_agent.py
-
-# Agent 5: Project Timeline (Nov 2025 - June 2026)
-python3 nursing_project_timeline_agent.py
-
-# Agent 6: Data Analysis (statistical planning)
-python3 data_analysis_agent.py
-```
-
-### Using the Main Menu
-
-Run all agents from a single interface:
+The main entry point for the system is `run_nursing_project.py`. This handles project management, agent selection, and database initialization.
 
 ```bash
-python3 main_menu.py
+./start_nursing_project.sh
 ```
 
-This will present a menu to select which agent to use.
+Or manually:
+
+```bash
+python3 run_nursing_project.py
+```
+
+### 2. Project Management
+
+The system is **project-centric**. You will be prompted to:
+1.  **Create a new project** (e.g., "fall_prevention_2025")
+2.  **Switch to an existing project**
+3.  **Launch agents** for the active project
+
+### 3. Agent Selection
+
+Once a project is active, you can select from the 6 specialized agents:
+1.  **Nursing Research Agent**: Standards & Guidelines
+2.  **Medical Research Agent**: PubMed Clinical Studies
+3.  **Academic Research Agent**: ArXiv & Methodology
+4.  **Research Writing Agent**: Writing & Synthesis
+5.  **Project Timeline Agent**: Deadlines & Milestones
+6.  **Data Analysis Planner**: Statistics & Sample Size
 
 ---
 

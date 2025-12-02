@@ -1,3 +1,7 @@
+from agno.workflow import Condition, Parallel, Step, Workflow
+from agno.workflow.types import StepInput
+from models import ProcurementAnalysisRequest
+
 from agents import (
     alternative_suppliers_agent,
     company_overview_agent,
@@ -8,9 +12,6 @@ from agents import (
     report_compiler_agent,
     switching_barriers_agent,
 )
-from agno.workflow import Condition, Parallel, Step, Workflow
-from agno.workflow.types import StepInput
-from models import ProcurementAnalysisRequest
 
 
 def should_run_analysis(analysis_type: str) -> callable:

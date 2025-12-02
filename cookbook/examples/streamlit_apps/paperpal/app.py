@@ -3,12 +3,6 @@ import json
 import nest_asyncio
 import pandas as pd
 import streamlit as st
-from agents import (
-    ArxivSearchResults,
-    SearchTerms,
-    WebSearchResults,
-    get_paperpal_agents,
-)
 from agno.utils.streamlit import (
     COMMON_CSS,
     MODELS,
@@ -19,6 +13,13 @@ from agno.utils.streamlit import (
     export_chat_history,
     reset_session_state,
     session_selector_widget,
+)
+
+from agents import (
+    ArxivSearchResults,
+    SearchTerms,
+    WebSearchResults,
+    get_paperpal_agents,
 )
 
 nest_asyncio.apply()

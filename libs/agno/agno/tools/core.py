@@ -67,7 +67,9 @@ class CoreTools(Toolkit):
                 core_id = result.get("id", "N/A")
                 title = result.get("title", "No title available")
                 authors = result.get("authors", [])
-                author_names = ", ".join([author.get("name", "") for author in authors[:5]]) if authors else "Not available"
+                author_names = (
+                    ", ".join([author.get("name", "") for author in authors[:5]]) if authors else "Not available"
+                )
                 if len(authors) > 5:
                     author_names += f" et al. ({len(authors)} total authors)"
 
@@ -77,7 +79,9 @@ class CoreTools(Toolkit):
                 url = result.get("downloadUrl", result.get("url", "Not available"))
                 language = result.get("language", {}).get("code", "Unknown")
                 repositories = result.get("repositories", [])
-                repo_names = ", ".join([repo.get("name", "") for repo in repositories[:3]]) if repositories else "Not specified"
+                repo_names = (
+                    ", ".join([repo.get("name", "") for repo in repositories[:3]]) if repositories else "Not specified"
+                )
 
                 # Full text availability
                 fulltext_available = result.get("fullText", False)
@@ -112,4 +116,3 @@ class CoreTools(Toolkit):
         except Exception as e:
             logger.error(f"Error searching CORE: {e}", exc_info=True)
             return json.dumps({"error": str(e), "message": "Could not fetch papers."})
-

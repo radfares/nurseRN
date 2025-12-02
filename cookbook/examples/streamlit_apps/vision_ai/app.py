@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import streamlit as st
-from agents import get_vision_agent
 from agno.media import Image
 from agno.utils.streamlit import (
     COMMON_CSS,
@@ -15,6 +14,8 @@ from agno.utils.streamlit import (
     reset_session_state,
     session_selector_widget,
 )
+
+from agents import get_vision_agent
 
 st.set_page_config(
     page_title="Vision AI",

@@ -71,7 +71,9 @@ class MedRxivTools(Toolkit):
 
                 # Construct URLs
                 doi_url = f"https://doi.org/{doi}" if doi != "N/A" else "Not available"
-                pdf_url = item.get("jatsxml", "").replace(".xml", ".full.pdf") if item.get("jatsxml") else "Not available"
+                pdf_url = (
+                    item.get("jatsxml", "").replace(".xml", ".full.pdf") if item.get("jatsxml") else "Not available"
+                )
 
                 preprint = {
                     "DOI": doi,
@@ -95,11 +97,15 @@ class MedRxivTools(Toolkit):
 
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error searching {server}: {e}")
-            return json.dumps({"error": f"HTTP error: {e.response.status_code}", "message": f"Could not fetch preprints from {server}."})
+            return json.dumps(
+                {
+                    "error": f"HTTP error: {e.response.status_code}",
+                    "message": f"Could not fetch preprints from {server}.",
+                }
+            )
         except httpx.TimeoutException:
             logger.error(f"Timeout searching {server}")
             return json.dumps({"error": "timeout", "message": f"Request to {server} timed out."})
         except Exception as e:
             logger.error(f"Error searching {server}: {e}", exc_info=True)
             return json.dumps({"error": str(e), "message": f"Could not fetch preprints from {server}."})
-

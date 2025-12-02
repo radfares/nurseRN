@@ -1,5 +1,4 @@
 import streamlit as st
-from agents import generate_podcast, generate_podcast_agent
 from agno.utils.streamlit import (
     COMMON_CSS,
     MODELS,
@@ -12,6 +11,8 @@ from agno.utils.streamlit import (
     reset_session_state,
     session_selector_widget,
 )
+
+from agents import generate_podcast, generate_podcast_agent
 
 st.set_page_config(
     page_title="Podcast Generator",

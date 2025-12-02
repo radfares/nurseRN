@@ -4,7 +4,6 @@ from typing import Dict, List
 import chess
 import nest_asyncio
 import streamlit as st
-from agents import get_chess_team
 from agno.utils.streamlit import (
     COMMON_CSS,
     about_section,
@@ -16,6 +15,8 @@ from agno.utils.streamlit import (
     reset_session_state,
     session_selector_widget,
 )
+
+from agents import get_chess_team
 
 nest_asyncio.apply()
 st.set_page_config(

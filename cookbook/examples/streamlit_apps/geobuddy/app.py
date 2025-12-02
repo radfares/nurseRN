@@ -3,7 +3,6 @@ import tempfile
 from pathlib import Path
 
 import streamlit as st
-from agents import analyze_image_location, get_geobuddy_agent
 from agno.utils.streamlit import (
     COMMON_CSS,
     MODELS,
@@ -16,6 +15,8 @@ from agno.utils.streamlit import (
     reset_session_state,
     session_selector_widget,
 )
+
+from agents import analyze_image_location, get_geobuddy_agent
 
 st.set_page_config(
     page_title="GeoBuddy",

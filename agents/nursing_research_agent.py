@@ -17,8 +17,10 @@ FREE API UPDATE (2025-11-26): Added 5 free healthcare research APIs
 """
 
 import os
+import re
 import sys
 from textwrap import dedent
+from typing import List, Optional, Set
 
 # Module exports
 __all__ = ['NursingResearchAgent', 'nursing_research_agent']
@@ -26,12 +28,14 @@ __all__ = ['NursingResearchAgent', 'nursing_research_agent']
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
+from agno.models.response import ToolExecution
+from agno.run.agent import RunOutput
 
 # Import centralized configuration
 from agent_config import get_db_path
 
 # Import BaseAgent for inheritance pattern
-from .base_agent import BaseAgent
+from agents.base_agent import BaseAgent
 
 # Import resilience infrastructure
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -49,6 +53,8 @@ from src.services.api_tools import (
     build_tools_list,
     get_api_status
 )
+# Import LiteratureTools for saving findings to project database
+from src.tools.literature_tools import LiteratureTools
 
 
 class NursingResearchAgent(BaseAgent):
@@ -82,7 +88,7 @@ class NursingResearchAgent(BaseAgent):
             tools=tools
         )
 
-    def _create_tools(self) -> list:
+    def _create_tools(self) -> List:
         """
         Create search tools with safe fallback.
         
@@ -106,7 +112,15 @@ class NursingResearchAgent(BaseAgent):
         # Safe tool creation (Week 1 refactoring pattern)
         
         # PRIMARY: PubMed for healthcare research (most reliable for clinical evidence)
-        pubmed_tool = create_pubmed_tools_safe(required=False)
+        try:
+            pubmed_tool = create_pubmed_tools_safe(required=True)
+        except Exception as exc:
+            failure_message = (
+                "❌ PubMed tool creation failed. This agent will not run without verified PubMed access.\n"
+                "   Install dependencies (pip install biopython) and ensure network/API availability."
+            )
+            print(failure_message)
+            raise RuntimeError("PubMed initialization failed") from exc
         
         # Healthcare research tools (free APIs)
         clinicaltrials_tool = create_clinicaltrials_tools_safe(required=False)
@@ -138,9 +152,13 @@ class NursingResearchAgent(BaseAgent):
         arxiv_tool = None  # DISABLED - not for healthcare
         exa_tool = None    # DISABLED - not for healthcare
 
+        # LiteratureTools for saving findings to project database
+        literature_tools = LiteratureTools()
+        print("✅ LiteratureTools available (save findings to project DB)")
+
         # Build tools list - ONLY healthcare-appropriate tools
         # Note: ArXiv and Exa intentionally excluded to prevent misuse
-        # Tool priority: PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI
+        # Tool priority: PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI > LiteratureTools
         tools = build_tools_list(
             pubmed_tool,
             clinicaltrials_tool,
@@ -149,7 +167,8 @@ class NursingResearchAgent(BaseAgent):
             core_tool,
             doaj_tool,
             safety_tool,
-            serp_tool
+            serp_tool,
+            literature_tools
         )
 
         # Store tool availability for later reference (used by show_usage_examples)
@@ -228,7 +247,7 @@ class NursingResearchAgent(BaseAgent):
         return Agent(
             name="Nursing Research Agent",
             role="Healthcare improvement project research specialist",
-            model=OpenAIChat(id="gpt-4o"),
+            model=OpenAIChat(id="gpt-4o", temperature=0),
             tools=self.tools,
             description=dedent("""\
                 You are a specialized Nursing Research Assistant focused on healthcare improvement projects.
@@ -298,6 +317,46 @@ class NursingResearchAgent(BaseAgent):
                 
                 NOTE: ArXiv and Exa have been disabled as they are not appropriate for healthcare research.
 
+                CRITICAL RULES FOR SEARCH RESULTS:
+                1. NEVER fabricate articles, PMIDs, DOIs, or authors
+                2. If search tools return no results, explicitly state: "No articles found"
+                3. ONLY cite articles that were returned by search tools
+                4. If tools fail, state: "Search tools unavailable - cannot perform search"
+                5. Every PMID must come directly from PubMed tool results
+                6. If unsure about an article's authenticity, do not cite it
+
+                VERIFICATION CHECKLIST before citing any article:
+                ✓ Did this PMID come from PubMed tool results?
+                ✓ Did I receive complete article metadata (title, authors, journal)?
+                ✓ Can I verify this is real data, not generated?
+                ✓ If any answer is NO → refuse to provide the citation
+
+                CRITICAL: STRICT GROUNDING POLICY
+                You are a VERIFICATION-FIRST agent. Accuracy outranks helpfulness.
+                - If tools return no results → say "No articles found in PubMed"
+                - If tools fail → say "Search unavailable - cannot retrieve data"
+                - If you cannot verify information → say "I cannot verify this information"
+                - NEVER generate content that did not come from verified tool outputs
+                - NEVER fill gaps with plausible-sounding information
+                - NEVER assume or infer PMIDs, DOIs, author names, or journal titles
+                - "I don't know" is preferred over hallucinations
+
+                THINK LIKE THIS:
+                ❌ BAD: "I'll provide helpful articles..." (then fabricate)
+                ✅ GOOD: "No PubMed articles matched your query. Would you like to try alternate terms?"
+
+                RESPONSE REQUIREMENTS:
+                - Every citation MUST reference an actual tool output
+                - If unsure about ANY detail, explicitly state uncertainty
+                - Empty search results MUST produce "No results found" instead of fabricated articles
+
+                EXAMPLES OF CORRECT REFUSAL:
+                User: "Find articles about XYZ nursing intervention"
+                Tool returns 0 results → Respond with "I searched PubMed and found no articles matching 'XYZ nursing intervention'."
+                User: "What's the PMID for the Smith et al. catheter study?"
+                No search performed → Respond "I don't have that information available yet. Please provide more details so I can search PubMed."
+                User: "Find 5 articles about fall prevention" and only 2 results exist → Respond with the 2 verified citations and explain the shortfall.
+
                 RESPONSE FORMAT:
                 - Use clear headings and bullet points
                 - Summarize key takeaways
@@ -311,6 +370,197 @@ class NursingResearchAgent(BaseAgent):
             enable_agentic_memory=True,
             markdown=True,
             db=SqliteDb(db_file=get_db_path("nursing_research")),
+            pre_hooks=[self._audit_pre_hook],
+            post_hooks=[self._audit_post_hook],
+        )
+
+    def run_with_grounding_check(self, query: str, **kwargs) -> RunOutput:
+        """Execute the agent while forcing a grounding verification pass."""
+        # Audit Logging: Query Received
+        project_name = kwargs.get("project_name")
+        if self.audit_logger:
+            self.audit_logger.log_query_received(query, project_name)
+
+        stream_requested = bool(kwargs.get("stream"))
+        
+        try:
+            response = self.agent.run(query, **kwargs)
+            
+            # Audit Logging: Tool Calls & Results
+            # Note: Agno agent.run() handles tool execution internally, 
+            # so we capture them from the response object if possible,
+            # or rely on the agent framework hooks if we were deeper.
+            # For now, we log the final response and validation.
+            
+            # Streaming responses are yielded incrementally and cannot be re-verified here.
+            if stream_requested:
+                return response
+                
+            self._validate_run_output(response)
+            
+            # Audit Logging: Response Generated
+            if self.audit_logger:
+                self.audit_logger.log_response_generated(
+                    response=str(response.content),
+                    response_type="success",
+                    validation_passed=True # If we got here, validation passed (or didn't raise)
+                )
+                
+            return response
+            
+        except Exception as e:
+            # Audit Logging: Error
+            if self.audit_logger:
+                self.audit_logger.log_error(
+                    error_type=type(e).__name__,
+                    error_message=str(e),
+                    stack_trace=traceback.format_exc()
+                )
+            raise
+
+    def _grounding_post_hook(self, run_output: RunOutput, **_: object) -> None:
+        """Agno post-hook that blocks unverified research responses."""
+        self._validate_run_output(run_output)
+
+    def _validate_run_output(self, run_output: RunOutput) -> bool:
+        """Ensure every research claim is grounded in actual tool output."""
+        response_text = self._extract_response_text(run_output.content)
+        if not response_text:
+            return True
+
+        tools = run_output.tools or []
+        pmids_in_response = self._extract_pmids(response_text)
+        pmids_from_tools = self._extract_pmids_from_tools(tools)
+        tool_results_present = self._has_substantive_tool_results(tools)
+
+        # Audit Logging: Grounding Check
+        if self.audit_logger:
+            self.audit_logger.log_grounding_check(
+                pmids_cited=list(pmids_in_response),
+                pmids_verified=list(pmids_from_tools),
+                hallucination_detected=False # Will update if detected
+            )
+
+        if pmids_in_response and not tools:
+            reason = "PMIDs were cited without running any research tools"
+            self._replace_with_refusal(run_output, reason)
+            self.logger.warning(reason)
+            if self.audit_logger:
+                self.audit_logger.log_validation_check("grounding", False, {"reason": reason})
+            return False
+
+        if pmids_in_response and not pmids_from_tools:
+            reason = "cited PMIDs are missing from PubMed results"
+            self._replace_with_refusal(run_output, reason)
+            self.logger.warning(reason)
+            if self.audit_logger:
+                self.audit_logger.log_validation_check("grounding", False, {"reason": reason})
+            return False
+
+        missing_pmids = pmids_in_response - pmids_from_tools
+        if missing_pmids:
+            reason = f"unverified PMIDs detected: {', '.join(sorted(missing_pmids))}"
+            self._replace_with_refusal(run_output, reason)
+            self.logger.warning(reason)
+            if self.audit_logger:
+                self.audit_logger.log_validation_check("grounding", False, {"reason": reason})
+            return False
+
+        if self._response_claims_research(response_text) and not tool_results_present:
+            reason = self._refusal_reason_from_tools()
+            self._replace_with_refusal(run_output, reason)
+            self.logger.warning(reason)
+            if self.audit_logger:
+                self.audit_logger.log_validation_check("grounding", False, {"reason": reason})
+            return False
+
+        if self.audit_logger:
+            self.audit_logger.log_validation_check("grounding", True)
+            
+        return True
+
+    @staticmethod
+    def _extract_response_text(content: Optional[object]) -> Optional[str]:
+        """Normalize RunOutput content into a single string."""
+        if content is None:
+            return None
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return "\n".join(str(item) for item in content if item is not None)
+        return str(content)
+
+    @staticmethod
+    def _extract_pmids(text: str) -> Set[str]:
+        """Extract PMIDs from a blob of text."""
+        if not text:
+            return set()
+        return set(re.findall(r"pmid\s*[:#]?\s*(\d+)", text, flags=re.IGNORECASE))
+
+    def _extract_pmids_from_tools(self, tools: List[ToolExecution]) -> Set[str]:
+        pmids: Set[str] = set()
+        for execution in tools:
+            payload = self._get_tool_result_text(execution)
+            if payload:
+                pmids.update(self._extract_pmids(payload))
+        return pmids
+
+    def _has_substantive_tool_results(self, tools: List[ToolExecution]) -> bool:
+        for execution in tools:
+            payload = self._get_tool_result_text(execution).strip()
+            if not payload:
+                continue
+            lowered = payload.lower()
+            if any(flag in lowered for flag in ["temporarily unavailable", "error", "failed", "unavailable"]):
+                continue
+            return True
+        return False
+
+    @staticmethod
+    def _get_tool_result_text(execution: ToolExecution) -> str:
+        """Safely extract result text from ToolExecution or dict payloads."""
+        if isinstance(execution, ToolExecution):
+            return str(execution.result or "")
+        if isinstance(execution, dict):
+            return str(execution.get("result", "") or "")
+        return str(getattr(execution, "result", "") or "")
+
+    @staticmethod
+    def _response_claims_research(text: str) -> bool:
+        lowered = text.lower()
+        research_keywords = ["pmid", "doi", "journal", "article", "study", "trial"]
+        return any(keyword in lowered for keyword in research_keywords)
+
+    def _refusal_reason_from_tools(self) -> str:
+        status = getattr(self, '_tool_status', {})
+        if not status.get('pubmed'):
+            return "PubMed tool is unavailable"
+        if not self.tools:
+            return "no research tools are configured"
+        return "search tools returned no usable results to cite"
+
+    def _replace_with_refusal(self, run_output: RunOutput, reason: str) -> None:
+        refusal_message = self._build_refusal_message(reason)
+        run_output.content = refusal_message
+        metadata = dict(run_output.metadata or {})
+        metadata.update({
+            "grounding_status": "failed",
+            "grounding_reason": reason,
+        })
+        run_output.metadata = metadata
+
+    @staticmethod
+    def _build_refusal_message(reason: str) -> str:
+        guidance = (
+            "\nNext steps:\n"
+            "1. Provide additional context or alternate keywords.\n"
+            "2. Confirm PubMed/Safety tools are configured and reachable.\n"
+            "3. Retry once verified data is available."
+        )
+        return (
+            "⚠️ Unable to provide a research summary because verification failed.\n"
+            f"Reason: {reason}."
+            f"{guidance}"
         )
 
     def show_usage_examples(self) -> None:

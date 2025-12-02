@@ -1,6 +1,5 @@
 import nest_asyncio
 import streamlit as st
-from agents import get_deep_researcher_workflow
 from agno.utils.streamlit import (
     COMMON_CSS,
     about_section,
@@ -8,6 +7,8 @@ from agno.utils.streamlit import (
     display_chat_messages,
     export_chat_history,
 )
+
+from agents import get_deep_researcher_workflow
 
 nest_asyncio.apply()
 st.set_page_config(

@@ -15,6 +15,8 @@ This module provides safe wrappers for creating API tools that:
 
 import logging
 import os
+import threading
+import functools
 from typing import Optional, Any, Callable
 from functools import wraps
 
@@ -75,52 +77,163 @@ except Exception as e:
 # Tool Wrapper Classes with Circuit Breaker Protection
 # ============================================================================
 
-class CircuitProtectedToolWrapper:
+import inspect
+
+def _get_exa_breaker(): return EXA_BREAKER
+def _get_serp_breaker(): return SERP_BREAKER
+def _get_pubmed_breaker(): return PUBMED_BREAKER
+def _get_arxiv_breaker(): return ARXIV_BREAKER
+def _get_clinicaltrials_breaker(): return CLINICALTRIALS_BREAKER
+def _get_medrxiv_breaker(): return MEDRXIV_BREAKER
+def _get_semantic_scholar_breaker(): return SEMANTIC_SCHOLAR_BREAKER
+def _get_core_breaker(): return CORE_BREAKER
+def _get_doaj_breaker(): return DOAJ_BREAKER
+
+def _custom_getstate(self):
+    """Custom pickle getstate to remove unpicklable locks/breakers."""
+    # If the class had a getstate, call it
+    if hasattr(self, "_orig_getstate"):
+        state = self._orig_getstate()
+    else:
+        state = self.__dict__.copy()
+        
+    # Remove locks and breakers
+    keys = list(state.keys())
+    for k in keys:
+        if k.startswith("_breaker_lock_") or k.startswith("_breaker_"):
+            # Keep factory
+            if k == "_breaker_factory":
+                continue
+            del state[k]
+    return state
+
+def _custom_setstate(self, state):
+    """Custom pickle setstate to restore locks/breakers."""
+    # If the class had a setstate, call it
+    if hasattr(self, "_orig_setstate"):
+        self._orig_setstate(state)
+    else:
+        self.__dict__.update(state)
+        
+    # Restore locks and breakers
+    if hasattr(self, "_wrapped_methods") and hasattr(self, "_breaker_factory"):
+        factory = self._breaker_factory
+        for name in self._wrapped_methods:
+            setattr(self, f"_breaker_lock_{name}", threading.Lock())
+            # Re-create breaker using the factory
+            if factory:
+                setattr(self, f"_breaker_{name}", factory())
+
+def _make_bound_wrapper(method_name, orig_func):
     """
-    Base wrapper class that adds circuit breaker protection to tool method calls.
-
-    This wraps any tool object and intercepts method calls to add:
-    1. Circuit breaker protection
-    2. Error handling with fallback responses
-    3. Logging
+    Create a wrapper function for a method.
+    Defined at module level to aid pickling.
     """
+    @functools.wraps(orig_func)
+    def _wrapper(self, *args, **kwargs):
+        # Retrieve instance-specific lock and breaker
+        lock = getattr(self, f"_breaker_lock_{method_name}")
+        breaker = getattr(self, f"_breaker_{method_name}")
+        
+        with lock:
+            orig_method = getattr(self, f"_orig_{method_name}")
+            if hasattr(orig_method, "__get__"):
+                bound_orig = orig_method.__get__(self, self.__class__)
+            else:
+                bound_orig = orig_method
+                
+            return breaker.call(bound_orig, *args, **kwargs)
+            
+    # Explicitly copy signature from unbound function
+    try:
+        _wrapper.__signature__ = inspect.signature(orig_func)
+    except Exception:
+        pass
+        
+    return _wrapper
 
-    def __init__(self, tool, breaker, tool_name: str):
-        """
-        Initialize wrapper.
+def _unwrap_tool_method(tool, method_name):
+    """
+    Unwrap a method on a tool instance.
+    Defined at module level for pickling.
+    """
+    key = f"_orig_{method_name}"
+    if hasattr(tool, key):
+        setattr(tool, method_name, getattr(tool, key))
+        delattr(tool, key)
+        # Clean up breaker artifacts
+        if hasattr(tool, f"_breaker_{method_name}"):
+            delattr(tool, f"_breaker_{method_name}")
+        if hasattr(tool, f"_breaker_lock_{method_name}"):
+            delattr(tool, f"_breaker_lock_{method_name}")
+        if hasattr(tool, "_wrapped_methods"):
+            tool._wrapped_methods.discard(method_name)
 
-        Args:
-            tool: The tool instance to wrap
-            breaker: Circuit breaker instance
-            tool_name: Name for logging
-        """
-        self._tool = tool
-        self._breaker = breaker
-        self._tool_name = tool_name
+def apply_in_place_wrapper(tool: Any, method_names: list, breaker_factory: Callable[[], Any]) -> Any:
+    """
+    Replace methods on `tool` in-place with circuit-breaker-protected bound methods.
+    
+    Args:
+        tool: The tool instance to modify
+        method_names: List of method names to wrap
+        breaker_factory: Function that returns a circuit breaker instance. 
+                        MUST be a top-level function for pickling.
+        
+    Returns:
+        The modified tool instance
+    """
+    if not hasattr(tool, "_wrapped_methods"):
+        tool._wrapped_methods = set()
+        # Store factory for unpickling restoration
+        tool._breaker_factory = breaker_factory
+        
+        # Patch the class to support pickling
+        cls = tool.__class__
+        # Only patch if we haven't already (check for our custom methods)
+        if getattr(cls, "__getstate__", None) != _custom_getstate:
+            if hasattr(cls, "__getstate__"):
+                setattr(cls, "_orig_getstate", cls.__getstate__)
+            cls.__getstate__ = _custom_getstate
+            
+            if hasattr(cls, "__setstate__"):
+                setattr(cls, "_orig_setstate", cls.__setstate__)
+            cls.__setstate__ = _custom_setstate
+        
+    for name in method_names:
+        if name in tool._wrapped_methods:
+            continue
+            
+        try:
+            orig_bound = getattr(tool, name)
+            # Get unbound function from class for correct signature
+            orig_unbound = getattr(tool.__class__, name)
+        except AttributeError:
+            continue
 
-    def __getattr__(self, name):
-        """
-        Intercept attribute access to wrap methods with circuit breaker.
-        """
-        # Get the original attribute from the wrapped tool
-        attr = getattr(self._tool, name)
+        # Store original bound method
+        setattr(tool, f"_orig_{name}", orig_bound)
 
-        # If it's a method, wrap it with circuit breaker
-        if callable(attr):
-            @wraps(attr)
-            def circuit_protected_method(*args, **kwargs):
-                logger.debug(f"Calling {self._tool_name}.{name} with circuit breaker protection")
-                return call_with_breaker(
-                    self._breaker,
-                    attr,
-                    f"{self._tool_name} temporarily unavailable. Please try again later.",
-                    *args,
-                    **kwargs
-                )
-            return circuit_protected_method
+        # Create per-instance breaker and lock
+        breaker = breaker_factory()
+        
+        # If breaker is None (e.g. pybreaker not installed), skip wrapping
+        if breaker is None:
+            continue
+            
+        setattr(tool, f"_breaker_{name}", breaker)
+        setattr(tool, f"_breaker_lock_{name}", threading.Lock())
 
-        # If it's not a method, return it as-is
-        return attr
+        # Create wrapper using unbound function and bind to instance
+        wrapped = _make_bound_wrapper(name, orig_unbound)
+        # Bind the wrapper to the instance
+        bound = wrapped.__get__(tool, tool.__class__)
+        setattr(tool, name, bound)
+        tool._wrapped_methods.add(name)
+
+    # Attach unwrap method using partial for pickling support
+    tool._unwrap_method = functools.partial(_unwrap_tool_method, tool)
+    
+    return tool
 
 
 # ============================================================================
@@ -162,9 +275,15 @@ def create_exa_tools_safe(required: bool = False) -> Optional[Any]:
             type="neural",
         )
         # Wrap with circuit breaker protection
-        wrapped_tool = CircuitProtectedToolWrapper(exa_tool, EXA_BREAKER, "Exa API")
+        # We use a lambda to pass the breaker instance as a factory
+        # This means all instances share the same breaker state (global rate limiting)
+        apply_in_place_wrapper(
+            exa_tool, 
+            [m for m in dir(exa_tool) if not m.startswith("_") and callable(getattr(exa_tool, m))],
+            _get_exa_breaker
+        )
         logger.info("✅ Created Exa tool with circuit breaker protection")
-        return wrapped_tool
+        return exa_tool
     except Exception as e:
         logger.error(f"Failed to create ExaTools: {e}", exc_info=True)
         if required:
@@ -203,9 +322,13 @@ def create_serp_tools_safe(required: bool = False) -> Optional[Any]:
         # Create the base tool
         serp_tool = SerpApiTools(api_key=api_key)
         # Wrap with circuit breaker protection
-        wrapped_tool = CircuitProtectedToolWrapper(serp_tool, SERP_BREAKER, "SerpAPI")
+        apply_in_place_wrapper(
+            serp_tool,
+            [m for m in dir(serp_tool) if not m.startswith("_") and callable(getattr(serp_tool, m))],
+            _get_serp_breaker
+        )
         logger.info("✅ Created SerpAPI tool with circuit breaker protection")
-        return wrapped_tool
+        return serp_tool
     except Exception as e:
         logger.error(f"Failed to create SerpApiTools: {e}", exc_info=True)
         if required:
@@ -240,9 +363,13 @@ def create_pubmed_tools_safe(required: bool = False) -> Optional[Any]:
             enable_search_pubmed=True,
         )
         # Wrap with circuit breaker protection
-        wrapped_tool = CircuitProtectedToolWrapper(pubmed_tool, PUBMED_BREAKER, "PubMed API")
+        apply_in_place_wrapper(
+            pubmed_tool,
+            [m for m in dir(pubmed_tool) if not m.startswith("_") and callable(getattr(pubmed_tool, m))],
+            _get_pubmed_breaker
+        )
         logger.info("✅ Created PubMed tool with circuit breaker protection")
-        return wrapped_tool
+        return pubmed_tool
     except Exception as e:
         logger.error(f"Failed to create PubmedTools: {e}", exc_info=True)
         if required:
@@ -272,9 +399,13 @@ def create_arxiv_tools_safe(required: bool = False) -> Optional[Any]:
         # Create the base tool
         arxiv_tool = ArxivTools(enable_search_arxiv=True)
         # Wrap with circuit breaker protection
-        wrapped_tool = CircuitProtectedToolWrapper(arxiv_tool, ARXIV_BREAKER, "Arxiv API")
+        apply_in_place_wrapper(
+            arxiv_tool,
+            [m for m in dir(arxiv_tool) if not m.startswith("_") and callable(getattr(arxiv_tool, m))],
+            _get_arxiv_breaker
+        )
         logger.info("✅ Created Arxiv tool with circuit breaker protection")
-        return wrapped_tool
+        return arxiv_tool
     except Exception as e:
         logger.error(f"Failed to create ArxivTools: {e}", exc_info=True)
         if required:
@@ -307,9 +438,13 @@ def create_clinicaltrials_tools_safe(required: bool = False) -> Optional[Any]:
             max_results=10,
         )
         # Wrap with circuit breaker protection
-        wrapped_tool = CircuitProtectedToolWrapper(clinicaltrials_tool, CLINICALTRIALS_BREAKER, "ClinicalTrials.gov API")
+        apply_in_place_wrapper(
+            clinicaltrials_tool,
+            [m for m in dir(clinicaltrials_tool) if not m.startswith("_") and callable(getattr(clinicaltrials_tool, m))],
+            _get_clinicaltrials_breaker
+        )
         logger.info("✅ Created ClinicalTrials.gov tool with circuit breaker protection")
-        return wrapped_tool
+        return clinicaltrials_tool
     except Exception as e:
         logger.error(f"Failed to create ClinicalTrialsTools: {e}", exc_info=True)
         if required:
@@ -343,9 +478,13 @@ def create_medrxiv_tools_safe(required: bool = False) -> Optional[Any]:
             max_results=10,
         )
         # Wrap with circuit breaker protection
-        wrapped_tool = CircuitProtectedToolWrapper(medrxiv_tool, MEDRXIV_BREAKER, "medRxiv API")
+        apply_in_place_wrapper(
+            medrxiv_tool,
+            [m for m in dir(medrxiv_tool) if not m.startswith("_") and callable(getattr(medrxiv_tool, m))],
+            _get_medrxiv_breaker
+        )
         logger.info("✅ Created medRxiv tool with circuit breaker protection")
-        return wrapped_tool
+        return medrxiv_tool
     except Exception as e:
         logger.error(f"Failed to create MedRxivTools: {e}", exc_info=True)
         if required:
@@ -379,9 +518,13 @@ def create_semantic_scholar_tools_safe(required: bool = False) -> Optional[Any]:
             api_key=os.getenv("SEMANTIC_SCHOLAR_API_KEY"),
         )
         # Wrap with circuit breaker protection
-        wrapped_tool = CircuitProtectedToolWrapper(semantic_scholar_tool, SEMANTIC_SCHOLAR_BREAKER, "Semantic Scholar API")
+        apply_in_place_wrapper(
+            semantic_scholar_tool,
+            [m for m in dir(semantic_scholar_tool) if not m.startswith("_") and callable(getattr(semantic_scholar_tool, m))],
+            _get_semantic_scholar_breaker
+        )
         logger.info("✅ Created Semantic Scholar tool with circuit breaker protection")
-        return wrapped_tool
+        return semantic_scholar_tool
     except Exception as e:
         logger.error(f"Failed to create SemanticScholarTools: {e}", exc_info=True)
         if required:
@@ -415,9 +558,13 @@ def create_core_tools_safe(required: bool = False) -> Optional[Any]:
             api_key=os.getenv("CORE_API_KEY"),
         )
         # Wrap with circuit breaker protection
-        wrapped_tool = CircuitProtectedToolWrapper(core_tool, CORE_BREAKER, "CORE API")
+        apply_in_place_wrapper(
+            core_tool,
+            [m for m in dir(core_tool) if not m.startswith("_") and callable(getattr(core_tool, m))],
+            _get_core_breaker
+        )
         logger.info("✅ Created CORE tool with circuit breaker protection")
-        return wrapped_tool
+        return core_tool
     except Exception as e:
         logger.error(f"Failed to create CoreTools: {e}", exc_info=True)
         if required:
@@ -450,9 +597,13 @@ def create_doaj_tools_safe(required: bool = False) -> Optional[Any]:
             max_results=10,
         )
         # Wrap with circuit breaker protection
-        wrapped_tool = CircuitProtectedToolWrapper(doaj_tool, DOAJ_BREAKER, "DOAJ API")
+        apply_in_place_wrapper(
+            doaj_tool,
+            [m for m in dir(doaj_tool) if not m.startswith("_") and callable(getattr(doaj_tool, m))],
+            _get_doaj_breaker
+        )
         logger.info("✅ Created DOAJ tool with circuit breaker protection")
-        return wrapped_tool
+        return doaj_tool
     except Exception as e:
         logger.error(f"Failed to create DoajTools: {e}", exc_info=True)
         if required:

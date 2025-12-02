@@ -4,7 +4,6 @@ from os import unlink
 
 import nest_asyncio
 import streamlit as st
-from agents import get_recipe_image_agent
 from agno.utils.streamlit import (
     COMMON_CSS,
     MODELS,
@@ -19,6 +18,8 @@ from agno.utils.streamlit import (
     session_selector_widget,
 )
 from PIL import Image
+
+from agents import get_recipe_image_agent
 
 nest_asyncio.apply()
 st.set_page_config(

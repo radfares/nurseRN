@@ -9,6 +9,7 @@ PHASE 2 COMPLETE (2025-11-26): Refactored to use BaseAgent inheritance
 """
 
 from textwrap import dedent
+from typing import Any
 
 # Module exports
 __all__ = ['ResearchWritingAgent', 'research_writing_agent']
@@ -21,7 +22,7 @@ from agno.models.openai import OpenAIChat
 from agent_config import get_db_path
 
 # Import BaseAgent for inheritance pattern
-from .base_agent import BaseAgent
+from agents.base_agent import BaseAgent
 
 
 class ResearchWritingAgent(BaseAgent):
@@ -56,7 +57,7 @@ class ResearchWritingAgent(BaseAgent):
         return Agent(
             name="Research Writing Agent",
             role="Academic writing and research planning specialist",
-            model=OpenAIChat(id="gpt-4o"),  # Best model for writing quality
+            model=OpenAIChat(id="gpt-4o", temperature=0),  # Best model for writing quality
             tools=self.tools,
             description=dedent("""\
                 You are an expert Research Writing and Planning Specialist with deep knowledge of:
@@ -74,6 +75,17 @@ class ResearchWritingAgent(BaseAgent):
                 """),
             instructions=dedent("""\
                 CORE EXPERTISE AREAS:
+
+                ABSOLUTE LAW #1: NO HALLUCINATED SOURCES
+                - You do NOT have access to external search tools
+                - You MUST NOT invent citations, references, or PMIDs
+                - Only cite sources explicitly provided by the user or in the conversation history
+                - If you need sources, ask the user to provide them or use the Research Agents
+
+                ABSOLUTE LAW #2: ACADEMIC INTEGRITY
+                - Do not plagiarize
+                - Do not fabricate data or results
+                - Clearly distinguish between your suggestions and established facts
 
                 1. PICOT QUESTION DEVELOPMENT
                    - Help formulate clear, specific PICOT questions
@@ -178,7 +190,70 @@ class ResearchWritingAgent(BaseAgent):
             add_datetime_to_context=True,
             markdown=True,
             db=SqliteDb(db_file=get_db_path("research_writing")),
+            pre_hooks=[self._audit_pre_hook],
+            post_hooks=[self._audit_post_hook],
         )
+
+    def run_with_grounding_check(self, query: str, **kwargs) -> Any:
+        """Execute the agent while forcing a grounding verification pass."""
+        # Audit Logging: Query Received
+        project_name = kwargs.get("project_name")
+        if self.audit_logger:
+            self.audit_logger.log_query_received(query, project_name)
+
+        stream_requested = bool(kwargs.get("stream"))
+        
+        try:
+            response = self.agent.run(query, **kwargs)
+            
+            # Streaming responses are yielded incrementally and cannot be re-verified here.
+            if stream_requested:
+                return response
+                
+            self._validate_run_output(response)
+            
+            # Audit Logging: Response Generated
+            if self.audit_logger:
+                self.audit_logger.log_response_generated(
+                    response=str(response.content),
+                    response_type="success",
+                    validation_passed=True
+                )
+                
+            return response
+            
+        except Exception as e:
+            # Audit Logging: Error
+            if self.audit_logger:
+                self.audit_logger.log_error(
+                    error_type=type(e).__name__,
+                    error_message=str(e),
+                    stack_trace=str(e)
+                )
+            raise
+
+    def _validate_run_output(self, run_output: Any) -> bool:
+        """Ensure no hallucinated citations are present."""
+        # Since this agent has no tools, any citation (PMID/DOI) is potentially hallucinated
+        # unless it's from context. We'll just log if we see them.
+        
+        import re
+        content = str(run_output.content)
+        
+        # Check for PMIDs or DOIs
+        pmids = re.findall(r"PMID:?\s*(\d+)", content, re.IGNORECASE)
+        dois = re.findall(r"10\.\d{4,9}/[-._;()/:A-Z0-9]+", content, re.IGNORECASE)
+        
+        if pmids or dois:
+            # Log warning - this agent shouldn't be generating new citations
+            if self.audit_logger:
+                self.audit_logger.log_validation_check(
+                    "no_citations_check", 
+                    True, # We don't block, just log, as user might have provided them
+                    {"pmids_found": pmids, "dois_found": dois, "note": "Agent has no search tools"}
+                )
+        
+        return True
 
     def show_usage_examples(self) -> None:
         """Display usage examples for the Research Writing Agent."""

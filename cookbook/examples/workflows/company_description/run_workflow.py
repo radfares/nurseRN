@@ -1,12 +1,5 @@
 import markdown
 import resend
-from agents import (
-    SupplierProfile,
-    competitor_agent,
-    crawl_agent,
-    search_agent,
-    wikipedia_agent,
-)
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.run.agent import RunOutput
@@ -14,6 +7,14 @@ from agno.utils.log import log_error, log_info
 from agno.workflow import Parallel, Step, Workflow
 from agno.workflow.types import StepInput, StepOutput
 from prompts import SUPPLIER_PROFILE_DICT, SUPPLIER_PROFILE_INSTRUCTIONS_GENERAL
+
+from agents import (
+    SupplierProfile,
+    competitor_agent,
+    crawl_agent,
+    search_agent,
+    wikipedia_agent,
+)
 
 crawler_step = Step(
     name="Crawler",

@@ -58,7 +58,9 @@ class DoajTools(Toolkit):
                 article_id = result.get("id", "N/A")
                 title = result.get("bibjson", {}).get("title", "No title available")
                 authors = result.get("bibjson", {}).get("author", [])
-                author_names = ", ".join([author.get("name", "") for author in authors[:5]]) if authors else "Not available"
+                author_names = (
+                    ", ".join([author.get("name", "") for author in authors[:5]]) if authors else "Not available"
+                )
                 if len(authors) > 5:
                     author_names += f" et al. ({len(authors)} total authors)"
 
@@ -107,11 +109,12 @@ class DoajTools(Toolkit):
 
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error searching DOAJ: {e}")
-            return json.dumps({"error": f"HTTP error: {e.response.status_code}", "message": "Could not fetch articles."})
+            return json.dumps(
+                {"error": f"HTTP error: {e.response.status_code}", "message": "Could not fetch articles."}
+            )
         except httpx.TimeoutException:
             logger.error("Timeout searching DOAJ")
             return json.dumps({"error": "timeout", "message": "Request to DOAJ timed out."})
         except Exception as e:
             logger.error(f"Error searching DOAJ: {e}", exc_info=True)
             return json.dumps({"error": str(e), "message": "Could not fetch articles."})
-

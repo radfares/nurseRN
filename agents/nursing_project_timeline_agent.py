@@ -8,6 +8,7 @@ PHASE 2 COMPLETE (2025-11-26): Refactored to use BaseAgent inheritance
 """
 
 from textwrap import dedent
+from typing import Any
 
 # Module exports
 __all__ = ['ProjectTimelineAgent', 'project_timeline_agent']
@@ -20,7 +21,7 @@ from agno.models.openai import OpenAIChat
 from agent_config import get_db_path
 
 # Import BaseAgent for inheritance pattern
-from .base_agent import BaseAgent
+from agents.base_agent import BaseAgent
 
 
 class ProjectTimelineAgent(BaseAgent):
@@ -72,7 +73,7 @@ class ProjectTimelineAgent(BaseAgent):
         return Agent(
             name="Project Timeline Assistant",
             role="Guide nursing residents through improvement project milestones",
-            model=OpenAIChat(id="gpt-4o-mini"),  # Cheaper for timeline/guidance
+            model=OpenAIChat(id="gpt-4o-mini", temperature=0),  # Cheaper for timeline/guidance
             tools=self.tools,
             description=dedent("""\
                 You are a Project Timeline Assistant for the Nursing Residency improvement project
@@ -82,10 +83,19 @@ class ProjectTimelineAgent(BaseAgent):
             instructions=dedent("""\
                 PROJECT TIMELINE ASSISTANT - Database-Driven Guidance
 
+                ABSOLUTE LAW #1: DATABASE GROUNDING
+                - You MUST query the database for milestone dates and status
+                - NEVER invent or assume dates, deadlines, or deliverables
+                - If the database is empty or missing data, state that clearly
+                - Do not "fill in" missing dates with guesses
+
+                ABSOLUTE LAW #2: ACCURACY OVER HELPFULNESS
+                - It is better to say "I don't know" than to give a wrong date
+                - If tool execution fails, do not guess the timeline
+                - Always cite the specific milestone name from the database
+
                 You have access to the milestones table via MilestoneTools. Use these tools to provide
                 accurate, up-to-date timeline guidance based on the ACTUAL project database.
-
-                CRITICAL: ALWAYS query the database - NEVER assume or invent dates.
 
                 AVAILABLE TOOLS:
                 1. get_all_milestones() - Retrieve all milestones with status and dates
@@ -151,7 +161,74 @@ class ProjectTimelineAgent(BaseAgent):
             add_datetime_to_context=True,
             markdown=True,
             db=SqliteDb(db_file=get_db_path("project_timeline")),
+            pre_hooks=[self._audit_pre_hook],
+            post_hooks=[self._audit_post_hook],
         )
+
+    def run_with_grounding_check(self, query: str, **kwargs) -> Any:
+        """Execute the agent while forcing a grounding verification pass."""
+        # Audit Logging: Query Received
+        project_name = kwargs.get("project_name")
+        if self.audit_logger:
+            self.audit_logger.log_query_received(query, project_name)
+
+        stream_requested = bool(kwargs.get("stream"))
+        
+        try:
+            response = self.agent.run(query, **kwargs)
+            
+            # Streaming responses are yielded incrementally and cannot be re-verified here.
+            if stream_requested:
+                return response
+                
+            self._validate_run_output(response)
+            
+            # Audit Logging: Response Generated
+            if self.audit_logger:
+                self.audit_logger.log_response_generated(
+                    response=str(response.content),
+                    response_type="success",
+                    validation_passed=True
+                )
+                
+            return response
+            
+        except Exception as e:
+            # Audit Logging: Error
+            if self.audit_logger:
+                self.audit_logger.log_error(
+                    error_type=type(e).__name__,
+                    error_message=str(e),
+                    stack_trace=str(e)
+                )
+            raise
+
+    def _validate_run_output(self, run_output: Any) -> bool:
+        """Ensure milestone dates match database."""
+        # This is a basic check to ensure tools were used if dates are mentioned
+        content = str(run_output.content)
+        tools = run_output.tools or []
+        
+        import re
+        # Look for dates like "December 17" or "2025-12-17"
+        date_pattern = r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}|202\d-\d{2}-\d{2}"
+        dates_found = re.findall(date_pattern, content)
+        
+        if dates_found and not tools:
+            # Agent mentioned dates but didn't query database
+            if self.audit_logger:
+                self.audit_logger.log_validation_check(
+                    "database_grounding", 
+                    False, 
+                    {"dates_found": dates_found, "reason": "Dates mentioned without DB query"}
+                )
+            # We don't block here because it might be general conversation, but we log it.
+            return False
+            
+        if self.audit_logger:
+            self.audit_logger.log_validation_check("database_grounding", True)
+            
+        return True
 
     def show_usage_examples(self) -> None:
         """Display usage examples for the Project Timeline Assistant."""

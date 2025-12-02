@@ -65,7 +65,9 @@ class SemanticScholarTools(Toolkit):
                 paper_id = paper.get("paperId", "N/A")
                 title = paper.get("title", "No title available")
                 authors = paper.get("authors", [])
-                author_names = ", ".join([author.get("name", "") for author in authors[:5]]) if authors else "Not available"
+                author_names = (
+                    ", ".join([author.get("name", "") for author in authors[:5]]) if authors else "Not available"
+                )
                 if len(authors) > 5:
                     author_names += f" et al. ({len(authors)} total authors)"
 
@@ -112,4 +114,3 @@ class SemanticScholarTools(Toolkit):
         except Exception as e:
             logger.error(f"Error searching Semantic Scholar: {e}", exc_info=True)
             return json.dumps({"error": str(e), "message": "Could not fetch papers."})
-
