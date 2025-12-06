@@ -77,7 +77,8 @@ class WorkflowOrchestrator:
             AgentResult object
         """
         start_time = time.time()
-        agent_name = getattr(agent, "name", "UnknownAgent")
+        # Get agent name - check BaseAgent pattern first (agent_name), then Agno pattern (name)
+        agent_name = getattr(agent, "agent_name", None) or getattr(agent, "name", "UnknownAgent")
         
         try:
             # Log start (sanitized)
@@ -167,7 +168,7 @@ class WorkflowOrchestrator:
         
         # Submit all tasks
         for agent in agents:
-            agent_name = getattr(agent, "name", "UnknownAgent")
+            agent_name = getattr(agent, "agent_name", None) or getattr(agent, "name", "UnknownAgent")
             future = self._executor.submit(
                 self.execute_single_agent,
                 agent=agent,
