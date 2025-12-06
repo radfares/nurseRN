@@ -55,11 +55,9 @@ class ParallelSearchWorkflow(WorkflowTemplate):
             # Create agents for each database
             agents = []
             for db in databases:
-                agent = kwargs.get(f"{db}_agent") or MockAgent(
-                    name=f"{db.upper()}Agent",
-                    response=f"Found 10 articles in {db.upper()} for query: {query}",
-                    delay_seconds=0.5  # Simulate API delay
-                )
+                agent = kwargs.get(f"{db}_agent")
+                if agent is None:
+                    raise ValueError(f"Missing required agent: {db}_agent")
                 agents.append(agent)
             
             # Execute in parallel

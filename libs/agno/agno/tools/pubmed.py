@@ -1,4 +1,5 @@
 import json
+import time
 from typing import Any, Dict, List, Optional
 from xml.etree import ElementTree
 
@@ -37,6 +38,7 @@ class PubmedTools(Toolkit):
             "email": email,
             "usehistory": "y",
         }
+        time.sleep(0.34)  # Rate limit: max 3 req/sec (NCBI requirement)
         response = httpx.get(url, params=params)  # type: ignore
         root = ElementTree.fromstring(response.content)
         return [id_elem.text for id_elem in root.findall(".//Id") if id_elem.text is not None]
@@ -44,6 +46,7 @@ class PubmedTools(Toolkit):
     def fetch_details(self, pubmed_ids: List[str]) -> ElementTree.Element:
         url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
         params = {"db": "pubmed", "id": ",".join(pubmed_ids), "retmode": "xml"}
+        time.sleep(0.34)  # Rate limit: max 3 req/sec (NCBI requirement)
         response = httpx.get(url, params=params)
         return ElementTree.fromstring(response.content)
 

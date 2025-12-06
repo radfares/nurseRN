@@ -60,14 +60,13 @@ class TimelinePlannerWorkflow(WorkflowTemplate):
             
             # Step 1: Create timeline
             self._increment_step()
-            timeline_agent = kwargs.get("timeline_agent") or MockAgent(
-                name="TimelineAgent",
-                response=f"Timeline for {project_type}: {start_date} to {end_date}"
-            )
+            timeline_agent = kwargs.get("timeline_agent")
+            if timeline_agent is None:
+                raise ValueError("Missing required agent: timeline_agent")
             
             timeline_result = self.orchestrator.execute_single_agent(
                 agent=timeline_agent,
-                query=f"Create timeline for {project_type}",
+                query=f"GENERATE a standard academic research timeline for a {project_type} project starting {start_date} and ending {end_date}. Create monthly or quarterly phases with specific deliverables.",
                 workflow_id=self.workflow_id
             )
             
@@ -78,14 +77,13 @@ class TimelinePlannerWorkflow(WorkflowTemplate):
             
             # Step 2: Generate milestones
             self._increment_step()
-            milestone_agent = kwargs.get("milestone_agent") or MockAgent(
-                name="MilestoneAgent",
-                response=f"Milestones: IRB approval (Month 2), Data collection (Month 6), Final defense (Month 12)"
-            )
+            milestone_agent = kwargs.get("milestone_agent")
+            if milestone_agent is None:
+                raise ValueError("Missing required agent: milestone_agent")
             
             milestone_result = self.orchestrator.execute_single_agent(
                 agent=milestone_agent,
-                query=f"Generate milestones for {requirements}",
+                query=f"GENERATE milestones for a {project_type} spanning {start_date} to {end_date}. Include: IRB submission, data collection, analysis, writing, and defense phases with due dates.",
                 workflow_id=self.workflow_id
             )
             

@@ -72,12 +72,10 @@ class ResearchWorkflow(WorkflowTemplate):
             # Step 1: PICOT Development
             self._increment_step()
             picot_query = f"Develop a PICOT question for {topic} in {setting} using {intervention}"
-            
-            # For testing, use mock agent (in production, use real PICOT agent)
-            picot_agent = kwargs.get("picot_agent") or MockAgent(
-                name="PICOTAgent",
-                response=f"P: Patients in {setting}, I: {intervention}, C: Standard care, O: {topic} reduction"
-            )
+
+            picot_agent = kwargs.get("picot_agent")
+            if picot_agent is None:
+                raise ValueError("Missing required agent: picot_agent")
             
             picot_result = self.orchestrator.execute_single_agent(
                 agent=picot_agent,
@@ -93,11 +91,10 @@ class ResearchWorkflow(WorkflowTemplate):
             # Step 2: Literature Search
             self._increment_step()
             search_query = f"Find studies on {topic} with {intervention}"
-            
-            search_agent = kwargs.get("search_agent") or MockAgent(
-                name="SearchAgent",
-                response=f"Found 15 articles on {topic} interventions"
-            )
+
+            search_agent = kwargs.get("search_agent")
+            if search_agent is None:
+                raise ValueError("Missing required agent: search_agent")
             
             search_result = self.orchestrator.execute_single_agent(
                 agent=search_agent,
@@ -113,11 +110,10 @@ class ResearchWorkflow(WorkflowTemplate):
             #Step 3: Writing Draft
             self._increment_step()
             writing_query = f"Draft an abstract based on the PICOT: {picot_result.content}"
-            
-            writing_agent = kwargs.get("writing_agent") or MockAgent(
-                name="WritingAgent",
-                response=f"Abstract: This study investigates {intervention} for {topic}..."
-            )
+
+            writing_agent = kwargs.get("writing_agent")
+            if writing_agent is None:
+                raise ValueError("Missing required agent: writing_agent")
             
             writing_result = self.orchestrator.execute_single_agent(
                 agent=writing_agent,
