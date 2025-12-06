@@ -7,7 +7,7 @@ Part of Phase 3: Workflow Templates
 
 from typing import Any, Dict, List
 from src.workflows.base import WorkflowTemplate, WorkflowResult
-from tests.orchestration.conftest import MockAgent
+# MockAgent import removed - only needed for testing
 
 
 class ParallelSearchWorkflow(WorkflowTemplate):
