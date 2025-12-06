@@ -183,13 +183,20 @@ class BaseAgent(ABC):
             self.agent_name, self.logger, self.show_usage_examples
         )
 
-    def _audit_pre_hook(self, message: Any, **kwargs) -> None:
-        """Pre-hook to log query reception."""
+    def _audit_pre_hook(self, *args, message: Any = None, **kwargs) -> None:
+        """Pre-hook to log query reception. Accepts flexible args for agno compatibility."""
         if self.audit_logger:
-            # Extract query text
-            query = str(message)
-            if hasattr(message, "content"):
-                query = message.content
+            # Extract query text from message or first positional arg
+            query = ""
+            if message is not None:
+                query = str(message)
+                if hasattr(message, "content"):
+                    query = message.content
+            elif args:
+                # Try first positional arg if message wasn't passed as keyword
+                query = str(args[0])
+                if hasattr(args[0], "content"):
+                    query = args[0].content
             
             # Try to get project name from kwargs or context
             project_name = kwargs.get("project_name")

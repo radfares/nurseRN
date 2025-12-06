@@ -83,13 +83,30 @@ class WorkflowOrchestrator:
             # Log start (sanitized)
             logger.info(sanitize_log_entry(f"Starting execution for agent {agent_name}"))
             
-            # Execute agent
-            # Note: We assume agent has a .run() method compatible with Agno agents
-            response = agent.run(query, **kwargs)
+            # Execute agent using safe method hierarchy:
+            # 1. run_with_grounding_check (preferred - includes validation)
+            # 2. print_response (standard interface)
+            # 3. agent.run (raw agno method - last resort)
+            response = None
+            content = None
             
-            # Extract data safely using Phase 0 utilities
-            content = safe_get_content(response)
-            metadata = safe_get_metadata(response) or {}
+            if hasattr(agent, 'run_with_grounding_check'):
+                # Use grounding-checked method if available
+                result = agent.run_with_grounding_check(query, **kwargs)
+                content = result.get("content") if isinstance(result, dict) else str(result)
+            elif hasattr(agent, 'agent') and hasattr(agent.agent, 'run'):
+                # BaseAgent pattern: use inner agent.run but capture output
+                response = agent.agent.run(query, **kwargs)
+                content = safe_get_content(response)
+            elif hasattr(agent, 'run'):
+                # Direct run method (MockAgent or simple agents)
+                response = agent.run(query, **kwargs)
+                content = safe_get_content(response) if response else str(response)
+            else:
+                raise ValueError(f"Agent {agent_name} has no compatible run method")
+            
+            # Extract metadata safely
+            metadata = safe_get_metadata(response) if response else {}
             
             # Calculate duration
             duration = time.time() - start_time
