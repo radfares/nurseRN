@@ -445,9 +445,9 @@ def run_workflow_mode():
     orchestrator = WorkflowOrchestrator(context_manager)
     
     workflows = {
-        "1": ResearchWorkflow(orchestrator),
-        "2": ParallelSearchWorkflow(orchestrator),
-        "3": TimelinePlannerWorkflow(orchestrator)
+        "1": ResearchWorkflow(orchestrator, context_manager),
+        "2": ParallelSearchWorkflow(orchestrator, context_manager),
+        "3": TimelinePlannerWorkflow(orchestrator, context_manager)
     }
     
     while True:
