@@ -11,6 +11,7 @@ load_dotenv(override=True)
 
 # Ensure vendored agno library is importable
 import sys
+import time
 from pathlib import Path
 _project_root = Path(__file__).parent
 _agno_path = _project_root / "libs" / "agno"
@@ -33,6 +34,14 @@ from agents.medical_research_agent import get_medical_research_agent
 from agents.academic_research_agent import academic_research_agent
 from agents.research_writing_agent import research_writing_agent
 from agents.data_analysis_agent import data_analysis_agent
+
+# Orchestration imports
+from src.orchestration.context_manager import ContextManager
+from src.orchestration.orchestrator import WorkflowOrchestrator
+from src.orchestration.query_router import QueryRouter, Intent
+from src.workflows.research_workflow import ResearchWorkflow
+from src.workflows.parallel_search import ParallelSearchWorkflow
+from src.workflows.timeline_planner import TimelinePlannerWorkflow
 
 
 def show_welcome():
@@ -182,6 +191,18 @@ def show_agent_menu():
     print("   - Results interpretation")
     print("   - Best for: Planning statistics, sample sizes!")
 
+    print("\n7. Smart Mode (Auto-Routing) 🧠")
+    print("   - Automatically routes your query to the best agent")
+    print("   - Detects intent (Research, Search, Planning)")
+    print("   - Best for: When you're not sure which agent to use")
+
+    print("\n8. Workflow Mode (Templates) ⚡")
+    print("   - Run pre-defined multi-step workflows")
+    print("   - Research Workflow (PICOT -> Search -> Writing)")
+    print("   - Parallel Search (Multiple databases)")
+    print("   - Timeline Planner")
+    print("   - Best for: Complex tasks requiring multiple steps")
+
     print("\n" + "="*80)
     print("\nCommands: 1-6 (select agent), 'back' (return to projects), 'exit'")
 
@@ -208,8 +229,17 @@ def agent_selection_loop():
             '3': (academic_research_agent, "Academic Research Agent (ArXiv)"),
             '4': (research_writing_agent, "Research Writing Agent"),
             '5': (project_timeline_agent, "Project Timeline Agent"),
+            '5': (project_timeline_agent, "Project Timeline Agent"),
             '6': (data_analysis_agent, "Data Analysis Planner")
         }
+
+        # Handle new modes
+        if choice == '7':
+            run_smart_mode()
+            continue
+        elif choice == '8':
+            run_workflow_mode()
+            continue
 
         if choice not in agent_map:
             print(f"❌ Invalid choice: {choice}")
@@ -303,6 +333,196 @@ def run_agent_interaction(agent, agent_name: str, project_name: str):
             break
 
 
+def run_smart_mode():
+    """
+    Run Smart Mode (Auto-Routing).
+    Uses QueryRouter to determine intent and route to appropriate agent.
+    """
+    print("\n" + "="*80)
+    print("🧠 SMART MODE (AUTO-ROUTING)")
+    print("="*80)
+    
+    pm = get_project_manager()
+    active_project = pm.get_active_project()
+    project_db = pm.get_project_db_path()
+    
+    if not active_project:
+        print("\n❌ No active project. Please select a project first.")
+        return
+
+    print(f"\nActive Project: {active_project}")
+    print("Type 'exit' to return to menu.")
+    
+    # Initialize orchestration
+    context_manager = ContextManager(db_path=project_db)
+    orchestrator = WorkflowOrchestrator(context_manager)
+    router = QueryRouter()
+    
+    while True:
+        query = input("\n🧠 How can I help you? ").strip()
+        
+        if not query:
+            continue
+            
+        if query.lower() in ['exit', 'quit', 'q', 'back']:
+            print("\n🔙 Returning to menu...")
+            break
+            
+        print("\n🤔 Analyzing intent...", end="", flush=True)
+        
+        # Route query
+        intent, confidence, entities = router.route_query(query)
+        print(f"\n👉 Detected intent: {intent.value} (Confidence: {confidence:.2f})")
+        
+        # Map intent to agent
+        intent_agent_map = {
+            Intent.PICOT: "nursing_research_agent",
+            Intent.SEARCH: "medical_research_agent",
+            Intent.TIMELINE: "project_timeline_agent",
+            Intent.DATA_ANALYSIS: "data_analysis_agent",
+            Intent.WRITING: "research_writing_agent",
+            Intent.UNKNOWN: "nursing_research_agent"
+        }
+        
+        suggested_agent = intent_agent_map.get(intent, "nursing_research_agent")
+        print(f"👉 Routing to: {suggested_agent}")
+        
+        # Map router agent names to actual agents
+        agent_map = {
+            "nursing_research_agent": nursing_research_agent,
+            "medical_research_agent": get_medical_research_agent(),
+            "academic_research_agent": academic_research_agent,
+            "research_writing_agent": research_writing_agent,
+            "project_timeline_agent": project_timeline_agent,
+            "data_analysis_agent": data_analysis_agent
+        }
+        
+        target_agent = agent_map.get(suggested_agent)
+        
+        if target_agent:
+            print(f"\n🤖 {suggested_agent}: ", end="", flush=True)
+            try:
+                # Execute via orchestrator for consistent logging/result handling
+                result = orchestrator.execute_single_agent(
+                    agent=target_agent,
+                    query=query,
+                    workflow_id=f"smart_mode_{int(time.time())}"
+                )
+                
+                if result.success:
+                    print(result.content)
+                else:
+                    print(f"\n❌ Execution failed: {result.error}")
+                    
+                BaseAgent.print_watermark()
+                print("\n" + "-"*80)
+                
+            except Exception as e:
+                print(f"\n❌ Error: {e}")
+        else:
+            print(f"\n❌ Could not find agent: {route.suggested_agent}")
+
+
+def run_workflow_mode():
+    """
+    Run Workflow Mode (Templates).
+    Select and execute pre-defined workflows.
+    """
+    print("\n" + "="*80)
+    print("⚡ WORKFLOW MODE (TEMPLATES)")
+    print("="*80)
+    
+    pm = get_project_manager()
+    active_project = pm.get_active_project()
+    project_db = pm.get_project_db_path()
+    
+    if not active_project:
+        print("\n❌ No active project. Please select a project first.")
+        return
+
+    # Initialize orchestration
+    context_manager = ContextManager(db_path=project_db)
+    orchestrator = WorkflowOrchestrator(context_manager)
+    
+    workflows = {
+        "1": ResearchWorkflow(orchestrator),
+        "2": ParallelSearchWorkflow(orchestrator),
+        "3": TimelinePlannerWorkflow(orchestrator)
+    }
+    
+    while True:
+        print("\nAvailable Workflows:")
+        print("1. Research Workflow (PICOT -> Search -> Writing)")
+        print("2. Parallel Search (PubMed + CINAHL + Cochrane)")
+        print("3. Timeline Planner (Milestones & Schedule)")
+        print("4. Back to Main Menu")
+        
+        choice = input("\n⚡ Select workflow (1-4): ").strip()
+        
+        if choice == '4' or choice.lower() in ['back', 'exit', 'q']:
+            print("\n🔙 Returning to menu...")
+            break
+            
+        if choice not in workflows:
+            print("❌ Invalid choice")
+            continue
+            
+        workflow = workflows[choice]
+        print(f"\n🚀 Starting {workflow.name}...")
+        print(f"📝 {workflow.description}")
+        
+        # Collect inputs based on workflow type
+        inputs = {}
+        try:
+            if isinstance(workflow, ResearchWorkflow):
+                inputs["topic"] = input("Enter research topic: ").strip()
+                inputs["setting"] = input("Enter clinical setting: ").strip()
+                inputs["intervention"] = input("Enter intervention: ").strip()
+                
+                # Inject real agents
+                inputs["picot_agent"] = nursing_research_agent
+                inputs["search_agent"] = get_medical_research_agent()
+                inputs["writing_agent"] = research_writing_agent
+                
+            elif isinstance(workflow, ParallelSearchWorkflow):
+                inputs["query"] = input("Enter search query: ").strip()
+                # Inject real agents (using same agent for demo if others not available, 
+                # but ideally we'd have distinct ones. For now using what we have)
+                # In a real scenario, we'd have distinct agents for CINAHL/Cochrane.
+                # We'll use the medical agent for all to demonstrate parallelism 
+                # (orchestrator handles the threading)
+                med_agent = get_medical_research_agent()
+                inputs["pubmed_agent"] = med_agent
+                inputs["cinahl_agent"] = med_agent 
+                inputs["cochrane_agent"] = med_agent
+                
+            elif isinstance(workflow, TimelinePlannerWorkflow):
+                inputs["project_type"] = input("Enter project type (e.g., DNP Capstone): ").strip()
+                inputs["start_date"] = input("Enter start date (YYYY-MM-DD): ").strip()
+                inputs["end_date"] = input("Enter end date (YYYY-MM-DD): ").strip()
+                inputs["timeline_agent"] = project_timeline_agent
+                inputs["milestone_agent"] = project_timeline_agent
+            
+            print("\n⏳ Executing workflow... (this may take a moment)")
+            result = workflow.execute(**inputs)
+            
+            if result.success:
+                print("\n✅ Workflow Completed Successfully!")
+                print("\nOutputs:")
+                for key, value in result.outputs.items():
+                    print(f"\n--- {key.upper()} ---")
+                    if isinstance(value, list):
+                        for item in value:
+                            print(f"- {item}")
+                    else:
+                        print(str(value)[:500] + "..." if len(str(value)) > 500 else value)
+            else:
+                print(f"\n❌ Workflow Failed: {result.error}")
+                
+        except Exception as e:
+            print(f"\n❌ Error preparing workflow: {e}")
+            
+        print("\n" + "-"*80)
 def show_clinical_disclaimer() -> bool:
     """
     Display clinical disclaimer and require acknowledgment.
