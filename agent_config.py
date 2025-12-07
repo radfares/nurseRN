@@ -30,6 +30,7 @@ DATABASE_PATHS = {
     "research_writing": str(DB_DIR / "research_writing_agent.db"),
     "project_timeline": str(DB_DIR / "project_timeline_agent.db"),
     "data_analysis": str(DB_DIR / "data_analysis_agent.db"),
+    "citation_validation": str(DB_DIR / "citation_validation_agent.db"),
 }
 
 # ============================================================================
@@ -44,6 +45,7 @@ DEFAULT_MODELS = {
     "research_writing": "gpt-4o",
     "project_timeline": "gpt-4o-mini",  # Cheaper for timeline queries
     "data_analysis": "gpt-4o",
+    "citation_validation": "gpt-4o",
 }
 
 # Model-specific parameters

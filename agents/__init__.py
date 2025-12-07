@@ -29,7 +29,9 @@ __all__ = [
     'ResearchWritingAgent',
     'ProjectTimelineAgent',
     'DataAnalysisAgent',
+    'CitationValidationAgent',
 ]
+
 
 # Note: Individual agents are imported from their respective modules
 # Example: from agents.nursing_research_agent import NursingResearchAgent
