@@ -17,8 +17,12 @@ def main():
         description="Move misplaced test files to correct directories"
     ))
 
-    # Gate 2: Test Integrity (to be implemented)
-    # gatekeeper.add_gate(Gate(...))
+    # Gate 2: Test Integrity
+    gatekeeper.add_gate(Gate(
+        name="Gate 2: Test Integrity",
+        test_command="pytest tests/unit/test_test_integrity.py -v",
+        description="Ensure tests have meaningful assertions and aren't fake/trivial"
+    ))
 
     # Gate 3: Gitignore Cleanup (to be implemented)
     # gatekeeper.add_gate(Gate(...))
