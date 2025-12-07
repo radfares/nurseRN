@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 
 from src.models.evidence_types import EvidenceLevel, ValidationResult
+from src.services.citation_apis import PubMedRetractionChecker
 
 
 class ValidationTools:
@@ -59,8 +60,8 @@ class ValidationTools:
     }
     
     def __init__(self):
-        """Initialize validation tools."""
-        pass
+        """Initialize validation tools with retraction checker."""
+        self.retraction_checker = PubMedRetractionChecker()
     
     def grade_evidence(
         self,
@@ -290,6 +291,7 @@ class ValidationTools:
         publication_date: str,
         publication_types: Optional[List[str]] = None,
         max_age_years: int = 5,
+        check_retraction: bool = True,
         is_retracted: bool = False,
         retraction_reason: Optional[str] = None
     ) -> ValidationResult:
@@ -306,7 +308,8 @@ class ValidationTools:
             publication_date: Publication date (YYYY-MM-DD or YYYY)
             publication_types: PubMed publication type tags
             max_age_years: Currency threshold
-            is_retracted: Whether article is retracted
+            check_retraction: Whether to check PubMed for retractions (default True)
+            is_retracted: Pre-checked retraction status (overrides API check)
             retraction_reason: Reason for retraction if applicable
             
         Returns:
@@ -334,7 +337,14 @@ class ValidationTools:
         elif currency_flag == "unknown":
             issues.append("Could not determine publication date")
         
-        # Step 3: Handle retraction
+        # Step 3: Check for retraction if not already provided
+        if not is_retracted and check_retraction and pmid and pmid != "unknown":
+            retraction_status = self.retraction_checker.check_retraction(pmid)
+            is_retracted = retraction_status.is_retracted
+            if is_retracted:
+                retraction_reason = retraction_status.retraction_reason
+        
+        # Handle retraction
         if is_retracted:
             issues.insert(0, "⚠️ ARTICLE HAS BEEN RETRACTED")
         
