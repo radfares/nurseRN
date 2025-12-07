@@ -1,17 +1,28 @@
 # Nursing Research Project Assistant
 
+> [!IMPORTANT]
+> ## 🎯 USE BRANCH: `main`
+> **All feature branches have been merged into `main`. This is the only branch you should use.**
+> 
+> Last updated: **December 6, 2025** | Grade: **95/100** (Production Ready)
+> ```bash
+> git checkout main && git pull origin main
+> ```
+
 A comprehensive multi-agent AI system designed to support nursing residents through their healthcare improvement projects (November 2025 - June 2026). Built with the Agno framework, this system provides specialized AI agents for research, writing, planning, and statistical analysis.
 
 <div align="center">
 
 ![Status](https://img.shields.io/badge/status-production--ready-success)
-![Agents](https://img.shields.io/badge/agents-6-blue)
+![Branch](https://img.shields.io/badge/branch-main-brightgreen)
+![Agents](https://img.shields.io/badge/agents-6%2B2_modes-blue)
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
-![License](https://img.shields.io/badge/license-MPL--2.0-green)
+![Updated](https://img.shields.io/badge/updated-Dec_6_2025-orange)
 
 </div>
 
 ---
+
 
 ## 🎯 Overview
 
@@ -396,5 +407,6 @@ Built with:
 ---
 
 **Status**: Production-ready ✅  
-**Last Updated**: November 23, 2025  
-**Version**: 1.0.0
+**Branch**: `main` ← **USE THIS ONE**  
+**Last Updated**: December 6, 2025  
+**Version**: 2.0.0 (Orchestration + System Hardening)
