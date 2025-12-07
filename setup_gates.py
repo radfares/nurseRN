@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""
+Setup and run gated validation for test cleanup
+"""
+
+from tests.gates.gate_validator import GateKeeper, Gate
+
+def main():
+    """Setup gates and begin validation"""
+
+    gatekeeper = GateKeeper()
+
+    # Gate 1: File Organization
+    gatekeeper.add_gate(Gate(
+        name="Gate 1: File Organization",
+        test_command="pytest tests/unit/test_file_organization.py -v",
+        description="Move misplaced test files to correct directories"
+    ))
+
+    # Gate 2: Test Integrity (to be implemented)
+    # gatekeeper.add_gate(Gate(...))
+
+    # Gate 3: Gitignore Cleanup (to be implemented)
+    # gatekeeper.add_gate(Gate(...))
+
+    print("\n🚀 Starting Gated Validation System")
+    print(f"📊 Total Gates: {len(gatekeeper.gates)}")
+    print(f"📍 Current Gate: {gatekeeper.current_gate + 1}\n")
+
+    # Validate current gate
+    result = gatekeeper.validate_current_gate()
+
+    if result["status"] == "PASSED":
+        print(f"\n✅ Gate {gatekeeper.current_gate} passed!")
+        print(f"🔓 Gate {gatekeeper.current_gate + 1} is now unlocked")
+    elif result["status"] == "FAILED":
+        print(f"\n❌ Gate {gatekeeper.current_gate + 1} failed")
+        print(f"\nTest Output:")
+        print(result["result"]["stdout"])
+        if result["result"]["stderr"]:
+            print(f"\nErrors:")
+            print(result["result"]["stderr"])
+
+    print(f"\n📝 Full log saved to: tests/gates/gate_log.json")
+
+if __name__ == "__main__":
+    main()
