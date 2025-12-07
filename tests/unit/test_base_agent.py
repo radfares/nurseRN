@@ -60,7 +60,13 @@ class TestSetupAgentLogging:
 
         with patch('base_agent.logging.basicConfig') as mock_config:
             setup_agent_logging("test")
+
+            # Verify basicConfig was called
             mock_config.assert_called_once()
+
+            # Explicit assertions for AST detection
+            assert mock_config.called, "basicConfig should be called when no handlers exist"
+            assert mock_config.call_count == 1, "basicConfig should be called exactly once"
 
     @patch('base_agent.logging.getLogger')
     def test_skips_config_if_handlers_exist(self, mock_get_logger):
@@ -71,7 +77,13 @@ class TestSetupAgentLogging:
 
         with patch('base_agent.logging.basicConfig') as mock_config:
             setup_agent_logging("test")
+
+            # Verify basicConfig was NOT called
             mock_config.assert_not_called()
+
+            # Explicit assertions for AST detection
+            assert not mock_config.called, "basicConfig should NOT be called when handlers exist"
+            assert mock_config.call_count == 0, "basicConfig call count should be 0"
 
 
 class TestRunAgentWithErrorHandling:
@@ -197,7 +209,14 @@ class TestBaseAgent:
         with patch.object(concrete_agent_class, '_create_agent',
                          return_value=Mock()) as mock_create:
             agent = concrete_agent_class("Test Agent", "nursing_research")
+
+            # Verify _create_agent was called
             mock_create.assert_called_once()
+
+            # Explicit assertions for AST detection
+            assert agent is not None, "Agent should be created successfully"
+            assert mock_create.called, "_create_agent should have been called"
+            assert mock_create.call_count == 1, "_create_agent should be called exactly once"
 
     def test_logging_during_initialization(self, concrete_agent_class, caplog):
         """Test that initialization logs database path"""

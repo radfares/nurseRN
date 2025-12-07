@@ -43,6 +43,7 @@ from src.orchestration.query_router import QueryRouter, Intent
 from src.workflows.research_workflow import ResearchWorkflow
 from src.workflows.parallel_search import ParallelSearchWorkflow
 from src.workflows.timeline_planner import TimelinePlannerWorkflow
+from src.workflows.validated_research_workflow import ValidatedResearchWorkflow
 
 
 def show_welcome():
@@ -206,7 +207,8 @@ def show_agent_menu():
 
     print("\n9. Workflow Mode (Templates) ⚡")
     print("   - Run pre-defined multi-step workflows")
-    print("   - Research Workflow (PICOT -> Search -> Writing)")
+    print("   - Validated Research (Search + Validate + Write) ⭐")
+    print("   - Basic Research (PICOT -> Search -> Writing)")
     print("   - Parallel Search (Multiple databases)")
     print("   - Timeline Planner")
     print("   - Best for: Complex tasks requiring multiple steps")
@@ -453,21 +455,24 @@ def run_workflow_mode():
     orchestrator = WorkflowOrchestrator(context_manager)
     
     workflows = {
-        "1": ResearchWorkflow(orchestrator, context_manager),
-        "2": ParallelSearchWorkflow(orchestrator, context_manager),
-        "3": TimelinePlannerWorkflow(orchestrator, context_manager)
+        "1": ValidatedResearchWorkflow(orchestrator, context_manager),
+        "2": ResearchWorkflow(orchestrator, context_manager),
+        "3": ParallelSearchWorkflow(orchestrator, context_manager),
+        "4": TimelinePlannerWorkflow(orchestrator, context_manager)
     }
     
     while True:
         print("\nAvailable Workflows:")
-        print("1. Research Workflow (PICOT -> Search -> Writing)")
-        print("2. Parallel Search (PubMed + CINAHL + Cochrane)")
-        print("3. Timeline Planner (Milestones & Schedule)")
-        print("4. Back to Main Menu")
+        print("1. Validated Research Workflow (Recommended) ⭐")
+        print("   (PICOT → Search → Validation → Filtering → Synthesis)")
+        print("2. Basic Research Workflow")
+        print("3. Parallel Search (PubMed + CINAHL + Cochrane)")
+        print("4. Timeline Planner (Milestones & Schedule)")
+        print("5. Back to Main Menu")
         
-        choice = input("\n⚡ Select workflow (1-4): ").strip()
+        choice = input("\n⚡ Select workflow (1-5): ").strip()
         
-        if choice == '4' or choice.lower() in ['back', 'exit', 'q']:
+        if choice == '5' or choice.lower() in ['back', 'exit', 'q']:
             print("\n🔙 Returning to menu...")
             break
             
@@ -482,7 +487,18 @@ def run_workflow_mode():
         # Collect inputs based on workflow type
         inputs = {}
         try:
-            if isinstance(workflow, ResearchWorkflow):
+            if isinstance(workflow, ValidatedResearchWorkflow):
+                inputs["topic"] = input("Enter research topic: ").strip()
+                inputs["setting"] = input("Enter clinical setting: ").strip()
+                inputs["intervention"] = input("Enter intervention: ").strip()
+                
+                # Inject real agents
+                inputs["picot_agent"] = nursing_research_agent
+                inputs["search_agent"] = get_medical_research_agent()
+                inputs["validation_agent"] = get_citation_validation_agent()
+                inputs["writing_agent"] = research_writing_agent
+
+            elif isinstance(workflow, ResearchWorkflow):
                 inputs["topic"] = input("Enter research topic: ").strip()
                 inputs["setting"] = input("Enter clinical setting: ").strip()
                 inputs["intervention"] = input("Enter intervention: ").strip()

@@ -13,6 +13,10 @@ from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 
 
+@pytest.mark.skipif(
+    not pytest.importorskip("agno.tools.pubmed", reason="agno.tools.pubmed not available"),
+    reason="agno.tools.pubmed module not available"
+)
 class TestPubMedRateLimiting:
     """Test PubMed rate limiting to prevent 429 errors"""
 

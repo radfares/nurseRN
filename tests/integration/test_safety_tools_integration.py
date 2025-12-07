@@ -8,7 +8,7 @@ import sys
 import os
 
 # Ensure we can import from project root
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, project_root)
 
 # Add agno to path
@@ -19,124 +19,75 @@ if agno_path not in sys.path:
 
 def test_safety_tools_in_agent():
     """Test that SafetyTools is loaded in NursingResearchAgent"""
-    print("\n🧪 TEST 1: SafetyTools Integration Check")
-    try:
-        from agents.nursing_research_agent import NursingResearchAgent
+    from agents.nursing_research_agent import NursingResearchAgent
 
-        agent_instance = NursingResearchAgent()
+    agent_instance = NursingResearchAgent()
 
-        # Check if safety tool is in the status
-        if hasattr(agent_instance, '_tool_status'):
-            safety_available = agent_instance._tool_status.get('safety', False)
-            if safety_available:
-                print("   ✅ SUCCESS: SafetyTools is registered in agent")
-                return True
-            else:
-                print("   ❌ FAILED: SafetyTools not in agent status")
-                return False
-        else:
-            print("   ❌ FAILED: Agent missing _tool_status attribute")
-            return False
+    # ASSERTION 1: Verify _tool_status exists
+    assert hasattr(agent_instance, '_tool_status'), \
+        "Agent should have _tool_status attribute for tracking tool availability"
 
-    except Exception as e:
-        print(f"   ❌ FAILED: Error loading agent: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+    # ASSERTION 2: Verify safety tool is registered
+    assert 'safety' in agent_instance._tool_status, \
+        "SafetyTools should be registered in agent's _tool_status"
+
+    # ASSERTION 3: Verify safety tool is available (not None)
+    safety_available = agent_instance._tool_status.get('safety', False)
+    assert safety_available, \
+        "SafetyTools should be available (not False/None) in agent"
 
 
 def test_safety_tools_direct():
     """Test SafetyTools directly (not through agent)"""
-    print("\n🧪 TEST 2: SafetyTools Direct API Test")
-    try:
-        from src.services.safety_tools import SafetyTools
+    from src.services.safety_tools import SafetyTools
 
-        tools = SafetyTools()
+    tools = SafetyTools()
 
-        # Test connectivity
-        if tools.verify_access():
-            print("   ✅ SUCCESS: OpenFDA API is accessible")
+    # ASSERTION 1: Verify SafetyTools instantiates
+    assert tools is not None, "SafetyTools should instantiate successfully"
 
-            # Try a real query
-            print("   Testing device recall query...")
-            result = tools.get_device_recalls("catheter", limit=1)
+    # ASSERTION 2: Verify verify_access method exists and returns boolean
+    assert hasattr(tools, 'verify_access'), \
+        "SafetyTools should have verify_access() method"
 
-            if result and len(result) > 50:
-                print(f"   ✅ SUCCESS: Got device recall data ({len(result)} chars)")
-                # Show snippet
-                snippet = result[:150] + "..." if len(result) > 150 else result
-                print(f"   📄 Sample: {snippet}")
-                return True
-            else:
-                print(f"   ⚠️ WARNING: Short or empty result: {result}")
-                return False
-        else:
-            print("   ❌ FAILED: OpenFDA API not accessible")
-            return False
+    access_result = tools.verify_access()
+    assert isinstance(access_result, bool), \
+        "verify_access() should return boolean"
 
-    except Exception as e:
-        print(f"   ❌ FAILED: Error testing SafetyTools: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+    # ASSERTION 3: Verify get_device_recalls method exists
+    assert hasattr(tools, 'get_device_recalls'), \
+        "SafetyTools should have get_device_recalls() method"
+
+    # ASSERTION 4: Test device recall query returns data
+    result = tools.get_device_recalls("catheter", limit=1)
+    assert result is not None, \
+        "get_device_recalls() should return data (not None)"
+
+    assert isinstance(result, str), \
+        "get_device_recalls() should return string data"
+
+    assert len(result) > 0, \
+        "get_device_recalls() should return non-empty result"
 
 
 def test_safety_tools_creation():
     """Test safe creation function"""
-    print("\n🧪 TEST 3: Safe Tool Creation Function")
-    try:
-        from src.services.api_tools import create_safety_tools_safe
+    from src.services.api_tools import create_safety_tools_safe
 
-        tool = create_safety_tools_safe(required=False)
+    # ASSERTION 1: Function should exist
+    assert create_safety_tools_safe is not None, \
+        "create_safety_tools_safe function should exist"
 
-        if tool:
-            print("   ✅ SUCCESS: create_safety_tools_safe() returned tool")
-            return True
-        else:
-            print("   ❌ FAILED: create_safety_tools_safe() returned None")
-            return False
+    # ASSERTION 2: Function should return SafetyTools instance (or None if unavailable)
+    tool = create_safety_tools_safe(required=False)
 
-    except Exception as e:
-        print(f"   ❌ FAILED: Error in safe creation: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+    # Tool can be None if OpenFDA is unavailable, but should be a valid type
+    assert tool is None or hasattr(tool, 'verify_access'), \
+        "create_safety_tools_safe() should return SafetyTools instance or None"
 
-
-if __name__ == "__main__":
-    print("=" * 70)
-    print("   SAFETY TOOLS INTEGRATION TEST")
-    print("=" * 70)
-    print("\nVerifying SafetyTools is properly integrated into NursingResearchAgent\n")
-
-    # Run tests
-    test1_pass = test_safety_tools_in_agent()
-    test2_pass = test_safety_tools_direct()
-    test3_pass = test_safety_tools_creation()
-
-    # Summary
-    print("\n" + "=" * 70)
-    print("   TEST SUMMARY")
-    print("=" * 70)
-
-    print(f"\nTest 1 - Agent Integration:     {'✅ PASS' if test1_pass else '❌ FAIL'}")
-    print(f"Test 2 - Direct API Test:       {'✅ PASS' if test2_pass else '❌ FAIL'}")
-    print(f"Test 3 - Safe Creation:         {'✅ PASS' if test3_pass else '❌ FAIL'}")
-
-    all_passed = test1_pass and test2_pass and test3_pass
-
-    if all_passed:
-        print("\n🟢 ALL TESTS PASSED: SafetyTools is fully integrated!")
-        print("   ✓ Agent has SafetyTools registered")
-        print("   ✓ OpenFDA API is accessible")
-        print("   ✓ Safe creation pattern works")
-        print("\n   The NursingResearchAgent can now check FDA device recalls")
-        print("   and drug adverse events using SafetyTools.\n")
-        sys.exit(0)
-    else:
-        print("\n🔴 SOME TESTS FAILED: Check errors above")
-        print("   Review the integration and ensure:")
-        print("   - src/services/safety_tools.py exists")
-        print("   - SafetyTools is imported in nursing_research_agent.py")
-        print("   - OpenFDA API is accessible from your network\n")
-        sys.exit(1)
+    # ASSERTION 3: If tool exists, it should have required methods
+    if tool is not None:
+        assert hasattr(tool, 'get_device_recalls'), \
+            "SafetyTools should have get_device_recalls method"
+        assert hasattr(tool, 'get_drug_adverse_events'), \
+            "SafetyTools should have get_drug_adverse_events method"

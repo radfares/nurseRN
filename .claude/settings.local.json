@@ -5,7 +5,12 @@
       "Bash(git commit:*)",
       "Bash(python3:*)",
       "Bash(sqlite3:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(git mv:*)",
+      "Bash(pytest:*)",
+      "Bash(cat:*)",
+      "Bash(tree:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

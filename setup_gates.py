@@ -31,19 +31,27 @@ def main():
     print(f"📊 Total Gates: {len(gatekeeper.gates)}")
     print(f"📍 Current Gate: {gatekeeper.current_gate + 1}\n")
 
-    # Validate current gate
-    result = gatekeeper.validate_current_gate()
+    # Validate gates until failure or completion
+    while True:
+        result = gatekeeper.validate_current_gate()
 
-    if result["status"] == "PASSED":
-        print(f"\n✅ Gate {gatekeeper.current_gate} passed!")
-        print(f"🔓 Gate {gatekeeper.current_gate + 1} is now unlocked")
-    elif result["status"] == "FAILED":
-        print(f"\n❌ Gate {gatekeeper.current_gate + 1} failed")
-        print(f"\nTest Output:")
-        print(result["result"]["stdout"])
-        if result["result"]["stderr"]:
-            print(f"\nErrors:")
-            print(result["result"]["stderr"])
+        if result["status"] == "COMPLETE":
+            print(f"\n🎉 {result['message']}")
+            break
+
+        if result["status"] == "PASSED":
+            print(f"\n✅ Gate {gatekeeper.current_gate} passed!")
+            print(f"🔓 Gate {gatekeeper.current_gate + 1} is now unlocked")
+            continue
+            
+        elif result["status"] == "FAILED":
+            print(f"\n❌ Gate {gatekeeper.current_gate + 1} failed")
+            print(f"\nTest Output:")
+            print(result["result"]["stdout"])
+            if result["result"]["stderr"]:
+                print(f"\nErrors:")
+                print(result["result"]["stderr"])
+            break
 
     print(f"\n📝 Full log saved to: tests/gates/gate_log.json")
 
