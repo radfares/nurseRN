@@ -58,3 +58,9 @@ libs/agno/agno/vectordb/*/data/
 
 # Isolated testing folder (analysis reports, status docs)
 project agents status check/
+
+# Agent Audit Logs
+.claude/
+
+# Test Data
+data/projects/
