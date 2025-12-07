@@ -6,13 +6,13 @@ Created: 2025-11-23
 Part of 4-day implementation (Day 1)
 """
 
-import sqlite3
 import json
-from pathlib import Path
-from datetime import datetime, date
-from typing import Optional, List, Dict, Tuple
-import shutil
 import logging
+import shutil
+import sqlite3
+from datetime import date, datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -303,44 +303,49 @@ DEFAULT_MILESTONES = [
         "name": "PICOT Development",
         "description": "Develop and refine PICOT question",
         "due_date": "2025-12-17",
-        "deliverables": ["Approved PICOT statement", "NM confirmation form"]
+        "deliverables": ["Approved PICOT statement", "NM confirmation form"],
     },
     {
         "name": "Literature Search",
         "description": "Find and analyze 3 research articles",
         "due_date": "2026-01-21",
-        "deliverables": ["3 peer-reviewed articles", "Article summaries"]
+        "deliverables": ["3 peer-reviewed articles", "Article summaries"],
     },
     {
         "name": "Intervention Planning",
         "description": "Design intervention and data collection plan",
         "due_date": "2026-03-18",
-        "deliverables": ["Intervention steps", "Data collection template", "Stakeholder list"]
+        "deliverables": [
+            "Intervention steps",
+            "Data collection template",
+            "Stakeholder list",
+        ],
     },
     {
         "name": "Poster Completion",
         "description": "Complete poster board and PowerPoint",
         "due_date": "2026-04-22",
-        "deliverables": ["Poster board", "PowerPoint file"]
+        "deliverables": ["Poster board", "PowerPoint file"],
     },
     {
         "name": "Practice Presentation",
         "description": "Practice presentation day",
         "due_date": "2026-05-20",
-        "deliverables": ["Practiced presentation"]
+        "deliverables": ["Practiced presentation"],
     },
     {
         "name": "Final Presentation",
         "description": "Final presentation and graduation",
         "due_date": "2026-06-17",
-        "deliverables": ["Completed presentation"]
-    }
+        "deliverables": ["Completed presentation"],
+    },
 ]
 
 
 # ============================================================================
 # PROJECT MANAGER CLASS
 # ============================================================================
+
 
 class ProjectManager:
     """Manages nursing research projects."""
@@ -354,7 +359,9 @@ class ProjectManager:
 
         logger.info("ProjectManager initialized")
 
-    def create_project(self, project_name: str, add_default_milestones: bool = True) -> Path:
+    def create_project(
+        self, project_name: str, add_default_milestones: bool = True
+    ) -> Path:
         """
         Create a new project with initialized database.
 
@@ -388,15 +395,18 @@ class ProjectManager:
         # Add default milestones if requested
         if add_default_milestones:
             for milestone in DEFAULT_MILESTONES:
-                conn.execute("""
+                conn.execute(
+                    """
                     INSERT INTO milestones (milestone_name, description, due_date, deliverables)
                     VALUES (?, ?, ?, ?)
-                """, (
-                    milestone["name"],
-                    milestone["description"],
-                    milestone["due_date"],
-                    json.dumps(milestone["deliverables"])
-                ))
+                """,
+                    (
+                        milestone["name"],
+                        milestone["description"],
+                        milestone["due_date"],
+                        json.dumps(milestone["deliverables"]),
+                    ),
+                )
 
         conn.commit()
         conn.close()
@@ -438,21 +448,27 @@ class ProjectManager:
                         stats = cursor.fetchone()
                         conn.close()
 
-                        projects.append({
-                            "name": project_dir.name,
-                            "path": str(project_dir),
-                            "findings": stats[0],
-                            "picots": stats[1],
-                            "progress": f"{stats[2]}/{stats[3]} milestones",
-                            "modified": datetime.fromtimestamp(db_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
-                        })
+                        projects.append(
+                            {
+                                "name": project_dir.name,
+                                "path": str(project_dir),
+                                "findings": stats[0],
+                                "picots": stats[1],
+                                "progress": f"{stats[2]}/{stats[3]} milestones",
+                                "modified": datetime.fromtimestamp(
+                                    db_path.stat().st_mtime
+                                ).strftime("%Y-%m-%d %H:%M"),
+                            }
+                        )
                     except Exception as e:
                         logger.error(f"Error reading project {project_dir.name}: {e}")
-                        projects.append({
-                            "name": project_dir.name,
-                            "path": str(project_dir),
-                            "error": str(e)
-                        })
+                        projects.append(
+                            {
+                                "name": project_dir.name,
+                                "path": str(project_dir),
+                                "error": str(e),
+                            }
+                        )
 
         return projects
 
@@ -519,7 +535,9 @@ class ProjectManager:
 
         # Check if it's the active project
         if self.get_active_project() == safe_name:
-            raise ValueError(f"Cannot archive active project. Switch to another project first.")
+            raise ValueError(
+                f"Cannot archive active project. Switch to another project first."
+            )
 
         # Create archive name with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -549,7 +567,9 @@ class ProjectManager:
         if project_name is None:
             project_name = self.get_active_project()
             if project_name is None:
-                raise ValueError("No active project. Create or switch to a project first.")
+                raise ValueError(
+                    "No active project. Create or switch to a project first."
+                )
 
         safe_name = self._sanitize_project_name(project_name)
         db_path = PROJECTS_BASE_DIR / safe_name / "project.db"
@@ -559,7 +579,9 @@ class ProjectManager:
 
         return db_path
 
-    def get_project_connection(self, project_name: Optional[str] = None) -> sqlite3.Connection:
+    def get_project_connection(
+        self, project_name: Optional[str] = None
+    ) -> sqlite3.Connection:
         """
         Get a database connection for a project.
 
@@ -606,6 +628,7 @@ class ProjectManager:
 
 _project_manager = None
 
+
 def get_project_manager() -> ProjectManager:
     """Get or create global ProjectManager instance."""
     global _project_manager
@@ -617,6 +640,7 @@ def get_project_manager() -> ProjectManager:
 # ============================================================================
 # CLI HELPER FUNCTIONS
 # ============================================================================
+
 
 def cli_create_project(project_name: str, add_milestones: bool = True):
     """CLI command: Create new project."""
@@ -655,7 +679,9 @@ def cli_list_projects():
             print(f"  ❌ {project['name']} - Error: {project['error']}")
         else:
             print(f"  {'★' if is_active else ' '} {project['name']} {is_active}")
-            print(f"     Findings: {project['findings']} | PICOTs: {project['picots']} | Progress: {project['progress']}")
+            print(
+                f"     Findings: {project['findings']} | PICOTs: {project['picots']} | Progress: {project['progress']}"
+            )
             print(f"     Modified: {project['modified']}")
             print()
 
