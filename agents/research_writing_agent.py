@@ -46,11 +46,22 @@ class ResearchWritingAgent(BaseAgent):
         """
         Create tools for the writing agent.
 
-        This agent has no external tools - it relies on GPT-4o for writing,
-        organization, and planning capabilities.
+        Tools include:
+        - extract_citations: Find PMIDs/DOIs in text
+        - format_citation_apa7: Format citations in APA 7
+        - validate_citation_format: Check citation format
+        - create_reference_list: Build reference lists
         """
-        # No tools needed for writing agent
-        return []
+        try:
+            from src.tools.writing_tools import create_writing_tools
+            writing_tools = create_writing_tools()
+            print("✅ WritingTools available - citation formatting enabled")
+            return [writing_tools]
+        except ImportError as e:
+            import logging
+            logging.getLogger(__name__).warning(f"WritingTools not available: {e}")
+            print("⚠️ WritingTools not available - pure writing mode")
+            return []
 
     def _create_agent(self) -> Agent:
         """Create and configure the Research Writing Agent."""

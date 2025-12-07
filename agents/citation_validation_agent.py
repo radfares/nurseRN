@@ -13,6 +13,7 @@ Features:
 Created: 2025-12-07 (Phase 5 - Citation Validation)
 """
 
+import os
 import time
 import traceback
 from textwrap import dedent
@@ -64,14 +65,26 @@ class CitationValidationAgent(BaseAgent):
         """
         Create validation tools.
         
-        Tools will be added in Phase 2:
-        - grade_evidence: Assign evidence level based on study design
-        - check_retraction: Query PubMed for retraction status
-        - check_currency: Assess if article is current or outdated
-        - validate_articles: Full validation pipeline
+        Tools:
+        - grade_evidence_level: Assign evidence level based on study design
+        - check_retraction_status: Query PubMed for retraction status
+        - assess_currency: Assess if article is current or outdated
+        - validate_single_article: Full validation pipeline
         """
-        # Phase 2 will add: ValidationTools
-        return []
+        try:
+            from src.tools.citation_validation_tools import create_citation_validation_tools
+            validation_tools = create_citation_validation_tools(
+                email=os.getenv("PUBMED_EMAIL", "nursing.research@example.com"),
+                max_age_years=5,
+                min_evidence_level="IV"
+            )
+            self.validation_tools = validation_tools  # Store for direct access
+            return [validation_tools]
+        except ImportError as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Could not import validation tools: {e}")
+            self.validation_tools = None
+            return []
     
     def _create_agent(self) -> Agent:
         """Create and configure the Citation Validation Agent."""
@@ -158,20 +171,77 @@ class CitationValidationAgent(BaseAgent):
         Returns:
             ValidationReport with per-article results and summary
         """
+        import json
+        
         results = []
         include_count = 0
         review_count = 0
         exclude_count = 0
         retracted_count = 0
         
+        # Map level codes to EvidenceLevel enum
+        level_map = {
+            "I": EvidenceLevel.LEVEL_I,
+            "II": EvidenceLevel.LEVEL_II,
+            "III": EvidenceLevel.LEVEL_III,
+            "IV": EvidenceLevel.LEVEL_IV,
+            "V": EvidenceLevel.LEVEL_V,
+            "VI": EvidenceLevel.LEVEL_VI,
+            "VII": EvidenceLevel.LEVEL_VII,
+            "?": EvidenceLevel.UNKNOWN,
+        }
+        
         for article in articles:
-            # Placeholder validation - full implementation in Phase 2
-            result = ValidationResult(
-                pmid=article.get("pmid", "unknown"),
-                title=article.get("title", "Unknown Title"),
-                evidence_level=EvidenceLevel.UNKNOWN,
-                recommendation="review"
-            )
+            pmid = article.get("pmid", "unknown")
+            title = article.get("title", "Unknown Title")
+            abstract = article.get("abstract", "")
+            pub_date = article.get("publication_date", article.get("date", ""))
+            pub_type = article.get("publication_type", "")
+            
+            # Use real validation tools if available
+            if hasattr(self, 'validation_tools') and self.validation_tools:
+                try:
+                    validation_json = self.validation_tools.validate_single_article(
+                        pmid=pmid,
+                        title=title,
+                        abstract=abstract,
+                        publication_date=pub_date,
+                        publication_type=pub_type
+                    )
+                    v_data = json.loads(validation_json)
+                    
+                    level_code = v_data.get("evidence_level", "?")
+                    evidence_level = level_map.get(level_code, EvidenceLevel.UNKNOWN)
+                    
+                    result = ValidationResult(
+                        pmid=pmid,
+                        title=title,
+                        evidence_level=evidence_level,
+                        is_retracted=v_data.get("is_retracted", False),
+                        currency_flag=v_data.get("currency_status", "unknown"),
+                        quality_score=v_data.get("quality_score", 0.0),
+                        issues=v_data.get("issues", []),
+                        recommendation=v_data.get("recommendation", "review")
+                    )
+                except Exception as e:
+                    # Fallback on error
+                    result = ValidationResult(
+                        pmid=pmid,
+                        title=title,
+                        evidence_level=EvidenceLevel.UNKNOWN,
+                        issues=[f"Validation error: {str(e)}"],
+                        recommendation="review"
+                    )
+            else:
+                # Fallback if tools not available
+                result = ValidationResult(
+                    pmid=pmid,
+                    title=title,
+                    evidence_level=EvidenceLevel.UNKNOWN,
+                    issues=["Validation tools not available"],
+                    recommendation="review"
+                )
+            
             results.append(result)
             
             if result.recommendation == "include":

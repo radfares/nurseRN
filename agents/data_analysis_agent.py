@@ -300,11 +300,22 @@ class DataAnalysisAgent(BaseAgent):
         """
         Create tools for the data analysis agent.
 
-        This agent has no external tools - it relies on GPT-4o statistical
-        reasoning capabilities with temperature=0.2 for reliability.
+        Tools include:
+        - calculate_sample_size: Power-based sample size calculation
+        - calculate_power: Power analysis for given sample size
+        - suggest_statistical_test: Test selection based on study design
+        - calculate_effect_size: Cohen's d effect size calculation
         """
-        # No tools needed for data analysis agent
-        return []
+        try:
+            from src.tools.statistics_tools import create_statistics_tools
+            stats_tools = create_statistics_tools()
+            print("✅ StatisticsTools available - real calculations enabled")
+            return [stats_tools]
+        except ImportError as e:
+            import logging
+            logging.getLogger(__name__).warning(f"StatisticsTools not available: {e}")
+            print("⚠️ StatisticsTools not available - LLM reasoning mode")
+            return []
 
     def _create_agent(self) -> Agent:
         """Create and configure the Data Analysis Agent."""

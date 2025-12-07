@@ -376,10 +376,88 @@ class MedicalResearchAgent(BaseAgent):
                 duration_ms=int((time.time() - start_time) * 1000),
             )
 
+            # === AUTOMATIC CITATION VALIDATION (Phase 0 Enhancement) ===
+            # If we found verified PMIDs, validate them for evidence quality & retractions
+            validation_report = None
+            if verified_pmids:
+                try:
+                    from src.tools.citation_validation_tools import CitationValidationTools
+                    
+                    validator = CitationValidationTools()
+                    
+                    # Build article list from verified PMIDs
+                    articles_to_validate = []
+                    for pmid in verified_pmids:
+                        # Extract title from response if possible
+                        title_match = re.search(
+                            rf"(?:Title|Article):\s*(.+?)(?:\n|PMID|$)",
+                            response_text,
+                            re.IGNORECASE
+                        )
+                        articles_to_validate.append({
+                            "pmid": pmid,
+                            "title": title_match.group(1).strip() if title_match else f"Article PMID:{pmid}",
+                            "abstract": "",  # Not available in response
+                            "publication_date": "",  # Not available in response
+                        })
+                    
+                    # Validate each article
+                    import json
+                    validation_results = []
+                    retracted_pmids = []
+                    
+                    for article in articles_to_validate:
+                        result_json = validator.validate_single_article(
+                            pmid=article["pmid"],
+                            title=article["title"],
+                            abstract=article["abstract"],
+                            publication_date=article["publication_date"]
+                        )
+                        result = json.loads(result_json)
+                        validation_results.append(result)
+                        
+                        if result.get("is_retracted"):
+                            retracted_pmids.append(article["pmid"])
+                    
+                    # Build validation report
+                    validation_report = {
+                        "total_validated": len(validation_results),
+                        "retracted_count": len(retracted_pmids),
+                        "retracted_pmids": retracted_pmids,
+                        "results": validation_results,
+                    }
+                    
+                    # Log validation
+                    self.audit_logger.log_tool_result(
+                        tool_name="citation_validation",
+                        result=validation_report,
+                    )
+                    
+                    # If retractions found, add warning to response
+                    if retracted_pmids:
+                        retraction_warning = (
+                            "\n\n⚠️ **RETRACTION WARNING**\n"
+                            f"The following PMIDs have been retracted and should NOT be used:\n"
+                            f"- {', '.join(retracted_pmids)}\n"
+                            "Please exclude these from your research."
+                        )
+                        response_text += retraction_warning
+                        
+                except ImportError:
+                    # Validation tools not available - continue without
+                    pass
+                except Exception as val_error:
+                    # Log but don't fail the response
+                    self.audit_logger.log_error(
+                        error_type="ValidationError",
+                        error_message=f"Citation validation failed: {str(val_error)}",
+                    )
+
             return {
                 "content": response_text,
                 "validation_passed": True,
                 "hallucination_detected": False,
+                "citation_validation": validation_report,  # New field!
             }
 
         except Exception as e:

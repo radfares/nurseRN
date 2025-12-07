@@ -24,8 +24,12 @@ def main():
         description="Ensure tests have meaningful assertions and aren't fake/trivial"
     ))
 
-    # Gate 3: Gitignore Cleanup (to be implemented)
-    # gatekeeper.add_gate(Gate(...))
+    # Gate 3: Gitignore Security
+    gatekeeper.add_gate(Gate(
+        name="Gate 3: Gitignore Security",
+        test_command="pytest tests/unit/test_gitignore_security.py -v",
+        description="Verify .gitignore correctly ignores secrets and user data"
+    ))
 
     print("\n🚀 Starting Gated Validation System")
     print(f"📊 Total Gates: {len(gatekeeper.gates)}")

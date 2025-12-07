@@ -10,7 +10,9 @@
       "Bash(pytest:*)",
       "Bash(cat:*)",
       "Bash(tree:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(python -m pytest:*)"
     ],
     "deny": [],
     "ask": []

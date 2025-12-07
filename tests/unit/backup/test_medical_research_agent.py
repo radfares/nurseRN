@@ -292,15 +292,12 @@ class TestShowUsageExamples:
         agent.show_usage_examples()
 
         captured = capsys.readouterr()
-        # Check for example queries (updated to match current output format)
-        # The agent now uses "EXAMPLE QUERIES:" format with numbered examples
-        output_lower = captured.out.lower()
-        assert "example" in output_lower or "queries" in output_lower, \
-            "Should have example queries section"
-        assert "systematic review" in output_lower or "clinical" in output_lower, \
-            "Should mention clinical research types"
-        assert "pubmed" in output_lower or "ready" in output_lower, \
-            "Should indicate PubMed readiness"
+        # Check for example queries
+        assert "Find clinical studies:" in captured.out
+        assert "Search for specific conditions:" in captured.out
+        assert "Literature review:" in captured.out
+        assert "With Streaming:" in captured.out
+        assert "medical_research_agent.run(" in captured.out
 
     @patch('agents.medical_research_agent.get_api_status')
     @patch('agents.medical_research_agent.Agent')
@@ -320,42 +317,36 @@ class TestShowUsageExamples:
         agent.show_usage_examples()
 
         captured = capsys.readouterr()
-        # Check for tips section (updated to match current output format)
-        # The agent now uses "TIP: Be specific!" format
-        output_lower = captured.out.lower()
-        assert "tip" in output_lower, "Should have TIP section"
-        # Check for helpful guidance (exact wording may vary)
-        assert "specific" in output_lower or "recent" in output_lower or "peer-reviewed" in output_lower, \
-            "Should provide search guidance"
+        assert "TIP:" in captured.out
+        assert "PubMed has millions of biomedical articles" in captured.out
+        assert "Full metadata includes: DOI, URLs, MeSH terms" in captured.out
 
 
 class TestGlobalInstance:
-    """Test global instance creation.
+    """Test global instance creation"""
 
-    Note: These tests don't use mocks because the module uses lazy initialization
-    via get_medical_research_agent(). Mocking at module import time doesn't work
-    due to Python's import caching.
-    """
+    @patch('agents.medical_research_agent.Agent')
+    @patch('agents.medical_research_agent.create_pubmed_tools_safe')
+    @patch('agents.medical_research_agent.build_tools_list')
+    def test_global_instance_exists(self, mock_build, mock_pubmed, mock_agent, mock_agno):
+        """Test that global instance is created"""
+        mock_build.return_value = []
 
-    def test_global_instance_exists(self):
-        """Test that global instance can be obtained via getter."""
+        # The module creates a global instance
+        # We need to import the module inside the patch context
         import agents.medical_research_agent as mra_module
 
-        # Use the getter function to trigger lazy initialization
-        agent = mra_module.get_medical_research_agent()
+        assert mra_module._medical_research_agent_instance is not None
+        assert mra_module.medical_research_agent is not None
 
-        # Now the instance should exist
-        assert agent is not None, "get_medical_research_agent() should return an agent"
-        assert mra_module._medical_research_agent_instance is not None, \
-            "Instance variable should be populated after getter call"
+    @patch('agents.medical_research_agent.Agent')
+    @patch('agents.medical_research_agent.create_pubmed_tools_safe')
+    @patch('agents.medical_research_agent.build_tools_list')
+    def test_global_instance_is_medical_research_agent(self, mock_build, mock_pubmed, mock_agent, mock_agno):
+        """Test that global instance is a MedicalResearchAgent"""
+        mock_build.return_value = []
 
-    def test_global_instance_is_medical_research_agent(self):
-        """Test that global instance is a MedicalResearchAgent."""
         import agents.medical_research_agent as mra_module
+        MedicalResearchAgent = mra_module.MedicalResearchAgent
 
-        # Get the agent via the proper getter
-        agent = mra_module.get_medical_research_agent()
-
-        # Verify it's the correct type
-        assert isinstance(agent, mra_module.MedicalResearchAgent), \
-            "Instance should be MedicalResearchAgent type"
+        assert isinstance(mra_module._medical_research_agent_instance, MedicalResearchAgent)

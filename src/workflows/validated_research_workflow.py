@@ -44,6 +44,10 @@ class ValidatedResearchWorkflow(WorkflowTemplate):
             - search_agent: Agent instance
             - validation_agent: Agent instance
             - writing_agent: Agent instance
+            
+        Optional:
+            - timeline_agent: Agent instance (for deadline awareness)
+            - project_deadline: str (e.g., "June 2026")
         """
         required = [
             "topic", "setting", "intervention", 
@@ -105,6 +109,36 @@ class ValidatedResearchWorkflow(WorkflowTemplate):
             
             outputs["picot"] = picot_result.content
             
+            # Step 1.5: Timeline Context (OPTIONAL)
+            # If timeline_agent is provided, get project deadline awareness
+            timeline_context = ""
+            if kwargs.get("timeline_agent"):
+                self._increment_step()
+                project_deadline = kwargs.get("project_deadline", "June 2026")
+                
+                timeline_query = f"""
+                What are the key milestones and deadlines for a nursing research project?
+                Project deadline: {project_deadline}
+                Topic: {topic}
+                
+                Provide a brief timeline summary including:
+                1. Literature review deadline
+                2. Data collection window
+                3. Analysis phase
+                4. Final submission date
+                """
+                
+                timeline_result = self.orchestrator.execute_single_agent(
+                    agent=kwargs["timeline_agent"],
+                    query=timeline_query,
+                    workflow_id=self.workflow_id
+                )
+                
+                if timeline_result.success:
+                    timeline_context = f"\n\nPROJECT TIMELINE:\n{timeline_result.content}"
+                    outputs["timeline"] = timeline_result.content
+                # Note: Timeline failure is non-blocking - workflow continues
+            
             # Step 2: Literature Search
             self._increment_step()
             search_query = f"Find 5 recent peer-reviewed studies on {topic} with {intervention}. Return results as a JSON list with keys: pmid, title, abstract, publication_date."
@@ -159,8 +193,10 @@ class ValidatedResearchWorkflow(WorkflowTemplate):
             
             VALIDATED EVIDENCE (Use ONLY these sources):
             {validation_result.content}
+            {timeline_context}
             
             Please synthesize the findings and provide a clinical recommendation.
+            If project timeline is provided, ensure recommendations are feasible within that timeframe.
             """
             
             writing_result = self.orchestrator.execute_single_agent(
