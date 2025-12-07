@@ -34,6 +34,7 @@ from agents.medical_research_agent import get_medical_research_agent
 from agents.academic_research_agent import academic_research_agent
 from agents.research_writing_agent import research_writing_agent
 from agents.data_analysis_agent import data_analysis_agent
+from agents.citation_validation_agent import get_citation_validation_agent
 
 # Orchestration imports
 from src.orchestration.context_manager import ContextManager
@@ -191,12 +192,19 @@ def show_agent_menu():
     print("   - Results interpretation")
     print("   - Best for: Planning statistics, sample sizes!")
 
-    print("\n7. Smart Mode (Auto-Routing) 🧠")
+    print("\n7. Citation Validation Agent")
+    print("   - Evidence level grading (Johns Hopkins I-VII)")
+    print("   - Retraction detection via PubMed")
+    print("   - Currency assessment (flags old articles)")
+    print("   - Quality scoring and recommendations")
+    print("   - Best for: Validating research quality!")
+
+    print("\n8. Smart Mode (Auto-Routing) 🧠")
     print("   - Automatically routes your query to the best agent")
     print("   - Detects intent (Research, Search, Planning)")
     print("   - Best for: When you're not sure which agent to use")
 
-    print("\n8. Workflow Mode (Templates) ⚡")
+    print("\n9. Workflow Mode (Templates) ⚡")
     print("   - Run pre-defined multi-step workflows")
     print("   - Research Workflow (PICOT -> Search -> Writing)")
     print("   - Parallel Search (Multiple databases)")
@@ -204,7 +212,7 @@ def show_agent_menu():
     print("   - Best for: Complex tasks requiring multiple steps")
 
     print("\n" + "="*80)
-    print("\nCommands: 1-6 (select agent), 'back' (return to projects), 'exit'")
+    print("\nCommands: 1-7 (select agent), 8 (smart mode), 9 (workflows), 'back', 'exit'")
 
 
 def agent_selection_loop():
@@ -229,15 +237,15 @@ def agent_selection_loop():
             '3': (academic_research_agent, "Academic Research Agent (ArXiv)"),
             '4': (research_writing_agent, "Research Writing Agent"),
             '5': (project_timeline_agent, "Project Timeline Agent"),
-            '5': (project_timeline_agent, "Project Timeline Agent"),
-            '6': (data_analysis_agent, "Data Analysis Planner")
+            '6': (data_analysis_agent, "Data Analysis Planner"),
+            '7': (get_citation_validation_agent(), "Citation Validation Agent")
         }
 
         # Handle new modes
-        if choice == '7':
+        if choice == '8':
             run_smart_mode()
             continue
-        elif choice == '8':
+        elif choice == '9':
             run_workflow_mode()
             continue
 
