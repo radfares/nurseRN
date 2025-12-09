@@ -1,0 +1,26 @@
+# 1) Clone the repo
+git clone <repository-url>
+cd nurseRN            # adjust path if you renamed the folder
+# 2) Create & activate a virtual environment (Python ≥ 3.8)
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+# 3) Install Python dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+# 4) Copy the environment-variable template and add your keys
+cp .env.example .env
+# → open .env in an editor and add:
+#    OPENAI_API_KEY=...
+#    (optionally) EXA_API_KEY=...  SERP_API_KEY=...  PUBMED_EMAIL=...
+# 5) Verify your setup script runs successfully
+python3 verify_setup.py
+# 6) (Optional but recommended) Run static checks & full test suite
+./scripts/validate.sh            # Ruff + mypy
+./scripts/test.sh                # PyTest (+ coverage)
+# 7) Run the application
+#    a) Fast path – one-liner start script
+./start_nursing_project.sh
+#    b) OR manual launch if you prefer:
+#       (still inside the activated venv)
+export PYTHONPATH="${PYTHONPATH}:$(pwd)/libs/agno"
+python3 run_nursing_project.py

@@ -17,8 +17,25 @@ import logging
 import os
 import threading
 import functools
-from typing import Optional, Any, Callable
+from typing import Optional, Any, Callable, Dict, List
 from functools import wraps
+
+import pybreaker
+try:
+    from agno.tools.exa import ExaTools
+    from agno.tools.serpapi import SerpApiTools
+    from agno.tools.pubmed import PubmedTools
+    from agno.tools.arxiv import ArxivTools
+    from agno.tools.clinicaltrials import ClinicalTrialsTools
+    from agno.tools.medrxiv import MedRxivTools
+    from agno.tools.semantic_scholar import SemanticScholarTools
+    from agno.tools.core import CoreTools
+    from agno.tools.doaj import DoajTools
+    from src.tools.milestone_tools import MilestoneTools
+    from src.services.safety_tools import SafetyTools
+except ImportError as e:
+    logger.warning(f"Could not import one or more tool classes, type hints may be imprecise: {e}")
+    ExaTools = SerpApiTools = PubmedTools = ArxivTools = ClinicalTrialsTools = MedRxivTools = SemanticScholarTools = CoreTools = DoajTools = MilestoneTools = SafetyTools = Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +64,26 @@ except ImportError:
     SEMANTIC_SCHOLAR_BREAKER = None
     CORE_BREAKER = None
     DOAJ_BREAKER = None
-    def call_with_breaker(breaker, func, fallback_message, *args, **kwargs):
+    def call_with_breaker(
+        breaker: Optional[Any], 
+        func: Callable[..., Any], 
+        fallback_message: str, 
+        *args: Any, 
+        **kwargs: Any
+    ) -> Any:
+        """
+        Execute a function with circuit breaker protection (mock implementation).
+        
+        Args:
+            breaker: The circuit breaker instance (ignored in mock)
+            func: The function to execute
+            fallback_message: Message to log on failure
+            *args: Positional arguments for func
+            **kwargs: Keyword arguments for func
+            
+        Returns:
+            Result of func
+        """
         return func(*args, **kwargs)
 
 # Setup HTTP caching for API responses (24hr TTL)
@@ -79,17 +115,43 @@ except Exception as e:
 
 import inspect
 
-def _get_exa_breaker(): return EXA_BREAKER
-def _get_serp_breaker(): return SERP_BREAKER
-def _get_pubmed_breaker(): return PUBMED_BREAKER
-def _get_arxiv_breaker(): return ARXIV_BREAKER
-def _get_clinicaltrials_breaker(): return CLINICALTRIALS_BREAKER
-def _get_medrxiv_breaker(): return MEDRXIV_BREAKER
-def _get_semantic_scholar_breaker(): return SEMANTIC_SCHOLAR_BREAKER
-def _get_core_breaker(): return CORE_BREAKER
-def _get_doaj_breaker(): return DOAJ_BREAKER
+def _get_exa_breaker() -> Optional[Any]: 
+    """Get the Exa API circuit breaker."""
+    return EXA_BREAKER
 
-def _custom_getstate(self):
+def _get_serp_breaker() -> Optional[Any]: 
+    """Get the SerpAPI circuit breaker."""
+    return SERP_BREAKER
+
+def _get_pubmed_breaker() -> Optional[Any]: 
+    """Get the PubMed API circuit breaker."""
+    return PUBMED_BREAKER
+
+def _get_arxiv_breaker() -> Optional[Any]: 
+    """Get the Arxiv API circuit breaker."""
+    return ARXIV_BREAKER
+
+def _get_clinicaltrials_breaker() -> Optional[Any]: 
+    """Get the ClinicalTrials.gov API circuit breaker."""
+    return CLINICALTRIALS_BREAKER
+
+def _get_medrxiv_breaker() -> Optional[Any]: 
+    """Get the MedRxiv/BioRxiv API circuit breaker."""
+    return MEDRXIV_BREAKER
+
+def _get_semantic_scholar_breaker() -> Optional[Any]: 
+    """Get the Semantic Scholar API circuit breaker."""
+    return SEMANTIC_SCHOLAR_BREAKER
+
+def _get_core_breaker() -> Optional[Any]: 
+    """Get the CORE API circuit breaker."""
+    return CORE_BREAKER
+
+def _get_doaj_breaker() -> Optional[Any]: 
+    """Get the DOAJ API circuit breaker."""
+    return DOAJ_BREAKER
+
+def _custom_getstate(self: object) -> Dict[str, Any]:
     """Custom pickle getstate to remove unpicklable locks/breakers."""
     # If the class had a getstate, call it
     if hasattr(self, "_orig_getstate"):
@@ -107,7 +169,7 @@ def _custom_getstate(self):
             del state[k]
     return state
 
-def _custom_setstate(self, state):
+def _custom_setstate(self: object, state: Dict[str, Any]) -> None:
     """Custom pickle setstate to restore locks/breakers."""
     # If the class had a setstate, call it
     if hasattr(self, "_orig_setstate"):
@@ -124,13 +186,16 @@ def _custom_setstate(self, state):
             if factory:
                 setattr(self, f"_breaker_{name}", factory())
 
-def _make_bound_wrapper(method_name, orig_func):
+def _make_bound_wrapper(method_name: str, orig_func: Callable[..., Any]) -> Callable[..., Any]:
     """
     Create a wrapper function for a method.
     Defined at module level to aid pickling.
     """
     @functools.wraps(orig_func)
-    def _wrapper(self, *args, **kwargs):
+    def _wrapper(self: object, *args: Any, **kwargs: Any) -> Any:
+        """
+        Internal wrapper that applies per-instance locking and circuit breaking.
+        """
         # Retrieve instance-specific lock and breaker
         lock = getattr(self, f"_breaker_lock_{method_name}")
         breaker = getattr(self, f"_breaker_{method_name}")
@@ -152,7 +217,7 @@ def _make_bound_wrapper(method_name, orig_func):
         
     return _wrapper
 
-def _unwrap_tool_method(tool, method_name):
+def _unwrap_tool_method(tool: Any, method_name: str) -> None:
     """
     Unwrap a method on a tool instance.
     Defined at module level for pickling.
@@ -169,7 +234,7 @@ def _unwrap_tool_method(tool, method_name):
         if hasattr(tool, "_wrapped_methods"):
             tool._wrapped_methods.discard(method_name)
 
-def apply_in_place_wrapper(tool: Any, method_names: list, breaker_factory: Callable[[], Any]) -> Any:
+def apply_in_place_wrapper(tool: Any, method_names: list, breaker_factory: Callable[[], Optional[pybreaker.CircuitBreaker]]) -> Any:
     """
     Replace methods on `tool` in-place with circuit-breaker-protected bound methods.
     
@@ -240,7 +305,7 @@ def apply_in_place_wrapper(tool: Any, method_names: list, breaker_factory: Calla
 # Safe Tool Creation Functions
 # ============================================================================
 
-def create_exa_tools_safe(required: bool = False) -> Optional[Any]:
+def create_exa_tools_safe(required: bool = False) -> Optional[ExaTools]:
     """
     Safely create ExaTools with circuit breaker protection and error handling.
 
@@ -291,7 +356,7 @@ def create_exa_tools_safe(required: bool = False) -> Optional[Any]:
         return None
 
 
-def create_serp_tools_safe(required: bool = False) -> Optional[Any]:
+def create_serp_tools_safe(required: bool = False) -> Optional[SerpApiTools]:
     """
     Safely create SerpApiTools with circuit breaker protection and error handling.
 
@@ -336,7 +401,7 @@ def create_serp_tools_safe(required: bool = False) -> Optional[Any]:
         return None
 
 
-def create_pubmed_tools_safe(required: bool = False) -> Optional[Any]:
+def create_pubmed_tools_safe(required: bool = False) -> Optional[PubmedTools]:
     """
     Safely create PubmedTools with circuit breaker protection and error handling.
 
@@ -377,7 +442,7 @@ def create_pubmed_tools_safe(required: bool = False) -> Optional[Any]:
         return None
 
 
-def create_arxiv_tools_safe(required: bool = False) -> Optional[Any]:
+def create_arxiv_tools_safe(required: bool = False) -> Optional[ArxivTools]:
     """
     Safely create ArxivTools with circuit breaker protection and error handling.
 
@@ -413,7 +478,7 @@ def create_arxiv_tools_safe(required: bool = False) -> Optional[Any]:
         return None
 
 
-def create_clinicaltrials_tools_safe(required: bool = False) -> Optional[Any]:
+def create_clinicaltrials_tools_safe(required: bool = False) -> Optional[ClinicalTrialsTools]:
     """
     Safely create ClinicalTrialsTools with circuit breaker protection and error handling.
 
@@ -452,7 +517,7 @@ def create_clinicaltrials_tools_safe(required: bool = False) -> Optional[Any]:
         return None
 
 
-def create_medrxiv_tools_safe(required: bool = False) -> Optional[Any]:
+def create_medrxiv_tools_safe(required: bool = False) -> Optional[MedRxivTools]:
     """
     Safely create MedRxivTools with circuit breaker protection and error handling.
 
@@ -492,7 +557,7 @@ def create_medrxiv_tools_safe(required: bool = False) -> Optional[Any]:
         return None
 
 
-def create_semantic_scholar_tools_safe(required: bool = False) -> Optional[Any]:
+def create_semantic_scholar_tools_safe(required: bool = False) -> Optional[SemanticScholarTools]:
     """
     Safely create SemanticScholarTools with circuit breaker protection and error handling.
 
@@ -532,7 +597,7 @@ def create_semantic_scholar_tools_safe(required: bool = False) -> Optional[Any]:
         return None
 
 
-def create_core_tools_safe(required: bool = False) -> Optional[Any]:
+def create_core_tools_safe(required: bool = False) -> Optional[CoreTools]:
     """
     Safely create CoreTools with circuit breaker protection and error handling.
 
@@ -572,7 +637,7 @@ def create_core_tools_safe(required: bool = False) -> Optional[Any]:
         return None
 
 
-def create_doaj_tools_safe(required: bool = False) -> Optional[Any]:
+def create_doaj_tools_safe(required: bool = False) -> Optional[DoajTools]:
     """
     Safely create DoajTools with circuit breaker protection and error handling.
 
@@ -653,7 +718,7 @@ def validate_tools_list(tools: list, min_required: int = 1) -> bool:
 # Milestone Tools (Database Access)
 # ============================================================================
 
-def create_milestone_tools_safe(required: bool = False) -> Optional[Any]:
+def create_milestone_tools_safe(required: bool = False) -> Optional[MilestoneTools]:
     """
     Create MilestoneTools with safe fallback.
 
@@ -691,7 +756,7 @@ def create_milestone_tools_safe(required: bool = False) -> Optional[Any]:
 # Safety Tools (OpenFDA API)
 # ============================================================================
 
-def create_safety_tools_safe(required: bool = False) -> Optional[Any]:
+def create_safety_tools_safe(required: bool = False) -> Optional[SafetyTools]:
     """
     Create SafetyTools with safe fallback.
 
@@ -797,7 +862,7 @@ def get_api_status() -> dict:
     return status
 
 
-def print_api_status():
+def print_api_status() -> None:
     """Print API availability status (for debugging)."""
     status = get_api_status()
     print("\n" + "=" * 60)

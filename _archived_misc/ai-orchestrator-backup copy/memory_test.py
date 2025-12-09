@@ -1,0 +1,22 @@
+from memory_bank import MemoryBank
+
+# SECURITY FIX: Use environment variables for database credentials
+# Set environment variables: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME
+mb = MemoryBank()  # Now uses secure environment variable configuration
+
+
+if mb.conn:
+    print("✅ Connected to MySQL")
+
+    mb.add_agent('Aider', 'Code Editor')
+    mb.log_invocation('Claude:Sonnet', 950, 'req_002', 'success', task_id=1)
+    mb.store_memory(agent_id=1, content='Successfully refactored signup flow.')
+
+    results = mb.search_memories('signup')
+    for r in results:
+        print(f"{r['timestamp']}: {r['content']}")
+
+    mb.close()
+else:
+    print("❌ Failed to connect to MySQL")
+
