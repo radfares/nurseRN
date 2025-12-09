@@ -1,217 +1,174 @@
-"""
-Validated Research Workflow
-
-Automates the pipeline: PICOT → Search → Validation → Filtering → Synthesis.
-Ensures only high-quality, non-retracted evidence is used for research writing.
-
-Created: 2025-12-07 (Phase 4b - Workflow Integration)
-"""
-
 import json
-from typing import Any, Dict, List
+import sqlite3
+import time
+from typing import Dict, Any, Optional
 from src.workflows.base import WorkflowTemplate, WorkflowResult
-from src.models.evidence_types import EvidenceLevel, ValidationReport
+from src.orchestration.orchestrator import WorkflowOrchestrator
+from src.orchestration.context_manager import ContextManager
 
 class ValidatedResearchWorkflow(WorkflowTemplate):
     """
-    Validated Research Workflow: PICOT → Search → Validate → Filter → Write
-    
-    Automates a complete research workflow with quality control:
-    1. PICOT Agent develops research question
-    2. Search Agent finds relevant literature
-    3. Citation Validation Agent grades and checks for retractions
-    4. Workflow filters out low-quality/retracted articles
-    5. Writing Agent drafts abstract using ONLY validated evidence
+    Orchestrates the full flow: PICOT -> Search -> Validation -> Synthesis
+    With AUTOMATIC DATABASE SAVING.
     """
-    
+
+    def __init__(self, orchestrator: WorkflowOrchestrator, context_manager: ContextManager):
+        # Initialize the parent class
+        super().__init__(orchestrator, context_manager)
+        # FIX 1: Explicitly save the context manager so we can use it later
+        self.context_manager = context_manager
+
     @property
     def name(self) -> str:
         return "validated_research_workflow"
-    
+
     @property
     def description(self) -> str:
-        return "Research pipeline with automatic evidence validation and retraction checking"
-    
-    def validate_inputs(self, **kwargs) -> bool:
-        """
-        Validate required inputs.
-        
-        Required:
-            - topic: Research topic (str)
-            - setting: Clinical setting (str)
-            - intervention: Proposed intervention (str)
-            - picot_agent: Agent instance
-            - search_agent: Agent instance
-            - validation_agent: Agent instance
-            - writing_agent: Agent instance
-            
-        Optional:
-            - timeline_agent: Agent instance (for deadline awareness)
-            - project_deadline: str (e.g., "June 2026")
-        """
-        required = [
-            "topic", "setting", "intervention", 
-            "picot_agent", "search_agent", "validation_agent", "writing_agent"
-        ]
-        for param in required:
-            if param not in kwargs:
-                raise ValueError(f"Missing required parameter: {param}")
-        
-        return True
-    
-    def _parse_search_results(self, search_content: str) -> List[Dict[str, Any]]:
-        """
-        Parse search agent output into structured article list.
-        Handles both JSON-like strings and plain text.
-        """
-        # Attempt to find JSON structure
-        try:
-            # Look for list start/end
-            start = search_content.find('[')
-            end = search_content.rfind(']') + 1
-            if start != -1 and end != -1:
-                json_str = search_content[start:end]
-                return json.loads(json_str)
-        except Exception:
-            pass
-            
-        # Fallback: Create a dummy structure if parsing fails
-        # In a real implementation, we'd want robust parsing or structured output from the agent
-        return []
+        return "End-to-end evidence synthesis with validation and DB saving"
 
-    def execute(self, **kwargs) -> WorkflowResult:
-        """
-        Execute the validated research workflow.
-        """
-        self._start_execution()
-        outputs = {}
+    def validate_inputs(self, inputs: Dict[str, Any], required_keys: Optional[list] = None) -> bool:
+        if required_keys is None:
+            required_keys = ["topic", "setting", "intervention"]
+        missing = [key for key in required_keys if key not in inputs]
+        return len(missing) == 0
+
+    def execute(self, **inputs) -> WorkflowResult:
+        start_time = time.time()
         
+        # 1. Validate Inputs
+        if not self.validate_inputs(inputs):
+            return WorkflowResult(
+                workflow_name=self.name, 
+                success=False, 
+                outputs={},
+                execution_time=0.0,
+                steps_completed=0,
+                error="Missing required parameters"
+            )
+
+        # 2. Extract Agents
+        picot_agent = inputs.get("picot_agent")
+        search_agent = inputs.get("search_agent")
+        validation_agent = inputs.get("validation_agent")
+        writing_agent = inputs.get("writing_agent")
+
+        if not all([picot_agent, search_agent, validation_agent, writing_agent]):
+             return WorkflowResult(
+                workflow_name=self.name, 
+                success=False, 
+                outputs={}, 
+                execution_time=0.0,
+                steps_completed=0,
+                error="Missing required agents."
+            )
+
         try:
-            # Validate inputs
-            self.validate_inputs(**kwargs)
-            
-            topic = kwargs["topic"]
-            setting = kwargs["setting"]
-            intervention = kwargs["intervention"]
-            
-            # Step 1: PICOT Development
-            self._increment_step()
-            picot_query = f"Develop a PICOT question for {topic} in {setting} using {intervention}"
-            
-            picot_result = self.orchestrator.execute_single_agent(
-                agent=kwargs["picot_agent"],
-                query=picot_query,
-                workflow_id=self.workflow_id
+            # --- AGENT EXECUTION ---
+            print(f"\n🔹 Step 1: Generating PICOT...")
+            picot_resp = self.orchestrator.execute_single_agent(
+                agent=picot_agent,
+                query=f"Create a PICOT question for: Topic={inputs['topic']}, Setting={inputs['setting']}, Intervention={inputs['intervention']}",
+                workflow_id="picot_gen"
             )
-            
-            if not picot_result.success:
-                return self._end_execution(outputs, error=f"PICOT step failed: {picot_result.error}")
-            
-            outputs["picot"] = picot_result.content
-            
-            # Step 1.5: Timeline Context (OPTIONAL)
-            # If timeline_agent is provided, get project deadline awareness
-            timeline_context = ""
-            if kwargs.get("timeline_agent"):
-                self._increment_step()
-                project_deadline = kwargs.get("project_deadline", "June 2026")
-                
-                timeline_query = f"""
-                What are the key milestones and deadlines for a nursing research project?
-                Project deadline: {project_deadline}
-                Topic: {topic}
-                
-                Provide a brief timeline summary including:
-                1. Literature review deadline
-                2. Data collection window
-                3. Analysis phase
-                4. Final submission date
-                """
-                
-                timeline_result = self.orchestrator.execute_single_agent(
-                    agent=kwargs["timeline_agent"],
-                    query=timeline_query,
-                    workflow_id=self.workflow_id
-                )
-                
-                if timeline_result.success:
-                    timeline_context = f"\n\nPROJECT TIMELINE:\n{timeline_result.content}"
-                    outputs["timeline"] = timeline_result.content
-                # Note: Timeline failure is non-blocking - workflow continues
-            
-            # Step 2: Literature Search
-            self._increment_step()
-            search_query = f"Find 5 recent peer-reviewed studies on {topic} with {intervention}. Return results as a JSON list with keys: pmid, title, abstract, publication_date."
-            
-            search_result = self.orchestrator.execute_single_agent(
-                agent=kwargs["search_agent"],
-                query=search_query,
-                workflow_id=self.workflow_id
+            picot_text = picot_resp.content if picot_resp else "Failed"
+
+            print("\n🔹 Step 2: Searching Literature...")
+            search_resp = self.orchestrator.execute_single_agent(
+                agent=search_agent,
+                query=f"Find 5 recent peer-reviewed studies for this PICOT: {picot_text}. Return ONLY valid JSON.",
+                workflow_id="lit_search"
             )
-            
-            if not search_result.success:
-                return self._end_execution(outputs, error=f"Search step failed: {search_result.error}")
-            
-            outputs["raw_search_results"] = search_result.content
-            
-            # Step 3: Validation & Filtering
-            self._increment_step()
-            
-            # Note: In a real scenario, we'd parse the search result content into a list of dicts.
-            # For this implementation, we'll ask the validation agent to parse and validate the raw text directly
-            # or use the tools directly if we had structured data.
-            # Since we have the agent, let's ask it to validate the content found.
-            
-            validation_query = f"""
-            Validate these search results. 
-            1. Extract the articles.
-            2. Grade evidence levels.
-            3. Check for retractions.
-            4. Return ONLY the valid, high-quality articles (Level I-III preferred) that are NOT retracted.
-            
-            Search Results to Validate:
-            {search_result.content}
-            """
-            
-            validation_result = self.orchestrator.execute_single_agent(
-                agent=kwargs["validation_agent"],
-                query=validation_query,
-                workflow_id=self.workflow_id
+            search_json = search_resp.content if search_resp else "[]"
+
+            print("\n🔹 Step 3: Validating...")
+            val_resp = self.orchestrator.execute_single_agent(
+                agent=validation_agent,
+                query=f"Validate these studies for retraction status and quality: {search_json}",
+                workflow_id="validation"
             )
-            
-            if not validation_result.success:
-                return self._end_execution(outputs, error=f"Validation step failed: {validation_result.error}")
-            
-            outputs["validation_report"] = validation_result.content
-            
-            # Step 4: Synthesis / Writing
-            self._increment_step()
-            writing_query = f"""
-            Draft an evidence synthesis based on the following:
-            
-            PICOT: {picot_result.content}
-            
-            VALIDATED EVIDENCE (Use ONLY these sources):
-            {validation_result.content}
-            {timeline_context}
-            
-            Please synthesize the findings and provide a clinical recommendation.
-            If project timeline is provided, ensure recommendations are feasible within that timeframe.
-            """
-            
-            writing_result = self.orchestrator.execute_single_agent(
-                agent=kwargs["writing_agent"],
-                query=writing_query,
-                workflow_id=self.workflow_id
+            val_text = val_resp.content if val_resp else "Failed"
+
+            print("\n🔹 Step 4: Writing Synthesis...")
+            write_resp = self.orchestrator.execute_single_agent(
+                agent=writing_agent,
+                query=f"Write a synthesis report based on: {picot_text}, {search_json}, and {val_text}.",
+                workflow_id="synthesis"
             )
-            
-            if not writing_result.success:
-                return self._end_execution(outputs, error=f"Writing step failed: {writing_result.error}")
-            
-            outputs["synthesis"] = writing_result.content
-            
-            # Success!
-            return self._end_execution(outputs)
-            
+            syn_text = write_resp.content if write_resp else "Failed"
+
+            # --- PACKAGING OUTPUTS ---
+            outputs = {
+                "picot": picot_text,
+                "raw_search_results": search_json,
+                "validation_report": val_text,
+                "synthesis": syn_text
+            }
+
+            # --- SAVING TO DB ---
+            print("\n💾 Saving results to project database...")
+            self._save_to_db(inputs, outputs)
+
+            # FIX 2: Calculate time and steps to satisfy the strict WorkflowResult class
+            end_time = time.time()
+            return WorkflowResult(
+                workflow_name=self.name,
+                success=True,
+                outputs=outputs,
+                execution_time=end_time - start_time,
+                steps_completed=4
+            )
+
         except Exception as e:
-            return self._end_execution(outputs, error=str(e))
+            # FIX 2: Return required fields even on error
+            return WorkflowResult(
+                workflow_name=self.name,
+                success=False,
+                outputs={},
+                execution_time=0.0,
+                steps_completed=0,
+                error=str(e)
+            )
+
+    def _save_to_db(self, inputs: Dict, outputs: Dict):
+        try:
+            # Connect to project.db
+            db_path = self.context_manager.db_path
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+
+            # Create Table if needed
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS workflow_outputs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id TEXT, 
+                workflow_type TEXT, 
+                topic TEXT, 
+                picot_text TEXT,
+                search_results_json TEXT, 
+                validation_report_text TEXT,
+                final_synthesis_text TEXT, 
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """)
+
+            # Insert Data
+            cursor.execute("""
+                INSERT INTO workflow_outputs 
+                (project_id, workflow_type, topic, picot_text, search_results_json, validation_report_text, final_synthesis_text)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                "active_project", 
+                self.name, 
+                inputs.get("topic"), 
+                outputs.get("picot"),
+                str(outputs.get("raw_search_results")), 
+                outputs.get("validation_report"),
+                outputs.get("synthesis")
+            ))
+
+            conn.commit()
+            conn.close()
+            print("✅ Report saved to 'workflow_outputs' table successfully.")
+
+        except Exception as e:
+            print(f"⚠️ Warning: Could not save to DB: {e}")
