@@ -18,3 +18,7 @@ source ${AGNO_INFRA_DIR}/scripts/validate.sh
 
 # Not validating cookbook for now
 # source ${COOKBOOK_DIR}/scripts/validate.sh
+
+# mypy removed - vendored agno library causes config complexity
+# print_heading "Validating src directory"
+# MYPYPATH=libs mypy src/
