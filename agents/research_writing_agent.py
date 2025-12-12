@@ -17,6 +17,7 @@ __all__ = ['ResearchWritingAgent', 'research_writing_agent']
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
+from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
 from agent_config import get_db_path
@@ -47,21 +48,27 @@ class ResearchWritingAgent(BaseAgent):
         Create tools for the writing agent.
 
         Tools include:
+        - ReasoningTools: Structured academic reasoning
         - extract_citations: Find PMIDs/DOIs in text
         - format_citation_apa7: Format citations in APA 7
         - validate_citation_format: Check citation format
         - create_reference_list: Build reference lists
         """
+        # Add ReasoningTools for structured writing/planning
+        reasoning_tools = ReasoningTools(add_instructions=True)
+        
         try:
             from src.tools.writing_tools import create_writing_tools
             writing_tools = create_writing_tools()
             print("✅ WritingTools available - citation formatting enabled")
-            return [writing_tools]
+            print("✅ ReasoningTools available - structured academic reasoning enabled")
+            return [reasoning_tools, writing_tools]
         except ImportError as e:
             import logging
             logging.getLogger(__name__).warning(f"WritingTools not available: {e}")
             print("⚠️ WritingTools not available - pure writing mode")
-            return []
+            print("✅ ReasoningTools available - structured academic reasoning enabled")
+            return [reasoning_tools]
 
     def _create_agent(self) -> Agent:
         """Create and configure the Research Writing Agent."""

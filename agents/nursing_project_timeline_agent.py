@@ -16,6 +16,7 @@ __all__ = ['ProjectTimelineAgent', 'project_timeline_agent']
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
+from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
 from agent_config import get_db_path
@@ -55,12 +56,16 @@ class ProjectTimelineAgent(BaseAgent):
 
         from src.services.api_tools import create_milestone_tools_safe, build_tools_list
 
+        # Add ReasoningTools for project planning
+        reasoning_tools = ReasoningTools(add_instructions=True)
+        
         # Create milestone database tool
         milestone_tool = create_milestone_tools_safe(required=False)
 
-        tools = build_tools_list(milestone_tool)
+        tools = build_tools_list(reasoning_tools, milestone_tool)
 
         # Log tool availability
+        print("✅ ReasoningTools available - structured project planning enabled")
         if milestone_tool:
             print("✅ MilestoneTools available - will query database for timeline")
         else:

@@ -14,6 +14,7 @@ import os
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.db.sqlite import SqliteDb
+from agno.tools.reasoning import ReasoningTools
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, Any
 
@@ -301,21 +302,27 @@ class DataAnalysisAgent(BaseAgent):
         Create tools for the data analysis agent.
 
         Tools include:
+        - ReasoningTools: Structured statistical reasoning
         - calculate_sample_size: Power-based sample size calculation
         - calculate_power: Power analysis for given sample size
         - suggest_statistical_test: Test selection based on study design
         - calculate_effect_size: Cohen's d effect size calculation
         """
+        # Add ReasoningTools for structured statistical reasoning
+        reasoning_tools = ReasoningTools(add_instructions=True)
+        
         try:
             from src.tools.statistics_tools import create_statistics_tools
             stats_tools = create_statistics_tools()
             print("✅ StatisticsTools available - real calculations enabled")
-            return [stats_tools]
+            print("✅ ReasoningTools available - structured statistical reasoning enabled")
+            return [reasoning_tools, stats_tools]
         except ImportError as e:
             import logging
             logging.getLogger(__name__).warning(f"StatisticsTools not available: {e}")
             print("⚠️ StatisticsTools not available - LLM reasoning mode")
-            return []
+            print("✅ ReasoningTools available - structured statistical reasoning enabled")
+            return [reasoning_tools]
 
     def _create_agent(self) -> Agent:
         """Create and configure the Data Analysis Agent."""

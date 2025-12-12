@@ -30,6 +30,7 @@ from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
 from agno.models.response import ToolExecution
 from agno.run.agent import RunOutput
+from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
 from agent_config import get_db_path
@@ -111,6 +112,9 @@ class NursingResearchAgent(BaseAgent):
         """
         # Safe tool creation (Week 1 refactoring pattern)
         
+        # Add ReasoningTools for structured clinical reasoning
+        reasoning_tools = ReasoningTools(add_instructions=True)
+        
         # PRIMARY: PubMed for healthcare research (most reliable for clinical evidence)
         try:
             pubmed_tool = create_pubmed_tools_safe(required=True)
@@ -149,8 +153,9 @@ class NursingResearchAgent(BaseAgent):
         print("✅ LiteratureTools available (save findings to project DB)")
 
         # Build tools list - Healthcare-focused with Exa for broader context
-        # Tool priority: PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI > Exa > LiteratureTools
+        # Tool priority: ReasoningTools > PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI > Exa > LiteratureTools
         tools = build_tools_list(
+            reasoning_tools,
             pubmed_tool,
             clinicaltrials_tool,
             medrxiv_tool,

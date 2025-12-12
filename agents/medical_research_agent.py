@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
+from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
 from agent_config import get_db_path
@@ -75,14 +76,17 @@ class MedicalResearchAgent(BaseAgent):
 
     def _create_tools(self) -> list:
         """Create PubMed tools with safe fallback + LiteratureTools for saving."""
+        # Add ReasoningTools for structured medical reasoning
+        reasoning_tools = ReasoningTools(add_instructions=True)
+        
         # PubMed doesn't require API keys (just email), so it's generally available
         pubmed_tool = create_pubmed_tools_safe(required=False)
 
         # LiteratureTools for saving findings to project database
         literature_tools = LiteratureTools()
 
-        # Build tools list, filtering out None values
-        tools = build_tools_list(pubmed_tool, literature_tools)
+        # Build tools list, filtering out None values (ReasoningTools first)
+        tools = build_tools_list(reasoning_tools, pubmed_tool, literature_tools)
 
         # Log tool availability (using print since self.logger not available yet)
         if pubmed_tool:

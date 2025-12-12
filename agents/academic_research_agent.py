@@ -17,6 +17,7 @@ from textwrap import dedent
 from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.openai import OpenAIChat
+from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
 from agent_config import get_db_path
@@ -48,14 +49,17 @@ class AcademicResearchAgent(BaseAgent):
 
     def _create_tools(self) -> list:
         """Create Arxiv tools with safe fallback + LiteratureTools for saving."""
+        # Add ReasoningTools for structured academic reasoning
+        reasoning_tools = ReasoningTools(add_instructions=True)
+        
         # Arxiv is free and doesn't require authentication
         arxiv_tool = create_arxiv_tools_safe(required=False)
 
         # LiteratureTools for saving findings to project database
         literature_tools = LiteratureTools()
 
-        # Build tools list, filtering out None values
-        tools = build_tools_list(arxiv_tool, literature_tools)
+        # Build tools list, filtering out None values (ReasoningTools first)
+        tools = build_tools_list(reasoning_tools, arxiv_tool, literature_tools)
 
         # Log tool availability (using print since self.logger not available yet)
         if arxiv_tool:

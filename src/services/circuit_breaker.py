@@ -123,6 +123,9 @@ PPTX_READER_BREAKER = create_circuit_breaker("PPTX Reader", failure_threshold=5,
 WEBSITE_READER_BREAKER = create_circuit_breaker("Website Reader", failure_threshold=5, timeout=60)
 TAVILY_READER_BREAKER = create_circuit_breaker("Tavily Reader", failure_threshold=5, timeout=60)
 WEB_SEARCH_READER_BREAKER = create_circuit_breaker("Web Search Reader", failure_threshold=5, timeout=60)
+ARXIV_READER_BREAKER = create_circuit_breaker("ArXiv Reader", failure_threshold=5, timeout=60)
+CSV_READER_BREAKER = create_circuit_breaker("CSV Reader", failure_threshold=5, timeout=60)
+JSON_READER_BREAKER = create_circuit_breaker("JSON Reader", failure_threshold=5, timeout=60)
 
 
 # ============================================================================
@@ -299,6 +302,9 @@ def get_all_breaker_status() -> dict:
         "website_reader": get_breaker_status(WEBSITE_READER_BREAKER),
         "tavily_reader": get_breaker_status(TAVILY_READER_BREAKER),
         "web_search_reader": get_breaker_status(WEB_SEARCH_READER_BREAKER),
+        "arxiv_reader": get_breaker_status(ARXIV_READER_BREAKER),
+        "csv_reader": get_breaker_status(CSV_READER_BREAKER),
+        "json_reader": get_breaker_status(JSON_READER_BREAKER),
     }
 
 

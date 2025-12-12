@@ -8,14 +8,17 @@ Purpose: Provide resilient document reading capabilities with error handling
 """
 
 import logging
-from typing import Optional
+from typing import Optional, List
 from pybreaker import CircuitBreakerError
 from src.services.circuit_breaker import (
     PDF_READER_BREAKER,
     PPTX_READER_BREAKER,
     WEBSITE_READER_BREAKER,
     TAVILY_READER_BREAKER,
-    WEB_SEARCH_READER_BREAKER
+    WEB_SEARCH_READER_BREAKER,
+    ARXIV_READER_BREAKER,
+    CSV_READER_BREAKER,
+    JSON_READER_BREAKER,
 )
 from src.tools.readers_tools.document_reader_tools import DocumentReaderTools
 
@@ -51,6 +54,9 @@ def create_document_reader_tools_safe(
     website_breaker = WEBSITE_READER_BREAKER
     tavily_breaker = TAVILY_READER_BREAKER
     web_search_breaker = WEB_SEARCH_READER_BREAKER
+    arxiv_breaker = ARXIV_READER_BREAKER
+    csv_breaker = CSV_READER_BREAKER
+    json_breaker = JSON_READER_BREAKER
     
     # Wrap methods with circuit breakers
     original_read_pdf = tools.read_pdf
@@ -59,6 +65,9 @@ def create_document_reader_tools_safe(
     original_read_website = tools.read_website
     original_extract_url = tools.extract_url_content
     original_search = tools.search_and_extract
+    original_search_arxiv = tools.search_arxiv
+    original_read_csv = tools.read_csv
+    original_read_json = tools.read_json
     
     def safe_read_pdf(file_path: str) -> str:
         try:
@@ -119,6 +128,36 @@ def create_document_reader_tools_safe(
         except Exception as e:
             logger.error(f"Error in safe_search: {e}", exc_info=True)
             return f"Error performing search: {str(e)}"
+
+    def safe_search_arxiv(topics: List[str], max_results: int = 5) -> str:
+        try:
+            return arxiv_breaker.call(original_search_arxiv, topics, max_results)
+        except CircuitBreakerError:
+            logger.error("ArXiv reader circuit breaker open")
+            return "Error: ArXiv search service temporarily unavailable."
+        except Exception as e:
+            logger.error(f"Error in safe_search_arxiv: {e}", exc_info=True)
+            return f"Error searching ArXiv: {str(e)}"
+
+    def safe_read_csv(file_path: str) -> str:
+        try:
+            return csv_breaker.call(original_read_csv, file_path)
+        except CircuitBreakerError:
+            logger.error("CSV reader circuit breaker open")
+            return "Error: CSV reading service temporarily unavailable."
+        except Exception as e:
+            logger.error(f"Error in safe_read_csv: {e}", exc_info=True)
+            return f"Error reading CSV: {str(e)}"
+
+    def safe_read_json(file_path: str) -> str:
+        try:
+            return json_breaker.call(original_read_json, file_path)
+        except CircuitBreakerError:
+            logger.error("JSON reader circuit breaker open")
+            return "Error: JSON reading service temporarily unavailable."
+        except Exception as e:
+            logger.error(f"Error in safe_read_json: {e}", exc_info=True)
+            return f"Error reading JSON: {str(e)}"
     
     # Replace methods with safe versions
     tools.read_pdf = safe_read_pdf
@@ -127,6 +166,9 @@ def create_document_reader_tools_safe(
     tools.read_website = safe_read_website
     tools.extract_url_content = safe_extract_url
     tools.search_and_extract = safe_search
+    tools.search_arxiv = safe_search_arxiv
+    tools.read_csv = safe_read_csv
+    tools.read_json = safe_read_json
     
     logger.info("Document reader tools created with circuit breaker protection")
     return tools
