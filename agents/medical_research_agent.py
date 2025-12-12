@@ -31,7 +31,7 @@ from agno.models.openai import OpenAIChat
 from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
-from agent_config import get_db_path
+from agent_config import get_db_path, is_reasoning_block_enabled
 
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
@@ -83,7 +83,12 @@ class MedicalResearchAgent(BaseAgent):
         pubmed_tool = create_pubmed_tools_safe(required=False)
 
         # LiteratureTools for saving findings to project database
-        literature_tools = LiteratureTools()
+        try:
+            literature_tools = LiteratureTools()
+            print("✅ LiteratureTools available (save findings to project DB)")
+        except Exception as exc:
+            literature_tools = None
+            print(f"⚠️ LiteratureTools unavailable: {exc}")
 
         # Build tools list, filtering out None values (ReasoningTools first)
         tools = build_tools_list(reasoning_tools, pubmed_tool, literature_tools)
@@ -93,8 +98,6 @@ class MedicalResearchAgent(BaseAgent):
             print("✅ PubMed search available")
         else:
             print("⚠️ PubMed search unavailable (tool creation failed)")
-
-        print("✅ LiteratureTools available (save findings to project DB)")
 
         if not tools:
             print(
@@ -245,7 +248,22 @@ class MedicalResearchAgent(BaseAgent):
                 - "Pressure ulcer prevention protocols nursing homes"
                 - "Medication reconciliation effectiveness"
                 - "Patient safety culture healthcare"
-                """),
+                """) + (
+                "\n"
+                + dedent("""\
+                REASONING APPROACH (PUBMED-FIRST):
+                - Break down complex questions into population, intervention, comparator, outcomes, and timeframe before tool calls
+                - State assumptions and missing inputs explicitly; ask for clarifications instead of guessing clinical context
+                - Call PubMed first and justify any alternate source; keep every claim mapped to tool output
+                - Prioritize evidence quality (systematic reviews > RCTs > observational) and flag small/older studies
+                - Compare plausible interventions/alternatives and note trade-offs, risks, and contraindications tied to the population
+                - Highlight uncertainties and propose next search queries or MeSH terms when evidence is thin
+                - Maintain strict refusals when verification fails; this reasoning augments but never replaces grounding policy
+                - Keep responses concise, citation-linked, and transparent about limits of the retrieved evidence
+                """)
+                if is_reasoning_block_enabled()
+                else ""
+            ),
             add_history_to_context=True,
             add_datetime_to_context=True,
             markdown=True,

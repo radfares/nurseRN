@@ -9,7 +9,8 @@ Created: 2025-12-11
 
 import json
 import logging
-from typing import Any, Dict, List, TYPE_CHECKING
+import os
+from typing import Any, Dict, List, TYPE_CHECKING, Optional
 
 from openai import OpenAI
 
@@ -27,14 +28,18 @@ class ResponseSynthesizer:
     that summarize findings, highlight key information, and guide next steps.
     """
 
-    def __init__(self, model: str = "gpt-4o"):
+    def __init__(self, model: str = "gpt-4o", client: Optional[OpenAI] = None):
         """
         Initialize synthesizer.
 
         Args:
             model: OpenAI model to use for synthesis
         """
-        self.client = OpenAI()  # Uses OPENAI_API_KEY from env
+        if client is not None:
+            self.client = client
+        else:
+            api_key = os.getenv("OPENAI_API_KEY")
+            self.client = OpenAI() if api_key else None
         self.model = model
 
     def synthesize(
@@ -70,6 +75,9 @@ class ResponseSynthesizer:
         user_prompt = self._build_user_prompt(user_message, plan, results, context)
 
         try:
+            if self.client is None:
+                raise RuntimeError("OpenAI client unavailable; using fallback synthesis")
+
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[

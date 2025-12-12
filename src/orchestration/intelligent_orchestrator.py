@@ -5,6 +5,7 @@ Decomposes user goals into agent tasks and synthesizes results.
 Uses GPT-4o-mini for planning and GPT-4o for synthesis.
 
 Created: 2025-12-11
+FIXED: 2025-12-12 - Improved planner prompt to handle conversational queries
 """
 
 import json
@@ -39,18 +40,29 @@ class IntelligentOrchestrator:
     Uses LLM to decompose goals, execute tasks, and synthesize results.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        client: OpenAI | None = None,
+        planner_model: str | None = None,
+        synthesis_model: str | None = None,
+    ):
         """Initialize orchestrator with OpenAI client and components."""
-        self.client = OpenAI()  # Uses OPENAI_API_KEY from env
+        if client is not None:
+            self.client = client
+        else:
+            # Only initialize OpenAI when an API key is available; otherwise rely on fallback planner.
+            import os
+            api_key = os.getenv("OPENAI_API_KEY")
+            self.client = OpenAI() if api_key else None
         self.agent_registry = AgentRegistry()
-        self.synthesizer = ResponseSynthesizer()
+        self.synthesizer = ResponseSynthesizer(client=self.client)
         self.suggestion_engine = SuggestionEngine()
 
         # Model for planning (cheaper, faster)
-        self.planner_model = "gpt-4o-mini"
+        self.planner_model = planner_model or "gpt-4o-mini"
 
         # Model for synthesis (better quality)
-        self.synthesis_model = "gpt-4o"
+        self.synthesis_model = synthesis_model or "gpt-4o"
 
     def process_user_message(
         self,
@@ -115,6 +127,9 @@ class IntelligentOrchestrator:
         user_prompt = self._build_planning_request(message, context)
 
         try:
+            if self.client is None:
+                raise RuntimeError("OpenAI client not configured")
+
             response = self.client.chat.completions.create(
                 model=self.planner_model,
                 messages=[
@@ -126,30 +141,102 @@ class IntelligentOrchestrator:
             )
 
             plan_json = json.loads(response.choices[0].message.content)
-
-            # Convert to AgentTask objects
-            tasks = []
-            for task_dict in plan_json.get("tasks", []):
-                tasks.append(AgentTask(
-                    task_id=task_dict.get("task_id", f"task_{len(tasks)+1}"),
-                    agent_name=task_dict.get("agent_name", "nursing_research"),
-                    action=task_dict.get("action", "search"),
-                    params=task_dict.get("params", {}),
-                    depends_on=task_dict.get("depends_on", [])
-                ))
-
-            logger.info(f"Created plan with {len(tasks)} tasks")
-            return tasks
+            return self._parse_plan(plan_json)
 
         except Exception as e:
             logger.error(f"Error creating execution plan: {e}", exc_info=True)
-            return []
+            logger.info("Falling back to rule-based planner")
+            return self._fallback_plan(message, context)
+
+    def _parse_plan(self, plan_json: Dict[str, Any]) -> List[AgentTask]:
+        """Convert JSON plan into AgentTask objects."""
+        tasks: List[AgentTask] = []
+        for task_dict in plan_json.get("tasks", []):
+            tasks.append(AgentTask(
+                task_id=task_dict.get("task_id", f"task_{len(tasks)+1}"),
+                agent_name=task_dict.get("agent_name", "nursing_research"),
+                action=task_dict.get("action", "search"),
+                params=task_dict.get("params", {}),
+                depends_on=task_dict.get("depends_on", [])
+            ))
+
+        logger.info(f"Created plan with {len(tasks)} tasks")
+        return tasks
+
+    def _fallback_plan(
+        self,
+        message: str,
+        context: ConversationContext
+    ) -> List[AgentTask]:
+        """
+        Deterministic planner used when LLM planning is unavailable.
+
+        Keeps tests/network-restricted environments working by mapping common
+        intents to a minimal task list.
+        """
+        topic = context.messages[-1]["content"] if getattr(context, "messages", None) else message
+        topic = topic if topic else "nursing research"
+
+        lowered = message.lower()
+        tasks: List[AgentTask] = []
+
+        if "timeline" in lowered or "milestone" in lowered:
+            tasks.append(AgentTask(
+                task_id="task_1",
+                agent_name="project_timeline",
+                action="get_milestones",
+                params={"topic": topic},
+                depends_on=[]
+            ))
+        elif "sample size" in lowered or "power" in lowered or "statistical" in lowered:
+            tasks.append(AgentTask(
+                task_id="task_1",
+                agent_name="data_analysis",
+                action="calculate_sample_size",
+                params={"topic": topic, "design": "parallel", "effect_size": "estimate"},
+                depends_on=[]
+            ))
+        elif "validate" in lowered or "retraction" in lowered:
+            tasks.append(AgentTask(
+                task_id="task_1",
+                agent_name="citation_validation",
+                action="validate",
+                params={"topic": topic},
+                depends_on=[]
+            ))
+        else:
+            tasks.append(AgentTask(
+                task_id="task_1",
+                agent_name="research_writing",
+                action="generate_picot",
+                params={"topic": topic},
+                depends_on=[]
+            ))
+            tasks.append(AgentTask(
+                task_id="task_2",
+                agent_name="medical_research",
+                action="search_pubmed",
+                params={"query": topic},
+                depends_on=["task_1"]
+            ))
+
+        return tasks
 
     def _build_planner_prompt(self) -> str:
         """Build system prompt for the planner LLM."""
         return """You are an execution planner for a nursing research assistant system.
 
 Your job is to decompose user goals into a sequence of agent tasks.
+
+CRITICAL: USE CONVERSATION HISTORY TO UNDERSTAND CONTEXT.
+When the user says "generate a PICOT question" or "search for articles",
+look at the recent conversation to understand WHAT TOPIC they're discussing.
+
+Examples:
+- If they just discussed "nurse-aide communication", then "generate a PICOT"
+  means generate a PICOT about nurse-aide communication
+- If they asked about "fall prevention", then "search for articles"
+  means search about fall prevention
 
 Available agents and their capabilities:
 - nursing_research: PICOT development, web search, healthcare standards, Joint Commission guidelines
@@ -159,6 +246,43 @@ Available agents and their capabilities:
 - project_timeline: Milestone tracking, deadline reminders, project phase management
 - data_analysis: Sample size calculation, statistical test selection, power analysis
 - citation_validation: Evidence grading (Johns Hopkins), retraction detection, quality scoring
+
+IMPORTANT RULES FOR PLANNING:
+
+1. **Use Conversation History**: Always check the recent messages for the topic being discussed. Extract and reuse that topic in params.
+
+2. **Extract Topic from Context**:
+   - Look at the last 3-5 messages
+   - Find the research topic or clinical question
+   - Use that topic in task parameters (e.g., params.topic, params.query)
+
+3. **Be Helpful, Not Strict**: If a user asks about a nursing/healthcare topic, create a research plan. Don't return empty tasks.
+
+4. **Interpret Conversational Queries**: 
+   - "what do you recommend" → suggest next steps based on context
+   - "what are promising research topics" → search for trending topics
+   - "how does X help Y" → research the relationship between X and Y
+
+5. **Default Research Workflow** (when user asks about a topic):
+   - Step 1: Generate PICOT question (research_writing)
+   - Step 2: Search PubMed (medical_research)
+   - Step 3: Validate articles (citation_validation) [OPTIONAL - only if articles found]
+   - Step 4: Synthesize findings (research_writing)
+
+6. **Single-Agent Queries** (simple requests):
+   - Timeline questions → project_timeline only
+   - Statistical calculations → data_analysis only
+   - Article validation → citation_validation only
+
+7. **Extract Topics from Natural Language**:
+   - "communication between nurses and aides" → topic: "nurse-aide communication"
+   - "fall prevention" → topic: "fall prevention"
+   - "CAUTI reduction" → topic: "catheter-associated urinary tract infection prevention"
+
+8. **Only Return Empty Tasks If**:
+   - User says "help", "exit", "quit", "back"
+   - User message is gibberish or completely unrelated to healthcare
+   - User is just chatting without a request
 
 Common workflows:
 1. Research topic → [research_writing: generate_picot] → [medical_research: search_pubmed] → [citation_validation: validate] → [research_writing: synthesize]
@@ -170,12 +294,12 @@ Return a JSON object with a "tasks" array. Each task has:
 - task_id: Unique identifier (e.g., "task_1")
 - agent_name: One of the available agents
 - action: The action to perform
-- params: Parameters for the action (object)
+- params: Parameters for the action (object). Include "topic" derived from recent conversation when relevant.
 - depends_on: Array of task_ids this depends on
 
 Use "<task_id.field>" syntax for dependency values.
 
-Example output:
+Example output for "research fall prevention":
 {
   "tasks": [
     {
@@ -195,7 +319,53 @@ Example output:
   ]
 }
 
-If the request is unclear or cannot be mapped to agents, return {"tasks": []}.
+Example output for "what do you recommend":
+{
+  "tasks": [
+    {
+      "task_id": "task_1",
+      "agent_name": "project_timeline",
+      "action": "get_next_milestone",
+      "params": {},
+      "depends_on": []
+    }
+  ]
+}
+
+Example output for "how does X help Y":
+{
+  "tasks": [
+    {
+      "task_id": "task_1",
+      "agent_name": "research_writing",
+      "action": "generate_picot",
+      "params": {"topic": "X and Y relationship"},
+      "depends_on": []
+    },
+    {
+      "task_id": "task_2",
+      "agent_name": "medical_research",
+      "action": "search_pubmed",
+      "params": {"query": "<task_1.picot>"},
+      "depends_on": ["task_1"]
+    }
+  ]
+}
+
+Example output for "generate a PICOT" (when discussing nurse-aide communication):
+{
+  "tasks": [
+    {
+      "task_id": "task_1",
+      "agent_name": "research_writing",
+      "action": "generate_picot",
+      "params": {"topic": "nurse-aide communication and workflow efficiency"},
+      "depends_on": []
+    }
+  ]
+}
+
+BE GENEROUS WITH TASK CREATION. When in doubt, create a research workflow. Users want help, not rejection.
 """
 
     def _build_planning_request(
@@ -207,7 +377,23 @@ If the request is unclear or cannot be mapped to agents, return {"tasks": []}.
         artifacts_list = list(context.artifacts.keys()) if context.artifacts else ["None"]
         completed_list = list(context.completed_tasks) if context.completed_tasks else ["None"]
 
+        # Get recent conversation history (last 5 messages), truncated for brevity
+        recent_messages = []
+        if hasattr(context, 'messages') and context.messages:
+            last_n = min(5, len(context.messages))
+            for msg in context.messages[-last_n:]:
+                role = msg.get("role", "unknown")
+                content = msg.get("content", "")
+                if isinstance(content, str) and len(content) > 200:
+                    content = content[:200] + "..."
+                recent_messages.append(f"{role}: {content}")
+
+        conversation_history = "\n".join(recent_messages) if recent_messages else "No previous messages"
+
         return f"""User message: "{message}"
+
+Recent conversation (last 5 messages):
+{conversation_history}
 
 Conversation context:
 - Project: {context.project_name}
@@ -215,7 +401,11 @@ Conversation context:
 - Completed tasks: {', '.join(completed_list)}
 - Available artifacts: {', '.join(artifacts_list)}
 
-Create an execution plan as a JSON object with a "tasks" array."""
+Create an execution plan as a JSON object with a "tasks" array.
+
+IMPORTANT: Look at the recent conversation to understand what topic the user is discussing.
+If they say "generate a PICOT" or "search for articles", use the topic from the recent messages.
+Remember: Be helpful! If the user is asking about a nursing/healthcare topic, create a research plan. Don't return empty tasks unless the request is truly unclear or unrelated."""
 
     def _execute_plan(
         self,

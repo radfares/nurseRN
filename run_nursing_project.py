@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 # Ensure vendored agno library is importable
+import os
 import sys
 import time
 from pathlib import Path
@@ -39,6 +40,7 @@ from agents.citation_validation_agent import get_citation_validation_agent
 # Orchestration imports - NEW CONVERSATIONAL INTERFACE
 from src.orchestration.intelligent_orchestrator import IntelligentOrchestrator
 from src.orchestration.conversation_context import ConversationContext
+from src.orchestration.api_validators import InvalidAPIKeyError, validate_openai_key
 
 # Legacy orchestration imports (kept for fallback)
 from src.orchestration.context_manager import ContextManager
@@ -48,6 +50,7 @@ from src.workflows.research_workflow import ResearchWorkflow
 from src.workflows.parallel_search import ParallelSearchWorkflow
 from src.workflows.timeline_planner import TimelinePlannerWorkflow
 from src.workflows.validated_research_workflow import ValidatedResearchWorkflow
+from src.workflows.registry import get_workflow
 
 
 def show_welcome():
@@ -454,12 +457,16 @@ def run_workflow_mode():
     context_manager = ContextManager(db_path=project_db)
     orchestrator = WorkflowOrchestrator(context_manager)
     
-    workflows = {
-        "1": ValidatedResearchWorkflow(orchestrator, context_manager),
-        "2": ResearchWorkflow(orchestrator, context_manager),
-        "3": ParallelSearchWorkflow(orchestrator, context_manager),
-        "4": TimelinePlannerWorkflow(orchestrator, context_manager)
+    workflows = {}
+    workflow_specs = {
+        "1": ("validated_research", ValidatedResearchWorkflow),
+        "2": ("research", ResearchWorkflow),
+        "3": ("parallel_search", ParallelSearchWorkflow),
+        "4": ("timeline_planner", TimelinePlannerWorkflow),
     }
+    for menu_key, (registry_key, fallback_class) in workflow_specs.items():
+        workflow_class = get_workflow(registry_key) or fallback_class
+        workflows[menu_key] = workflow_class(orchestrator, context_manager)
     
     while True:
         print("\nAvailable Workflows:")
@@ -761,6 +768,15 @@ def main():
     # Phase 1, Task 4 (2025-11-29) - Liability protection
     if not show_clinical_disclaimer():
         sys.exit(1)
+
+    # Fail-fast (format) validation for OpenAI key to avoid wasting requests.
+    # If key is missing, allow the app to start (some features/tests don't require live calls).
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        try:
+            validate_openai_key(openai_key)
+        except InvalidAPIKeyError as e:
+            print(f"\n⚠️  {e}")
 
     show_welcome()
 

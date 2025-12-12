@@ -33,7 +33,7 @@ from agno.run.agent import RunOutput
 from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
-from agent_config import get_db_path
+from agent_config import get_db_path, is_reasoning_block_enabled
 
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
@@ -149,8 +149,12 @@ class NursingResearchAgent(BaseAgent):
         exa_tool = create_exa_tools_safe(required=False)  # ENABLED - neural web search
 
         # LiteratureTools for saving findings to project database
-        literature_tools = LiteratureTools()
-        print("✅ LiteratureTools available (save findings to project DB)")
+        try:
+            literature_tools = LiteratureTools()
+            print("✅ LiteratureTools available (save findings to project DB)")
+        except Exception as exc:
+            literature_tools = None
+            print(f"⚠️ LiteratureTools unavailable: {exc}")
 
         # Build tools list - Healthcare-focused with Exa for broader context
         # Tool priority: ReasoningTools > PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI > Exa > LiteratureTools
@@ -365,7 +369,22 @@ class NursingResearchAgent(BaseAgent):
                 - Include relevant citations with PMIDs when available
                 - Highlight best practices and guidelines
                 - Always specify which database/source was used
-                """),
+                """) + (
+                "\n"
+                + dedent("""\
+                REASONING APPROACH (CLINICAL):
+                - Break down complex questions into PICOT pieces and clarify the clinical goal before searching
+                - State assumptions (population, setting, timeframe) and ask for missing context if any piece is unclear
+                - Start with PubMed; document why a secondary source is used when PubMed lacks coverage
+                - Grade evidence quality (study design, sample size, recency) before recommending actions
+                - Compare interventions/alternatives and note trade-offs, contraindications, and implementation risks
+                - Surface safety flags early: devices/medications → route through SafetyTools when risk is present
+                - Call out uncertainties and propose next search terms or filters instead of stretching limited evidence
+                - Keep every citation tied to tool output; this reasoning supports but never overrides grounding/refusal rules
+                """)
+                if is_reasoning_block_enabled()
+                else ""
+            ),
             add_history_to_context=True,
             add_datetime_to_context=True,
             enable_agentic_memory=True,

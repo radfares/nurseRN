@@ -16,6 +16,7 @@ import time
 from src.orchestration.context_manager import ContextManager
 from src.orchestration.safe_accessors import safe_get_content, safe_get_messages, safe_get_metadata
 from src.orchestration.log_sanitizer import sanitize_log_entry
+from src.models.agent_handoff import create_handoff
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -108,6 +109,15 @@ class WorkflowOrchestrator:
             
             # Extract metadata safely
             metadata = safe_get_metadata(response) if response else {}
+
+            # Create a structured handoff payload (non-breaking; stored alongside raw content)
+            handoff = create_handoff(
+                agent_name=agent_name,
+                content=content or "",
+                structured_data=None,
+                confidence=1.0,
+                metadata=metadata,
+            )
             
             # Calculate duration
             duration = time.time() - start_time
@@ -120,7 +130,8 @@ class WorkflowOrchestrator:
                 value={
                     "content": content,
                     "metadata": metadata,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
+                    "handoff": handoff.to_dict(),
                 }
             )
             

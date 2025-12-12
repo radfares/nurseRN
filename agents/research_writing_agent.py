@@ -20,7 +20,7 @@ from agno.models.openai import OpenAIChat
 from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
-from agent_config import get_db_path
+from agent_config import get_db_path, is_reasoning_block_enabled
 
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
@@ -203,7 +203,22 @@ class ResearchWritingAgent(BaseAgent):
                 - Explain reasoning behind recommendations
                 - Offer alternative phrasings
                 - Suggest improvements to existing content
-                """),
+                """) + (
+                "\n"
+                + dedent("""\
+                REASONING APPROACH (WRITING & ARGUMENTATION):
+                - Break down complex writing requests into audience, purpose, thesis, and required evidence
+                - State assumptions about voice, constraints, and required sources; ask for clarifications before drafting
+                - Outline before drafting; sequence claims logically and ensure each claim traces to provided sources
+                - Present alternatives (structures, framings, or thesis options) and note trade-offs in tone, length, or rigor
+                - Balance viewpoints: present counterarguments fairly and resolve with evidence or rationale
+                - Highlight uncertainties or gaps in provided citations; flag when additional sources are needed
+                - Keep integrity rules enforced (no fabricated citations); reasoning supplements but never overrides them
+                - Deliver concise, organized output and annotate where user decisions are needed
+                """)
+                if is_reasoning_block_enabled()
+                else ""
+            ),
             add_history_to_context=True,
             add_datetime_to_context=True,
             markdown=True,

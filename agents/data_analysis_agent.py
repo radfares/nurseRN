@@ -19,7 +19,12 @@ from pydantic import BaseModel, Field
 from typing import Literal, Optional, Any
 
 # PHASE 1: Import centralized configuration
-from agent_config import get_db_path, DATA_ANALYSIS_TEMPERATURE, DATA_ANALYSIS_MAX_TOKENS
+from agent_config import (
+    DATA_ANALYSIS_MAX_TOKENS,
+    DATA_ANALYSIS_TEMPERATURE,
+    get_db_path,
+    is_reasoning_block_enabled,
+)
 
 # PHASE 2: Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
@@ -278,6 +283,17 @@ JSON:
 }
 """
 
+STATISTICAL_REASONING_BLOCK = """## Reasoning Approach (Statistical)
+- Break down complex questions into design, outcome type, and comparison structure before selecting methods.
+- State assumptions early (independence, variance equality, distribution, clustering) and confirm missing inputs.
+- Map method choice to assumptions and data shape; propose alternatives when assumptions are shaky.
+- Quantify trade-offs (power vs. sample size vs. feasibility) and flag when choices increase bias or Type I/II risk.
+- Prefer simpler, robust methods when data quality is limited; justify when more complex models are warranted.
+- Expose uncertainties and sensitivity points (effect size estimates, ICC guesses, missing data mechanism).
+- Keep recommendations tied to reproducible steps/code; suggest validations/diagnostics to confirm fit.
+- This reasoning supports but never replaces math reliability and safety rules above.
+"""
+
 
 class DataAnalysisAgent(BaseAgent):
     """
@@ -329,6 +345,10 @@ class DataAnalysisAgent(BaseAgent):
         # Create database for session persistence (inside method, not module-level)
         db = SqliteDb(db_file=get_db_path("data_analysis"))
 
+        reasoning_block = (
+            "\n\n" + STATISTICAL_REASONING_BLOCK if is_reasoning_block_enabled() else ""
+        )
+
         return Agent(
             name="Data Analysis Planner",
             role="Statistical expert for nursing and healthcare research",
@@ -338,7 +358,9 @@ class DataAnalysisAgent(BaseAgent):
                 max_tokens=DATA_ANALYSIS_MAX_TOKENS,    # 1600 for JSON + prose
             ),
             tools=self.tools,
-            instructions=STATISTICAL_EXPERT_PROMPT + "\n\nABSOLUTE LAW #1: MATH RELIABILITY\n- Use temperature=0 for all calculations\n- Double-check all formulas\n- If sample size > 500, mark as INFEASIBLE",
+            instructions=STATISTICAL_EXPERT_PROMPT
+            + reasoning_block
+            + "\n\nABSOLUTE LAW #1: MATH RELIABILITY\n- Use temperature=0 for all calculations\n- Double-check all formulas\n- If sample size > 500, mark as INFEASIBLE",
             output_schema=DataAnalysisOutput,  # CRITICAL: Enabled for JSON validation
             markdown=True,
             db=db,
@@ -467,4 +489,3 @@ if __name__ == "__main__":
         _data_analysis_agent_instance.run_with_error_handling()
     else:
         print("❌ Agent failed to initialize. Check logs for details.")
-

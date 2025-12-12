@@ -3,6 +3,8 @@
 ## 🆕 What's New
 
 I've added **2 specialized research agents** to help you find peer-reviewed literature for your nursing project!
+- All agents now share a standardized reasoning framework—see each agent’s "Reasoning Approach" block for how they break down questions.
+- Want a lighter prompt? Set `REASONING_BLOCK=off` to disable the standardized reasoning blocks (defaults on).
 
 ---
 
@@ -276,4 +278,3 @@ You now have **4 specialized agents** for your project:
 **Perfect for your January literature search phase!**
 
 Run `./start_nursing_project.sh` to start using them! 🏥
-

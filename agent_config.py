@@ -63,6 +63,18 @@ LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 # HELPER FUNCTIONS
 # ============================================================================
 
+def is_reasoning_block_enabled() -> bool:
+    """
+    Feature flag: toggle standardized reasoning blocks in agent instructions.
+
+    Controlled via environment variable REASONING_BLOCK:
+    - "off", "false", "0", "disabled" → blocks removed
+    - Any other value (or unset) → blocks included
+    """
+    value = os.getenv("REASONING_BLOCK", "on").strip().lower()
+    return value not in {"off", "false", "0", "disable", "disabled"}
+
+
 def get_db_path(agent_name: str) -> str:
     """
     Get the absolute database path for a given agent.

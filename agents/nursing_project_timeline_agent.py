@@ -19,7 +19,7 @@ from agno.models.openai import OpenAIChat
 from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
-from agent_config import get_db_path
+from agent_config import get_db_path, is_reasoning_block_enabled
 
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
@@ -161,7 +161,22 @@ class ProjectTimelineAgent(BaseAgent):
                 - If a milestone has custom notes, include them in your response
                 - If all milestones are completed, congratulate the user
                 - If no milestones exist, suggest creating them
-                """),
+                """) + (
+                "\n"
+                + dedent("""\
+                REASONING APPROACH (PROJECT PLANNING):
+                - Break down complex requests into timeframe, dependency chain, and deliverables before answering
+                - State assumptions about dates, responsible roles, and scope; ask for missing details instead of guessing
+                - Query the milestone database first; align every recommendation to a specific record
+                - Identify dependencies and critical path; call out blockers and resource constraints explicitly
+                - Offer alternatives (sequence changes, scope trims, backups) and note trade-offs in risk, effort, or quality
+                - Surface uncertainties (missing dates, ambiguous status) and propose concrete next tool calls to resolve them
+                - Keep database grounding rules primary; reasoning supports but never overrides refusal to invent dates
+                - Communicate concise next steps with owners, due dates, and days remaining
+                """)
+                if is_reasoning_block_enabled()
+                else ""
+            ),
             add_history_to_context=True,
             add_datetime_to_context=True,
             markdown=True,

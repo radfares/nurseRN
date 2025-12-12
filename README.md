@@ -47,6 +47,7 @@ The Nursing Research Project Assistant is a project-centric multi-agent system t
 4. **Research Writing Agent** - Academic writing, literature synthesis, poster content
 5. **Project Timeline Agent** - Milestone tracking and deadline management
 6. **Data Analysis Planner** - Statistical test selection, sample size calculations, data templates
+   - All agents use a standardized reasoning framework—see the "Reasoning Approach" section in each agent’s instructions.
 
 ### 📁 Project Management
 
@@ -82,6 +83,7 @@ The Nursing Research Project Assistant is a project-centric multi-agent system t
   - Exa API Key (for Nursing Research Agent)
   - SerpAPI Key (for Nursing Research Agent)
   - PubMed Email (for Medical Research Agent)
+  - Feature flag: set `REASONING_BLOCK=off` to disable the standardized reasoning blocks (defaults to on)
 
 ### Installation
 

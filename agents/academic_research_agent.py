@@ -20,7 +20,7 @@ from agno.models.openai import OpenAIChat
 from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
-from agent_config import get_db_path
+from agent_config import get_db_path, is_reasoning_block_enabled
 
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
@@ -56,7 +56,12 @@ class AcademicResearchAgent(BaseAgent):
         arxiv_tool = create_arxiv_tools_safe(required=False)
 
         # LiteratureTools for saving findings to project database
-        literature_tools = LiteratureTools()
+        try:
+            literature_tools = LiteratureTools()
+            print("✅ LiteratureTools available (save findings to project DB)")
+        except Exception as exc:
+            literature_tools = None
+            print(f"⚠️ LiteratureTools unavailable: {exc}")
 
         # Build tools list, filtering out None values (ReasoningTools first)
         tools = build_tools_list(reasoning_tools, arxiv_tool, literature_tools)
@@ -66,8 +71,6 @@ class AcademicResearchAgent(BaseAgent):
             print("✅ Arxiv search available")
         else:
             print("⚠️ Arxiv search unavailable (tool creation failed)")
-
-        print("✅ LiteratureTools available (save findings to project DB)")
 
         if not tools:
             print("❌ No search tools available! Agent will have limited functionality.")
@@ -145,7 +148,22 @@ class AcademicResearchAgent(BaseAgent):
                 - "Data analysis methods clinical trials"
                 - "Epidemiological models hospital infections"
                 - "Quality metrics healthcare systems"
-                """),
+                """) + (
+                "\n"
+                + dedent("""\
+                REASONING APPROACH (ACADEMIC):
+                - Break down complex questions into sub-questions (theory, method, domain) before choosing queries
+                - State assumptions about domain/scope and confirm missing details instead of inferring them
+                - Map each claim to Arxiv tool output and prefer primary sources over commentary
+                - Compare methodological alternatives and frameworks, noting trade-offs in rigor, data needs, and bias
+                - Evaluate evidence quality: study design, reproducibility signals, code/data availability, peer review status
+                - Surface uncertainties and research gaps explicitly; propose follow-up searches or adjacent fields to explore
+                - Keep refusals in place when verification fails; this reasoning supports but never overrides grounding rules
+                - Present concise summaries, highlighting limitations and future work alongside key findings
+                """)
+                if is_reasoning_block_enabled()
+                else ""
+            ),
             add_history_to_context=True,
             add_datetime_to_context=True,
             markdown=True,

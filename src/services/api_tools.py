@@ -21,6 +21,26 @@ from typing import Optional, Any, Callable, Dict, List
 from functools import wraps
 
 import pybreaker
+
+logger = logging.getLogger(__name__)
+
+class CircuitProtectedToolWrapper:
+    """
+    Lightweight wrapper that preserves the tool interface while keeping a reference
+    to the circuit breaker for logging/inspection. Minimal by design so tests can
+    patch it without altering tool behavior.
+    """
+    def __init__(self, tool: Any, breaker: Optional[Any], api_name: str = "API"):
+        self._tool = tool
+        self._breaker = breaker
+        self._api_name = api_name
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._tool, name)
+
+    def __repr__(self) -> str:
+        return f"CircuitProtectedToolWrapper(api={self._api_name!r}, tool={self._tool!r})"
+
 try:
     from agno.tools.exa import ExaTools
     from agno.tools.serpapi import SerpApiTools
@@ -36,8 +56,6 @@ try:
 except ImportError as e:
     logger.warning(f"Could not import one or more tool classes, type hints may be imprecise: {e}")
     ExaTools = SerpApiTools = PubmedTools = ArxivTools = ClinicalTrialsTools = MedRxivTools = SemanticScholarTools = CoreTools = DoajTools = MilestoneTools = SafetyTools = Any
-
-logger = logging.getLogger(__name__)
 
 # Import circuit breakers
 try:
@@ -247,7 +265,7 @@ def apply_in_place_wrapper(tool: Any, method_names: list, breaker_factory: Calla
     Returns:
         The modified tool instance
     """
-    if not hasattr(tool, "_wrapped_methods"):
+    if not hasattr(tool, "_wrapped_methods") or not isinstance(getattr(tool, "_wrapped_methods", None), set):
         tool._wrapped_methods = set()
         # Store factory for unpickling restoration
         tool._breaker_factory = breaker_factory
@@ -509,7 +527,7 @@ def create_clinicaltrials_tools_safe(required: bool = False) -> Optional[Clinica
             _get_clinicaltrials_breaker
         )
         logger.info("✅ Created ClinicalTrials.gov tool with circuit breaker protection")
-        return clinicaltrials_tool
+        return CircuitProtectedToolWrapper(clinicaltrials_tool, CLINICALTRIALS_BREAKER, "ClinicalTrials.gov API")
     except Exception as e:
         logger.error(f"Failed to create ClinicalTrialsTools: {e}", exc_info=True)
         if required:
@@ -549,7 +567,7 @@ def create_medrxiv_tools_safe(required: bool = False) -> Optional[MedRxivTools]:
             _get_medrxiv_breaker
         )
         logger.info("✅ Created medRxiv tool with circuit breaker protection")
-        return medrxiv_tool
+        return CircuitProtectedToolWrapper(medrxiv_tool, MEDRXIV_BREAKER, "medRxiv API")
     except Exception as e:
         logger.error(f"Failed to create MedRxivTools: {e}", exc_info=True)
         if required:
@@ -589,7 +607,7 @@ def create_semantic_scholar_tools_safe(required: bool = False) -> Optional[Seman
             _get_semantic_scholar_breaker
         )
         logger.info("✅ Created Semantic Scholar tool with circuit breaker protection")
-        return semantic_scholar_tool
+        return CircuitProtectedToolWrapper(semantic_scholar_tool, SEMANTIC_SCHOLAR_BREAKER, "Semantic Scholar API")
     except Exception as e:
         logger.error(f"Failed to create SemanticScholarTools: {e}", exc_info=True)
         if required:
@@ -629,7 +647,7 @@ def create_core_tools_safe(required: bool = False) -> Optional[CoreTools]:
             _get_core_breaker
         )
         logger.info("✅ Created CORE tool with circuit breaker protection")
-        return core_tool
+        return CircuitProtectedToolWrapper(core_tool, CORE_BREAKER, "CORE API")
     except Exception as e:
         logger.error(f"Failed to create CoreTools: {e}", exc_info=True)
         if required:
@@ -668,7 +686,7 @@ def create_doaj_tools_safe(required: bool = False) -> Optional[DoajTools]:
             _get_doaj_breaker
         )
         logger.info("✅ Created DOAJ tool with circuit breaker protection")
-        return doaj_tool
+        return CircuitProtectedToolWrapper(doaj_tool, DOAJ_BREAKER, "DOAJ API")
     except Exception as e:
         logger.error(f"Failed to create DoajTools: {e}", exc_info=True)
         if required:
