@@ -206,64 +206,125 @@ class ResearchWritingAgent(BaseAgent):
         )
 
     def run_with_grounding_check(self, query: str, **kwargs) -> Any:
-        """Execute the agent while forcing a grounding verification pass."""
-        # Audit Logging: Query Received
+        """Execute the agent with citation fabrication prevention."""
+        import traceback
+
         project_name = kwargs.get("project_name")
         if self.audit_logger:
             self.audit_logger.log_query_received(query, project_name)
 
         stream_requested = bool(kwargs.get("stream"))
-        
+
         try:
             response = self.agent.run(query, **kwargs)
-            
-            # Streaming responses are yielded incrementally and cannot be re-verified here.
+
             if stream_requested:
                 return response
-                
+
             self._validate_run_output(response)
-            
-            # Audit Logging: Response Generated
+
             if self.audit_logger:
                 self.audit_logger.log_response_generated(
                     response=str(response.content),
                     response_type="success",
                     validation_passed=True
                 )
-                
+
             return response
-            
+
+        except ValueError as validation_error:
+            if self.audit_logger:
+                self.audit_logger.log_error(
+                    error_type="CitationFabricationBlocked",
+                    error_message=str(validation_error),
+                    stack_trace=traceback.format_exc()
+                )
+
+            return {
+                "content": (
+                    "CITATION SAFETY SYSTEM ACTIVATED\n\n"
+                    f"{str(validation_error)}\n\n"
+                    "I am a writing assistant without access to research databases.\n"
+                    "For citations, please use:\n"
+                    "- Medical Research Agent (PubMed)\n"
+                    "- Nursing Research Agent (PubMed + more)\n"
+                    "- Academic Research Agent (Arxiv)"
+                ),
+                "validation_passed": False
+            }
+
         except Exception as e:
-            # Audit Logging: Error
             if self.audit_logger:
                 self.audit_logger.log_error(
                     error_type=type(e).__name__,
                     error_message=str(e),
-                    stack_trace=str(e)
+                    stack_trace=traceback.format_exc()
                 )
             raise
 
     def _validate_run_output(self, run_output: Any) -> bool:
-        """Ensure no hallucinated citations are present."""
-        # Since this agent has no tools, any citation (PMID/DOI) is potentially hallucinated
-        # unless it's from context. We'll just log if we see them.
-        
+        """
+        Ensure no hallucinated citations are present.
+
+        ALLOWS citations if they were provided in the input prompt.
+        BLOCKS if new PMIDs/DOIs are fabricated (this agent has no search tools).
+        """
         import re
-        content = str(run_output.content)
-        
-        # Check for PMIDs or DOIs
-        pmids = re.findall(r"PMID:?\s*(\d+)", content, re.IGNORECASE)
-        dois = re.findall(r"10\.\d{4,9}/[-._;()/:A-Z0-9]+", content, re.IGNORECASE)
-        
-        if pmids or dois:
-            # Log warning - this agent shouldn't be generating new citations
+
+        content = str(run_output.content) if hasattr(run_output, 'content') else str(run_output)
+
+        # Get the input messages to extract provided citations
+        input_citations = set()
+        if hasattr(run_output, 'messages') and run_output.messages:
+            for msg in run_output.messages:
+                msg_content = str(msg.content) if hasattr(msg, 'content') else str(msg)
+                # Extract PMIDs from input
+                input_pmids = re.findall(r"PMID:?\s*(\d+)", msg_content, re.IGNORECASE)
+                input_pmids.extend(re.findall(r'\[(\d{7,8})\]\(https?://pubmed', msg_content))
+                input_pmids.extend(re.findall(r'pubmed\.ncbi\.nlm\.nih\.gov/(\d{7,8})', msg_content))
+                input_citations.update(input_pmids)
+                # Extract DOIs from input
+                input_dois = re.findall(r"10\.\d{4,9}/[-._;()/:A-Z0-9]+", msg_content, re.IGNORECASE)
+                input_citations.update(input_dois)
+
+        # Extract citations from output
+        output_pmids = re.findall(r"PMID:?\s*(\d+)", content, re.IGNORECASE)
+        output_pmids.extend(re.findall(r'\[(\d{7,8})\]\(https?://pubmed', content))
+        output_pmids.extend(re.findall(r'pubmed\.ncbi\.nlm\.nih\.gov/(\d{7,8})', content))
+        output_dois = re.findall(r"10\.\d{4,9}/[-._;()/:A-Z0-9]+", content, re.IGNORECASE)
+
+        # Check for fabricated citations (in output but NOT in input)
+        output_citations = set(output_pmids) | set(output_dois)
+        fabricated = output_citations - input_citations
+
+        if fabricated:
             if self.audit_logger:
                 self.audit_logger.log_validation_check(
-                    "no_citations_check", 
-                    True, # We don't block, just log, as user might have provided them
-                    {"pmids_found": pmids, "dois_found": dois, "note": "Agent has no search tools"}
+                    "no_citations_check",
+                    False,
+                    {
+                        "fabricated_citations": list(fabricated),
+                        "input_citations": list(input_citations),
+                        "output_citations": list(output_citations),
+                        "reason": "Agent fabricated citations not in input"
+                    }
                 )
-        
+
+            raise ValueError(
+                f"CITATION FABRICATION BLOCKED\n"
+                f"This agent has no search tools and cannot generate new citations.\n"
+                f"Fabricated citations: {list(fabricated)}\n"
+                f"Allowed citations from input: {list(input_citations)}\n"
+                f"Use Medical Research Agent or Nursing Research Agent for new citations."
+            )
+
+        if self.audit_logger:
+            self.audit_logger.log_validation_check(
+                "no_citations_check",
+                True,
+                {"citations_used": list(output_citations), "from_input": True}
+            )
+
         return True
 
     def show_usage_examples(self) -> None:

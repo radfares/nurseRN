@@ -166,68 +166,97 @@ class ProjectTimelineAgent(BaseAgent):
         )
 
     def run_with_grounding_check(self, query: str, **kwargs) -> Any:
-        """Execute the agent while forcing a grounding verification pass."""
-        # Audit Logging: Query Received
+        """Execute the agent with database grounding enforcement."""
+        import traceback
+
         project_name = kwargs.get("project_name")
         if self.audit_logger:
             self.audit_logger.log_query_received(query, project_name)
 
         stream_requested = bool(kwargs.get("stream"))
-        
+
         try:
             response = self.agent.run(query, **kwargs)
-            
-            # Streaming responses are yielded incrementally and cannot be re-verified here.
+
             if stream_requested:
                 return response
-                
+
             self._validate_run_output(response)
-            
-            # Audit Logging: Response Generated
+
             if self.audit_logger:
                 self.audit_logger.log_response_generated(
                     response=str(response.content),
                     response_type="success",
                     validation_passed=True
                 )
-                
+
             return response
-            
+
+        except ValueError as validation_error:
+            if self.audit_logger:
+                self.audit_logger.log_error(
+                    error_type="DatabaseGroundingViolation",
+                    error_message=str(validation_error),
+                    stack_trace=traceback.format_exc()
+                )
+
+            return {
+                "content": (
+                    "DATABASE GROUNDING SYSTEM ACTIVATED\n\n"
+                    f"{str(validation_error)}\n\n"
+                    "I must query the database before providing timeline information.\n"
+                    "Please rephrase your question so I can look up the actual milestones."
+                ),
+                "validation_passed": False
+            }
+
         except Exception as e:
-            # Audit Logging: Error
             if self.audit_logger:
                 self.audit_logger.log_error(
                     error_type=type(e).__name__,
                     error_message=str(e),
-                    stack_trace=str(e)
+                    stack_trace=traceback.format_exc()
                 )
             raise
 
     def _validate_run_output(self, run_output: Any) -> bool:
-        """Ensure milestone dates match database."""
-        # This is a basic check to ensure tools were used if dates are mentioned
-        content = str(run_output.content)
-        tools = run_output.tools or []
-        
+        """
+        Ensure milestone dates match database.
+        BLOCKS if dates mentioned without database query.
+        """
         import re
-        # Look for dates like "December 17" or "2025-12-17"
-        date_pattern = r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}|202\d-\d{2}-\d{2}"
-        dates_found = re.findall(date_pattern, content)
-        
-        if dates_found and not tools:
-            # Agent mentioned dates but didn't query database
+
+        content = str(run_output.content) if hasattr(run_output, 'content') else str(run_output)
+        tools = getattr(run_output, 'tools', None) or []
+
+        date_pattern = r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,?\s*\d{4})?|202\d-\d{2}-\d{2}"
+        dates_found = re.findall(date_pattern, content, re.IGNORECASE)
+
+        milestone_keywords = ["milestone", "deliverable", "deadline", "due date", "due by"]
+        has_milestone_content = any(kw in content.lower() for kw in milestone_keywords)
+
+        if (dates_found or has_milestone_content) and not tools:
             if self.audit_logger:
                 self.audit_logger.log_validation_check(
-                    "database_grounding", 
-                    False, 
-                    {"dates_found": dates_found, "reason": "Dates mentioned without DB query"}
+                    "database_grounding",
+                    False,
+                    {
+                        "dates_found": dates_found,
+                        "has_milestone_content": has_milestone_content,
+                        "reason": "Timeline data mentioned without database query"
+                    }
                 )
-            # We don't block here because it might be general conversation, but we log it.
-            return False
-            
+
+            raise ValueError(
+                f"DATABASE GROUNDING VIOLATION\n"
+                f"Timeline information provided without querying the database.\n"
+                f"Dates found: {dates_found}\n"
+                f"REQUIRED: Query milestones table before providing timeline information."
+            )
+
         if self.audit_logger:
-            self.audit_logger.log_validation_check("database_grounding", True)
-            
+            self.audit_logger.log_validation_check("database_grounding", True, {})
+
         return True
 
     def show_usage_examples(self) -> None:

@@ -151,70 +151,143 @@ class AcademicResearchAgent(BaseAgent):
         )
 
     def run_with_grounding_check(self, query: str, **kwargs) -> Any:
-        """Execute the agent while forcing a grounding verification pass."""
-        # Audit Logging: Query Received
+        """Execute the agent with mandatory grounding validation."""
+        import traceback
+
         project_name = kwargs.get("project_name")
         if self.audit_logger:
             self.audit_logger.log_query_received(query, project_name)
 
         stream_requested = bool(kwargs.get("stream"))
-        
+
         try:
             response = self.agent.run(query, **kwargs)
-            
-            # Streaming responses are yielded incrementally and cannot be re-verified here.
+
             if stream_requested:
                 return response
-                
+
             self._validate_run_output(response)
-            
-            # Audit Logging: Response Generated
+
             if self.audit_logger:
                 self.audit_logger.log_response_generated(
                     response=str(response.content),
                     response_type="success",
                     validation_passed=True
                 )
-                
+
             return response
-            
+
+        except ValueError as validation_error:
+            if self.audit_logger:
+                self.audit_logger.log_response_generated(
+                    response="GROUNDING VIOLATION BLOCKED",
+                    response_type="validation_failed",
+                    validation_passed=False
+                )
+                self.audit_logger.log_error(
+                    error_type="GroundingViolation",
+                    error_message=str(validation_error),
+                    stack_trace=traceback.format_exc()
+                )
+
+            return {
+                "content": (
+                    "SAFETY SYSTEM ACTIVATED\n\n"
+                    f"{str(validation_error)}\n\n"
+                    "I cannot provide unverified academic citations.\n"
+                    "Please try a different search query."
+                ),
+                "validation_passed": False,
+                "hallucination_detected": True
+            }
+
         except Exception as e:
-            # Audit Logging: Error
             if self.audit_logger:
                 self.audit_logger.log_error(
                     error_type=type(e).__name__,
                     error_message=str(e),
-                    stack_trace=str(e) # simplified stack trace
+                    stack_trace=traceback.format_exc()
                 )
             raise
 
-    def _validate_run_output(self, run_output: Any) -> bool:
-        """Ensure every cited paper is grounded in actual tool output."""
-        # Extract Arxiv IDs from response
-        # Pattern: \d{4}\.\d{4,5} (e.g., 2103.12345) or math/0001001
-        arxiv_pattern = r"(\d{4}\.\d{4,5}|[a-z\-]+/\d{7})"
-        
-        cited_ids = self.extract_verified_items_from_output(
-            run_output, 
-            item_pattern=arxiv_pattern,
-            item_type="Arxiv ID"
+    def run(self, *args, **kwargs):
+        """Block direct run() calls to enforce grounding validation."""
+        raise RuntimeError(
+            "Direct run() is disabled. Use run_with_grounding_check() for verified outputs."
         )
-        
-        # In a real implementation, we would compare these against tool outputs.
-        # Since we don't have easy access to tool outputs in the same way as NursingResearchAgent
-        # (unless we parse run_output.messages deeply), we will rely on the extraction 
-        # being successful as a proxy for "at least it looks like an ID".
-        # 
-        # However, to be strict, we should check if these IDs appear in the tool results.
-        # For now, we'll log the check.
-        
+
+    def _extract_verified_arxiv_ids_from_output(self, run_output: Any) -> set:
+        """
+        Extract Arxiv IDs from actual tool results in RunOutput.
+        """
+        import re
+        import traceback
+
+        verified_ids = set()
+
+        try:
+            if not hasattr(run_output, "messages") or not run_output.messages:
+                if self.audit_logger:
+                    self.audit_logger.log_error(
+                        error_type="MissingMessages",
+                        error_message="RunOutput has no messages field",
+                        stack_trace=""
+                    )
+                return verified_ids
+
+            for message in run_output.messages:
+                message_str = str(message)
+                arxiv_patterns = [
+                    r'\d{4}\.\d{4,5}',       # New format: 2103.12345
+                    r'[a-z\-]+/\d{7}'        # Old format: math/0001001
+                ]
+                for pattern in arxiv_patterns:
+                    ids = re.findall(pattern, message_str, re.IGNORECASE)
+                    verified_ids.update(ids)
+
+        except Exception as e:
+            if self.audit_logger:
+                self.audit_logger.log_error(
+                    error_type="ArxivIDExtractionError",
+                    error_message=f"Failed to extract Arxiv IDs: {str(e)}",
+                    stack_trace=traceback.format_exc()
+                )
+
+        return verified_ids
+
+    def _validate_run_output(self, run_output: Any) -> bool:
+        """
+        Ensure every cited paper is grounded in actual tool output.
+        BLOCKS execution if hallucinated Arxiv IDs detected.
+        """
+        import re
+
+        content = str(run_output.content) if hasattr(run_output, 'content') else str(run_output)
+        arxiv_pattern = r'(\d{4}\.\d{4,5}|[a-z\-]+/\d{7})'
+        cited_ids = set(re.findall(arxiv_pattern, content, re.IGNORECASE))
+
+        verified_ids = self._extract_verified_arxiv_ids_from_output(run_output)
+
+        unverified_ids = cited_ids - verified_ids
+        hallucination_detected = bool(unverified_ids)
+
         if self.audit_logger:
             self.audit_logger.log_validation_check(
-                "grounding", 
-                True, 
-                {"cited_ids": list(cited_ids)}
+                "grounding",
+                not hallucination_detected,
+                {
+                    "cited_ids": list(cited_ids),
+                    "verified_ids": list(verified_ids),
+                    "unverified_ids": list(unverified_ids)
+                }
             )
-            
+
+        if hallucination_detected:
+            raise ValueError(
+                f"GROUNDING VIOLATION: Unverified Arxiv IDs detected: {sorted(unverified_ids)}\n"
+                f"Only {len(verified_ids)} IDs were verified from tool results."
+            )
+
         return True
 
     def show_usage_examples(self):

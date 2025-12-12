@@ -11,6 +11,10 @@ __pycache__/
 *.so
 .Python
 
+# Archived files from refactoring
+_archived/
+_archived_*/
+
 # Environment Variables (API KEYS - NEVER COMMIT!)
 .env
 .env.local

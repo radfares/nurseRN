@@ -1,41 +1,19 @@
 {
-  "timestamp": "2025-12-07T10:58:50.071208",
-  "current_gate": 2,
+  "timestamp": "2025-12-09T16:28:57.553814",
+  "current_gate": 0,
   "total_gates": 3,
-  "gates_passed": 2,
+  "gates_passed": 0,
   "log": [
     {
       "gate": "Gate 1: File Organization",
-      "passed": true,
-      "exit_code": 0,
-      "stdout": "============================= test session starts ==============================\nplatform darwin -- Python 3.11.7, pytest-9.0.1, pluggy-1.6.0 -- /opt/anaconda3/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/hdz/nurseRN\nconfigfile: pytest.ini\nplugins: mock-3.15.1, anyio-4.12.0, asyncio-1.3.0, Faker-37.12.0, cov-7.0.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 7 items\n\ntests/unit/test_file_organization.py::test_no_test_files_in_root PASSED  [ 14%]\ntests/unit/test_file_organization.py::test_no_test_files_in_tests_root PASSED [ 28%]\ntests/unit/test_file_organization.py::test_pytest_output_not_in_root PASSED [ 42%]\ntests/unit/test_file_organization.py::test_tests_directory_structure PASSED [ 57%]\ntests/unit/test_file_organization.py::test_discovery_in_correct_location PASSED [ 71%]\ntests/unit/test_file_organization.py::test_safety_tools_in_correct_location PASSED [ 85%]\ntests/unit/test_file_organization.py::test_wrapping_in_correct_location PASSED [100%]\n\n============================== 7 passed in 0.03s ===============================\n",
+      "passed": false,
+      "exit_code": 1,
+      "stdout": "============================= test session starts ==============================\nplatform darwin -- Python 3.11.7, pytest-9.0.1, pluggy-1.6.0 -- /opt/anaconda3/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/hdz/nurseRN\nconfigfile: pytest.ini\nplugins: mock-3.15.1, anyio-4.12.0, asyncio-1.3.0, Faker-37.12.0, cov-7.0.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 7 items\n\ntests/unit/test_file_organization.py::test_no_test_files_in_root PASSED  [ 14%]\ntests/unit/test_file_organization.py::test_no_test_files_in_tests_root FAILED [ 28%]\ntests/unit/test_file_organization.py::test_pytest_output_not_in_root PASSED [ 42%]\ntests/unit/test_file_organization.py::test_tests_directory_structure PASSED [ 57%]\ntests/unit/test_file_organization.py::test_discovery_in_correct_location PASSED [ 71%]\ntests/unit/test_file_organization.py::test_safety_tools_in_correct_location PASSED [ 85%]\ntests/unit/test_file_organization.py::test_wrapping_in_correct_location PASSED [100%]\n\n=================================== FAILURES ===================================\n_______________________ test_no_test_files_in_tests_root _______________________\ntests/unit/test_file_organization.py:26: in test_no_test_files_in_tests_root\n    assert len(test_files_in_root) == 0, (\nE   AssertionError: Found test files in tests/ root: [PosixPath('tests/test_agent_collaboration.py')]\nE     Test files must be in tests/unit/ or tests/integration/\nE     Move them to appropriate subdirectory\nE   assert 1 == 0\nE    +  where 1 = len([PosixPath('tests/test_agent_collaboration.py')])\n=========================== short test summary info ============================\nFAILED tests/unit/test_file_organization.py::test_no_test_files_in_tests_root - AssertionError: Found test files in tests/ root: [PosixPath('tests/test_agent_collaboration.py')]\n  Test files must be in tests/unit/ or tests/integration/\n  Move them to appropriate subdirectory\nassert 1 == 0\n +  where 1 = len([PosixPath('tests/test_agent_collaboration.py')])\n========================= 1 failed, 6 passed in 0.04s ==========================\n",
       "stderr": "",
-      "test_hash_before": "39f2874b6e6277afe65a3e0027b39f46407f0d20a3e1753db91557780867dfb1",
-      "test_hash_after": "39f2874b6e6277afe65a3e0027b39f46407f0d20a3e1753db91557780867dfb1",
+      "test_hash_before": "b566a9e39055da8212032c4a8008486521bd37092c94cb0d0c8c2e764fd1ce5a",
+      "test_hash_after": "b566a9e39055da8212032c4a8008486521bd37092c94cb0d0c8c2e764fd1ce5a",
       "hash_verified": true,
-      "timestamp": "2025-12-07T10:58:49.247613"
-    },
-    {
-      "gate": "Gate 2: Test Integrity",
-      "passed": true,
-      "exit_code": 0,
-      "stdout": "============================= test session starts ==============================\nplatform darwin -- Python 3.11.7, pytest-9.0.1, pluggy-1.6.0 -- /opt/anaconda3/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/hdz/nurseRN\nconfigfile: pytest.ini\nplugins: mock-3.15.1, anyio-4.12.0, asyncio-1.3.0, Faker-37.12.0, cov-7.0.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 5 items\n\ntests/unit/test_test_integrity.py::test_no_pass_only_tests PASSED        [ 20%]\ntests/unit/test_test_integrity.py::test_minimum_assertion_ratio PASSED   [ 40%]\ntests/unit/test_test_integrity.py::test_no_excessive_mocking PASSED      [ 60%]\ntests/unit/test_test_integrity.py::test_all_tests_have_assertions PASSED [ 80%]\ntests/unit/test_test_integrity.py::test_minimum_tests_per_file PASSED    [100%]\n\n=============================== warnings summary ===============================\ntests/unit/test_test_integrity.py:13\n  /Users/hdz/nurseRN/tests/unit/test_test_integrity.py:13: PytestCollectionWarning: cannot collect test class 'TestAnalyzer' because it has a __init__ constructor (from: tests/unit/test_test_integrity.py)\n    class TestAnalyzer:\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n========================= 5 passed, 1 warning in 0.14s =========================\n",
-      "stderr": "",
-      "test_hash_before": "39f2874b6e6277afe65a3e0027b39f46407f0d20a3e1753db91557780867dfb1",
-      "test_hash_after": "39f2874b6e6277afe65a3e0027b39f46407f0d20a3e1753db91557780867dfb1",
-      "hash_verified": true,
-      "timestamp": "2025-12-07T10:58:49.658637"
-    },
-    {
-      "gate": "Gate 3: Gitignore Security",
-      "passed": true,
-      "exit_code": 0,
-      "stdout": "============================= test session starts ==============================\nplatform darwin -- Python 3.11.7, pytest-9.0.1, pluggy-1.6.0 -- /opt/anaconda3/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/hdz/nurseRN\nconfigfile: pytest.ini\nplugins: mock-3.15.1, anyio-4.12.0, asyncio-1.3.0, Faker-37.12.0, cov-7.0.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 3 items\n\ntests/unit/test_gitignore_security.py::TestGate3GitignoreSecurity::test_env_patterns_present PASSED [ 33%]\ntests/unit/test_gitignore_security.py::TestGate3GitignoreSecurity::test_no_secrets_tracked PASSED [ 66%]\ntests/unit/test_gitignore_security.py::TestGate3GitignoreSecurity::test_user_data_ignored PASSED [100%]\n\n============================== 3 passed in 0.05s ===============================\n",
-      "stderr": "",
-      "test_hash_before": "39f2874b6e6277afe65a3e0027b39f46407f0d20a3e1753db91557780867dfb1",
-      "test_hash_after": "39f2874b6e6277afe65a3e0027b39f46407f0d20a3e1753db91557780867dfb1",
-      "hash_verified": true,
-      "timestamp": "2025-12-07T10:58:50.071176"
+      "timestamp": "2025-12-09T16:28:57.553781"
     }
   ]
 }

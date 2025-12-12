@@ -12,7 +12,14 @@
       "Bash(tree:*)",
       "Bash(git push:*)",
       "Bash(source .venv/bin/activate)",
-      "Bash(python -m pytest:*)"
+      "Bash(python -m pytest:*)",
+      "Bash(grep:*)",
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(/opt/homebrew/opt/python@3.14/bin/python3.14:*)",
+      "Bash(pip freeze:*)",
+      "Bash(.venv/bin/python3:*)",
+      "Bash(.venv/bin/pip show:*)"
     ],
     "deny": [],
     "ask": []
