@@ -2,13 +2,16 @@
 """
 Test the IntelligentOrchestrator with a data analysis query.
 This should work better as the data analysis agent is more reliable.
+
+Created: 2025-12-11 (Session 007 Phase 2)
+Moved to tests/integration: 2025-12-11
 """
 
 import sys
 from pathlib import Path
 
 # Setup path
-_project_root = Path(__file__).parent
+_project_root = Path(__file__).parent.parent.parent
 _agno_path = _project_root / "libs" / "agno"
 if _agno_path.exists() and str(_agno_path) not in sys.path:
     sys.path.insert(0, str(_agno_path))

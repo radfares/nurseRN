@@ -10,7 +10,7 @@ FIXED: 2025-12-12 - Improved planner prompt to handle conversational queries
 
 import json
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 from dataclasses import dataclass, field
 
 from openai import OpenAI
@@ -42,9 +42,9 @@ class IntelligentOrchestrator:
 
     def __init__(
         self,
-        client: OpenAI | None = None,
-        planner_model: str | None = None,
-        synthesis_model: str | None = None,
+        client: Optional[OpenAI] = None,
+        planner_model: Optional[str] = None,
+        synthesis_model: Optional[str] = None,
     ):
         """Initialize orchestrator with OpenAI client and components."""
         if client is not None:

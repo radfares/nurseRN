@@ -5,12 +5,14 @@ Statistical reasoning and analysis planning for nursing quality improvement rese
 PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
 PHASE 2 COMPLETE (2025-11-26): Refactored to use BaseAgent inheritance
+SESSION 007 UPDATE (2025-12-12): Added DocumentReaderTools for CSV/JSON data files
 """
 
 # Module exports
 __all__ = ['DataAnalysisAgent', 'data_analysis_agent']
 
 import os
+import sys
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.db.sqlite import SqliteDb
@@ -28,6 +30,10 @@ from agent_config import (
 
 # PHASE 2: Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
+
+# SESSION 007: Import DocumentReaderTools for CSV/JSON data files
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from src.tools.readers_tools.document_reader_service import create_document_reader_tools_safe
 
 # Nested Pydantic models for structured output (replaces dict[str, Any] fields)
 class EffectSize(BaseModel):
@@ -319,26 +325,37 @@ class DataAnalysisAgent(BaseAgent):
 
         Tools include:
         - ReasoningTools: Structured statistical reasoning
-        - calculate_sample_size: Power-based sample size calculation
-        - calculate_power: Power analysis for given sample size
-        - suggest_statistical_test: Test selection based on study design
-        - calculate_effect_size: Cohen's d effect size calculation
+        - StatisticsTools: Sample size, power analysis, effect size calculations
+        - DocumentReaders: Read CSV/JSON data files for analysis
         """
+        from src.services.api_tools import build_tools_list
+
         # Add ReasoningTools for structured statistical reasoning
         reasoning_tools = ReasoningTools(add_instructions=True)
-        
+
+        # Statistics tools for calculations
+        stats_tools = None
         try:
             from src.tools.statistics_tools import create_statistics_tools
             stats_tools = create_statistics_tools()
             print("✅ StatisticsTools available - real calculations enabled")
-            print("✅ ReasoningTools available - structured statistical reasoning enabled")
-            return [reasoning_tools, stats_tools]
         except ImportError as e:
             import logging
             logging.getLogger(__name__).warning(f"StatisticsTools not available: {e}")
             print("⚠️ StatisticsTools not available - LLM reasoning mode")
-            print("✅ ReasoningTools available - structured statistical reasoning enabled")
-            return [reasoning_tools]
+
+        # Document readers for CSV/JSON data files
+        doc_reader_tools = create_document_reader_tools_safe(required=False)
+
+        if doc_reader_tools:
+            print("✅ DocumentReaders available - can read CSV/JSON data files")
+        else:
+            print("⚠️ DocumentReaders unavailable - dependency or initialization issue")
+
+        print("✅ ReasoningTools available - structured statistical reasoning enabled")
+
+        # Build tools list, filtering out None values
+        return build_tools_list(reasoning_tools, stats_tools, doc_reader_tools)
 
     def _create_agent(self) -> Agent:
         """Create and configure the Data Analysis Agent."""

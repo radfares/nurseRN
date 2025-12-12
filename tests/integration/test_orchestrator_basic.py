@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-Test the IntelligentOrchestrator with a simple query.
-This will test planning, execution, and synthesis.
+Test the IntelligentOrchestrator with a simple timeline query.
+Tests planning, execution, and synthesis.
 
-NOTE: This makes real OpenAI API calls and will cost ~$0.05-0.10
+Created: 2025-12-11 (Session 007 Phase 2)
+Moved to tests/integration: 2025-12-11
 """
 
 import sys
 from pathlib import Path
 
 # Setup path
-_project_root = Path(__file__).parent
+_project_root = Path(__file__).parent.parent.parent
 _agno_path = _project_root / "libs" / "agno"
 if _agno_path.exists() and str(_agno_path) not in sys.path:
     sys.path.insert(0, str(_agno_path))
@@ -80,5 +81,4 @@ print("-" * 80)
 print("TEST COMPLETE")
 print("-" * 80)
 print()
-print("Next: Run full integration test with 'Research fall prevention' query")
-print("      (This will cost more as it uses multiple agents)")
+print("Next: Run data analysis test with 'Research fall prevention' query")

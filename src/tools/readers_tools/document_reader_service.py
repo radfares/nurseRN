@@ -4,6 +4,7 @@ Integrates document reader tools with the nurseRN service layer.
 
 Created: 2025-12-11
 Updated: 2025-12-11 - Integrated with global circuit breakers
+Updated: 2025-12-12 - Made project context optional for agent integration
 Purpose: Provide resilient document reading capabilities with error handling
 """
 
@@ -21,32 +22,51 @@ from src.services.circuit_breaker import (
     JSON_READER_BREAKER,
 )
 from src.tools.readers_tools.document_reader_tools import DocumentReaderTools
+from project_manager import get_project_manager
 
 logger = logging.getLogger(__name__)
 
 
 def create_document_reader_tools_safe(
-    project_name: str,
-    project_db_path: str
-) -> DocumentReaderTools:
+    project_name: Optional[str] = None,
+    project_db_path: Optional[str] = None,
+    required: bool = False
+) -> Optional[DocumentReaderTools]:
     """
     Create DocumentReaderTools with circuit breaker protection.
-    
+
     This wraps all document reader methods with circuit breakers to prevent
     cascading failures when external services (Tavily, web requests) fail.
-    
+
     Args:
-        project_name: Name of the active project
-        project_db_path: Path to project database
-    
+        project_name: Name of the active project (or None to use active project)
+        project_db_path: Path to project database (or None to get from project manager)
+        required: If True, raises exception on failure. If False, returns None.
+
     Returns:
-        DocumentReaderTools instance with circuit breaker protection
+        DocumentReaderTools instance with circuit breaker protection, or None if creation fails and not required
+
+    Raises:
+        RuntimeError: If required=True and document readers cannot be initialized
     """
-    # Create base tools
-    tools = DocumentReaderTools(
-        project_name=project_name,
-        project_db_path=project_db_path
-    )
+    try:
+        # Get project context if not provided
+        pm = get_project_manager()
+        if project_name is None:
+            project_name = pm.get_active_project() or "default_project"
+        if project_db_path is None:
+            project_db_path = pm.get_project_db_path() if pm.get_active_project() else ""
+
+        # Create base tools
+        tools = DocumentReaderTools(
+            project_name=project_name,
+            project_db_path=project_db_path
+        )
+    except Exception as e:
+        logger.warning(f"Document reader tools creation failed: {e}")
+        if required:
+            raise RuntimeError(f"Document reader tools initialization failed: {e}") from e
+        return None
 
     # Use global circuit breakers (configured in src/services/circuit_breaker.py)
     pdf_breaker = PDF_READER_BREAKER
@@ -169,6 +189,6 @@ def create_document_reader_tools_safe(
     tools.search_arxiv = safe_search_arxiv
     tools.read_csv = safe_read_csv
     tools.read_json = safe_read_json
-    
-    logger.info("Document reader tools created with circuit breaker protection")
+
+    logger.info(f"Document reader tools created with circuit breaker protection (project: {project_name})")
     return tools

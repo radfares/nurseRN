@@ -34,6 +34,8 @@ from src.services.api_tools import (
 )
 # Import LiteratureTools for saving findings to project database
 from src.tools.literature_tools import LiteratureTools
+# Import DocumentReaderTools for reading PDFs, PPTX, websites
+from src.tools.readers_tools.document_reader_service import create_document_reader_tools_safe
 
 
 class AcademicResearchAgent(BaseAgent):
@@ -48,12 +50,15 @@ class AcademicResearchAgent(BaseAgent):
         )
 
     def _create_tools(self) -> list:
-        """Create Arxiv tools with safe fallback + LiteratureTools for saving."""
+        """Create Arxiv tools with safe fallback + DocumentReaders + LiteratureTools for saving."""
         # Add ReasoningTools for structured academic reasoning
         reasoning_tools = ReasoningTools(add_instructions=True)
-        
+
         # Arxiv is free and doesn't require authentication
         arxiv_tool = create_arxiv_tools_safe(required=False)
+
+        # Document readers for PDFs, PPTX, websites, etc.
+        doc_reader_tools = create_document_reader_tools_safe(required=False)
 
         # LiteratureTools for saving findings to project database
         try:
@@ -64,13 +69,18 @@ class AcademicResearchAgent(BaseAgent):
             print(f"⚠️ LiteratureTools unavailable: {exc}")
 
         # Build tools list, filtering out None values (ReasoningTools first)
-        tools = build_tools_list(reasoning_tools, arxiv_tool, literature_tools)
+        tools = build_tools_list(reasoning_tools, arxiv_tool, doc_reader_tools, literature_tools)
 
         # Log tool availability (using print since self.logger not available yet)
         if arxiv_tool:
             print("✅ Arxiv search available")
         else:
             print("⚠️ Arxiv search unavailable (tool creation failed)")
+
+        if doc_reader_tools:
+            print("✅ DocumentReaders available (PDF/PPTX/Web/ArXiv/CSV/JSON)")
+        else:
+            print("⚠️ DocumentReaders unavailable (dependency or initialization issue)")
 
         if not tools:
             print("❌ No search tools available! Agent will have limited functionality.")

@@ -6,8 +6,11 @@ Helps structure papers, write sections, and plan research methodology
 PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
 PHASE 2 COMPLETE (2025-11-26): Refactored to use BaseAgent inheritance
+SESSION 007 UPDATE (2025-12-12): Added DocumentReaderTools for reading papers
 """
 
+import sys
+import os
 from textwrap import dedent
 from typing import Any
 
@@ -24,6 +27,10 @@ from agent_config import get_db_path, is_reasoning_block_enabled
 
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
+
+# Import DocumentReaderTools for reading PDFs, papers, etc.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from src.tools.readers_tools.document_reader_service import create_document_reader_tools_safe
 
 
 class ResearchWritingAgent(BaseAgent):
@@ -49,26 +56,37 @@ class ResearchWritingAgent(BaseAgent):
 
         Tools include:
         - ReasoningTools: Structured academic reasoning
-        - extract_citations: Find PMIDs/DOIs in text
-        - format_citation_apa7: Format citations in APA 7
-        - validate_citation_format: Check citation format
-        - create_reference_list: Build reference lists
+        - DocumentReaders: Read papers, PDFs for context and citations
+        - WritingTools: Citation formatting and extraction
         """
+        from src.services.api_tools import build_tools_list
+
         # Add ReasoningTools for structured writing/planning
         reasoning_tools = ReasoningTools(add_instructions=True)
-        
+
+        # Document readers for reading papers, PDFs for citations and context
+        doc_reader_tools = create_document_reader_tools_safe(required=False)
+
+        # Writing tools for citation formatting
+        writing_tools = None
         try:
             from src.tools.writing_tools import create_writing_tools
             writing_tools = create_writing_tools()
             print("✅ WritingTools available - citation formatting enabled")
-            print("✅ ReasoningTools available - structured academic reasoning enabled")
-            return [reasoning_tools, writing_tools]
         except ImportError as e:
             import logging
             logging.getLogger(__name__).warning(f"WritingTools not available: {e}")
             print("⚠️ WritingTools not available - pure writing mode")
-            print("✅ ReasoningTools available - structured academic reasoning enabled")
-            return [reasoning_tools]
+
+        if doc_reader_tools:
+            print("✅ DocumentReaders available - can read PDFs, papers, and websites")
+        else:
+            print("⚠️ DocumentReaders unavailable - dependency or initialization issue")
+
+        print("✅ ReasoningTools available - structured academic reasoning enabled")
+
+        # Build tools list, filtering out None values
+        return build_tools_list(reasoning_tools, doc_reader_tools, writing_tools)
 
     def _create_agent(self) -> Agent:
         """Create and configure the Research Writing Agent."""

@@ -40,7 +40,6 @@ from agents.citation_validation_agent import get_citation_validation_agent
 # Orchestration imports - NEW CONVERSATIONAL INTERFACE
 from src.orchestration.intelligent_orchestrator import IntelligentOrchestrator
 from src.orchestration.conversation_context import ConversationContext
-from src.orchestration.api_validators import InvalidAPIKeyError, validate_openai_key
 
 # Legacy orchestration imports (kept for fallback)
 from src.orchestration.context_manager import ContextManager
@@ -768,15 +767,6 @@ def main():
     # Phase 1, Task 4 (2025-11-29) - Liability protection
     if not show_clinical_disclaimer():
         sys.exit(1)
-
-    # Fail-fast (format) validation for OpenAI key to avoid wasting requests.
-    # If key is missing, allow the app to start (some features/tests don't require live calls).
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        try:
-            validate_openai_key(openai_key)
-        except InvalidAPIKeyError as e:
-            print(f"\n⚠️  {e}")
 
     show_welcome()
 

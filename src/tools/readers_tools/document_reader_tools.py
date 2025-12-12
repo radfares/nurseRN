@@ -3,6 +3,7 @@ Document Reader Tools for Nursing Research
 Integrated PDF, PPTX, and Web reading capabilities with circuit breaker protection.
 
 Created: 2025-12-11
+Updated: 2025-12-12 - Fixed module-level imports to be lazy for optional dependencies
 Purpose: Enable agents to read and extract information from research documents
 """
 
@@ -11,16 +12,18 @@ import os
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from agno.tools import Toolkit
+
+# Import core readers that should always work
 from agno.knowledge.reader.pdf_reader import PDFReader
-from agno.knowledge.reader.pptx_reader import PPTXReader
 from agno.knowledge.reader.website_reader import WebsiteReader
-from agno.knowledge.reader.tavily_reader import TavilyReader
 from agno.knowledge.reader.web_search_reader import WebSearchReader
-from agno.knowledge.reader.arxiv_reader import ArxivReader
-from agno.knowledge.reader.csv_reader import CSVReader
-from agno.knowledge.reader.json_reader import JSONReader
+
+# Import chunking
 from agno.knowledge.chunking.semantic import SemanticChunking
 from agno.knowledge.chunking.row import RowChunking
+
+# Lazy imports for optional dependencies (will import when needed)
+# This prevents import failures when tavily-python or python-pptx are not installed
 
 logger = logging.getLogger(__name__)
 
@@ -68,27 +71,59 @@ class DocumentReaderTools(Toolkit):
         self.semantic_chunking = SemanticChunking(similarity_threshold=semantic_similarity_threshold)
         self.row_chunking = RowChunking()
 
-        # Initialize readers with chunking strategies
+        # Initialize core readers (always available)
         self.pdf_reader = PDFReader(chunking_strategy=self.semantic_chunking)
-        self.pptx_reader = PPTXReader(chunking_strategy=self.semantic_chunking)
         self.website_reader = WebsiteReader(chunking_strategy=self.semantic_chunking)
-        self.arxiv_reader = ArxivReader(chunking_strategy=self.semantic_chunking)
-        self.csv_reader = CSVReader(chunking_strategy=self.row_chunking)
-        self.json_reader = JSONReader()
-        
-        # Initialize Tavily reader if API key available
+
+        # Initialize PPTX reader (optional - requires python-pptx)
+        try:
+            from agno.knowledge.reader.pptx_reader import PPTXReader
+            self.pptx_reader = PPTXReader(chunking_strategy=self.semantic_chunking)
+        except ImportError as e:
+            self.pptx_reader = None
+            logger.warning(f"PPTX reader unavailable: {e}")
+
+        # Initialize ArXiv reader (optional)
+        try:
+            from agno.knowledge.reader.arxiv_reader import ArxivReader
+            self.arxiv_reader = ArxivReader(chunking_strategy=self.semantic_chunking)
+        except ImportError as e:
+            self.arxiv_reader = None
+            logger.warning(f"ArXiv reader unavailable: {e}")
+
+        # Initialize CSV reader (optional)
+        try:
+            from agno.knowledge.reader.csv_reader import CSVReader
+            self.csv_reader = CSVReader(chunking_strategy=self.row_chunking)
+        except ImportError as e:
+            self.csv_reader = None
+            logger.warning(f"CSV reader unavailable: {e}")
+
+        # Initialize JSON reader (optional)
+        try:
+            from agno.knowledge.reader.json_reader import JSONReader
+            self.json_reader = JSONReader()
+        except ImportError as e:
+            self.json_reader = None
+            logger.warning(f"JSON reader unavailable: {e}")
+
+        # Initialize Tavily reader if API key available (optional - requires tavily-python)
+        self.tavily_reader = None
         if self.tavily_api_key:
-            extract_format = os.getenv("TAVILY_EXTRACT_FORMAT", "markdown")
-            extract_depth = os.getenv("TAVILY_EXTRACT_DEPTH", "basic")
-            self.tavily_reader = TavilyReader(
-                api_key=self.tavily_api_key,
-                extract_format=extract_format,
-                extract_depth=extract_depth,
-                chunk=True
-            )
+            try:
+                from agno.knowledge.reader.tavily_reader import TavilyReader
+                extract_format = os.getenv("TAVILY_EXTRACT_FORMAT", "markdown")
+                extract_depth = os.getenv("TAVILY_EXTRACT_DEPTH", "basic")
+                self.tavily_reader = TavilyReader(
+                    api_key=self.tavily_api_key,
+                    extract_format=extract_format,
+                    extract_depth=extract_depth,
+                    chunk=True
+                )
+            except ImportError as e:
+                logger.warning(f"Tavily reader unavailable: {e}")
         else:
-            self.tavily_reader = None
-            logger.warning("Tavily API key not found - web extraction disabled")
+            logger.info("Tavily API key not found - web extraction disabled")
         
         # Initialize web search defaults from environment
         try:
@@ -198,16 +233,19 @@ class DocumentReaderTools(Toolkit):
     def read_pptx(self, file_path: str) -> str:
         """
         Read and extract text from a PowerPoint presentation.
-        
+
         Args:
             file_path: Path to PPTX file
-        
+
         Returns:
             Extracted text content from all slides
-        
+
         Example:
             text = read_pptx("data/research_presentation.pptx")
         """
+        if not self.pptx_reader:
+            return "Error: PPTX reader unavailable. Install python-pptx: pip install python-pptx"
+
         try:
             # Resolve path
             path = self._resolve_path(file_path)
@@ -284,13 +322,17 @@ class DocumentReaderTools(Toolkit):
         try:
             # Update format if needed
             if format != self.tavily_reader.extract_format:
-                self.tavily_reader = TavilyReader(
-                    api_key=self.tavily_api_key,
-                    extract_format=format,
-                    extract_depth="basic",
-                    chunk=True
-                )
-            
+                try:
+                    from agno.knowledge.reader.tavily_reader import TavilyReader
+                    self.tavily_reader = TavilyReader(
+                        api_key=self.tavily_api_key,
+                        extract_format=format,
+                        extract_depth="basic",
+                        chunk=True
+                    )
+                except ImportError as e:
+                    return f"Error: Tavily reader unavailable: {e}"
+
             # Extract content
             documents = self.tavily_reader.read(url)
             
@@ -368,6 +410,9 @@ class DocumentReaderTools(Toolkit):
         """
         Search ArXiv for academic papers on specified topics.
         """
+        if not self.arxiv_reader:
+            return "Error: ArXiv reader unavailable. Check dependencies."
+
         try:
             documents = self.arxiv_reader.read(topics=topics, max_results=max_results)
             if not documents:
@@ -385,6 +430,9 @@ class DocumentReaderTools(Toolkit):
 
     def read_csv(self, file_path: str) -> str:
         """Read and parse a CSV data file."""
+        if not self.csv_reader:
+            return "Error: CSV reader unavailable. Check dependencies."
+
         try:
             path = self._resolve_path(file_path)
             if not path.exists():
@@ -403,6 +451,9 @@ class DocumentReaderTools(Toolkit):
 
     def read_json(self, file_path: str) -> str:
         """Read and parse a JSON data file."""
+        if not self.json_reader:
+            return "Error: JSON reader unavailable. Check dependencies."
+
         try:
             path = self._resolve_path(file_path)
             if not path.exists():

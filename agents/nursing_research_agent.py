@@ -56,6 +56,8 @@ from src.services.api_tools import (
 )
 # Import LiteratureTools for saving findings to project database
 from src.tools.literature_tools import LiteratureTools
+# Import DocumentReaderTools for reading PDFs, PPTX, websites
+from src.tools.readers_tools.document_reader_service import create_document_reader_tools_safe
 
 
 class NursingResearchAgent(BaseAgent):
@@ -72,6 +74,7 @@ class NursingResearchAgent(BaseAgent):
     7. SafetyTools - OpenFDA device recalls and drug adverse events (public API)
     8. SerpAPI - Google search for official standards/guidelines (CDC, WHO, Joint Commission)
     9. Exa - Neural web search for broader healthcare context and recent developments
+    10. DocumentReaders - Read PDFs, PPTX, websites, ArXiv papers, CSV/JSON files
 
     DISABLED Tools:
     - ArXiv - DISABLED (tech/AI preprints, not peer-reviewed clinical studies)
@@ -148,6 +151,9 @@ class NursingResearchAgent(BaseAgent):
         arxiv_tool = None  # DISABLED - not for healthcare
         exa_tool = create_exa_tools_safe(required=False)  # ENABLED - neural web search
 
+        # Document readers for PDFs, PPTX, websites, etc.
+        doc_reader_tools = create_document_reader_tools_safe(required=False)
+
         # LiteratureTools for saving findings to project database
         try:
             literature_tools = LiteratureTools()
@@ -156,8 +162,8 @@ class NursingResearchAgent(BaseAgent):
             literature_tools = None
             print(f"⚠️ LiteratureTools unavailable: {exc}")
 
-        # Build tools list - Healthcare-focused with Exa for broader context
-        # Tool priority: ReasoningTools > PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI > Exa > LiteratureTools
+        # Build tools list - Healthcare-focused with Exa for broader context and document readers
+        # Tool priority: ReasoningTools > PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI > Exa > DocumentReaders > LiteratureTools
         tools = build_tools_list(
             reasoning_tools,
             pubmed_tool,
@@ -169,6 +175,7 @@ class NursingResearchAgent(BaseAgent):
             safety_tool,
             serp_tool,
             exa_tool,
+            doc_reader_tools,
             literature_tools
         )
 
@@ -183,7 +190,8 @@ class NursingResearchAgent(BaseAgent):
             'safety': safety_tool is not None,
             'serp': serp_tool is not None,
             'arxiv': arxiv_tool is not None,  # Will be False (disabled)
-            'exa': exa_tool is not None,      # Will be False (disabled)
+            'exa': exa_tool is not None,
+            'doc_readers': doc_reader_tools is not None,
         }
 
         # Log tool availability (using print since self.logger not available yet)
@@ -234,6 +242,11 @@ class NursingResearchAgent(BaseAgent):
             print("✅ Exa - Available (neural web search for broader context)")
         else:
             print("⚠️ Exa - Unavailable (EXA_API_KEY not set)")
+
+        if doc_reader_tools:
+            print("✅ DocumentReaders - Available (PDF/PPTX/Web/ArXiv/CSV/JSON)")
+        else:
+            print("⚠️ DocumentReaders - Unavailable (dependency or initialization issue)")
 
         # ArXiv remains disabled for healthcare focus
         print("🚫 ArXiv - DISABLED (not appropriate for healthcare research)")
