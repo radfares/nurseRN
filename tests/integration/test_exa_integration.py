@@ -11,10 +11,14 @@ import sys
 from pathlib import Path
 
 # Setup path
-_project_root = Path(__file__).parent
+_project_root = Path(__file__).parent.parent.parent
 _agno_path = _project_root / "libs" / "agno"
 if _agno_path.exists() and str(_agno_path) not in sys.path:
     sys.path.insert(0, str(_agno_path))
+
+# Add project root to sys.path for src imports
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
 
 from dotenv import load_dotenv
 load_dotenv(override=True)
