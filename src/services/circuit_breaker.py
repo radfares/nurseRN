@@ -117,6 +117,13 @@ SEMANTIC_SCHOLAR_BREAKER = create_circuit_breaker("Semantic Scholar API", failur
 CORE_BREAKER = create_circuit_breaker("CORE API", failure_threshold=5, timeout=60)
 DOAJ_BREAKER = create_circuit_breaker("DOAJ API", failure_threshold=5, timeout=60)
 
+# Document reader circuit breakers (added 2025-12-11)
+PDF_READER_BREAKER = create_circuit_breaker("PDF Reader", failure_threshold=5, timeout=60)
+PPTX_READER_BREAKER = create_circuit_breaker("PPTX Reader", failure_threshold=5, timeout=60)
+WEBSITE_READER_BREAKER = create_circuit_breaker("Website Reader", failure_threshold=5, timeout=60)
+TAVILY_READER_BREAKER = create_circuit_breaker("Tavily Reader", failure_threshold=5, timeout=60)
+WEB_SEARCH_READER_BREAKER = create_circuit_breaker("Web Search Reader", failure_threshold=5, timeout=60)
+
 
 # ============================================================================
 # Helper Functions for Wrapped API Calls
@@ -287,6 +294,11 @@ def get_all_breaker_status() -> dict:
         "semantic_scholar": get_breaker_status(SEMANTIC_SCHOLAR_BREAKER),
         "core": get_breaker_status(CORE_BREAKER),
         "doaj": get_breaker_status(DOAJ_BREAKER),
+        "pdf_reader": get_breaker_status(PDF_READER_BREAKER),
+        "pptx_reader": get_breaker_status(PPTX_READER_BREAKER),
+        "website_reader": get_breaker_status(WEBSITE_READER_BREAKER),
+        "tavily_reader": get_breaker_status(TAVILY_READER_BREAKER),
+        "web_search_reader": get_breaker_status(WEB_SEARCH_READER_BREAKER),
     }
 
 

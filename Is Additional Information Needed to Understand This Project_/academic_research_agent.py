@@ -351,14 +351,5 @@ _academic_research_agent_instance = AcademicResearchAgent()
 academic_research_agent = _academic_research_agent_instance.agent
 
 
-def get_academic_research_agent():
-    """Factory function to get the AcademicResearchAgent instance.
-
-    Returns:
-        AcademicResearchAgent wrapper instance.
-    """
-    return _academic_research_agent_instance
-
-
 if __name__ == "__main__":
     _academic_research_agent_instance.run_with_error_handling()

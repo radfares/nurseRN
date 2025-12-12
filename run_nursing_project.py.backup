@@ -36,11 +36,7 @@ from agents.research_writing_agent import research_writing_agent
 from agents.data_analysis_agent import data_analysis_agent
 from agents.citation_validation_agent import get_citation_validation_agent
 
-# Orchestration imports - NEW CONVERSATIONAL INTERFACE
-from src.orchestration.intelligent_orchestrator import IntelligentOrchestrator
-from src.orchestration.conversation_context import ConversationContext
-
-# Legacy orchestration imports (kept for fallback)
+# Orchestration imports
 from src.orchestration.context_manager import ContextManager
 from src.orchestration.orchestrator import WorkflowOrchestrator
 from src.orchestration.query_router import QueryRouter, Intent
@@ -53,11 +49,15 @@ from src.workflows.validated_research_workflow import ValidatedResearchWorkflow
 def show_welcome():
     """Display welcome message."""
     print("\n" + "=" * 80)
-    print("🏥 NURSING RESEARCH ASSISTANT")
+    print("🏥 NURSING RESEARCH PROJECT ASSISTANT")
     print("=" * 80)
-    print("\nI'll help you develop your healthcare improvement project from")
-    print("PICOT to poster presentation.")
-    print("\nJust tell me what you'd like to work on, and I'll handle the rest!")
+    print("\nProject-Centric Multi-Agent System")
+    print("Timeline: November 2025 - June 2026")
+    print("\nFeatures:")
+    print("  ✓ Project management (create, switch, archive)")
+    print("  ✓ 6 specialized AI agents")
+    print("  ✓ Centralized project database")
+    print("  ✓ PICOT development, literature search, data analysis")
     print("=" * 80)
 
 
@@ -605,167 +605,38 @@ IMPORTANT:
         return False
 
 
-def get_or_create_project():
-    """Get active project or help user create one."""
-    pm = get_project_manager()
-    active_project = pm.get_active_project()
-
-    if active_project:
-        return active_project
-
-    # No active project - help user create one
-    print("\n📋 Let's set up your project first.")
-    print("\nWhat would you like to name your project?")
-    print("(Examples: 'Fall Prevention Study', 'CAUTI Reduction', 'Pressure Ulcer Prevention')")
-
-    project_name = input("\n📝 Project name: ").strip()
-
-    if not project_name:
-        print("❌ Project name cannot be empty. Exiting.")
-        sys.exit(1)
-
-    # Create project
-    cli_create_project(project_name, add_milestones=True)
-
-    return project_name
-
-
-def print_help():
-    """Print help message."""
-    print("""
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                              HELP & EXAMPLES                                 ║
-╚══════════════════════════════════════════════════════════════════════════════╝
-
-📚 WHAT I CAN DO:
-  • Develop PICOT questions
-  • Search research databases (PubMed, ArXiv, ClinicalTrials)
-  • Validate and grade evidence quality
-  • Synthesize research findings
-  • Plan data analysis and calculate sample sizes
-  • Track project timeline and deadlines
-  • Draft literature reviews and project sections
-
-💬 EXAMPLE QUERIES:
-  • "Research fall prevention in elderly patients"
-  • "What's my next deadline?"
-  • "Calculate sample size for a 30% reduction in falls"
-  • "Validate these articles: PMID 12345, PMID 67890"
-  • "Draft a literature review on CAUTI prevention"
-  • "Show me my project timeline"
-
-🔧 COMMANDS:
-  • help          - Show this help message
-  • exit          - Save and quit
-  • legacy        - Switch to legacy menu mode
-
-Just describe what you want in natural language, and I'll figure out how to help!
-""")
-
-
-def main_conversational():
-    """
-    New conversational interface - main entry point.
-    """
-    # Get or create project
-    project_name = get_or_create_project()
-
-    # Get project database path
-    pm = get_project_manager()
-    project_db = pm.get_project_db_path()
-
-    # Initialize conversation context
-    context = ConversationContext(
-        project_name=project_name,
-        project_db_path=project_db
-    )
-
-    # Load previous conversation if exists
-    context.load_from_db()
-
-    # Initialize intelligent orchestrator
-    orchestrator = IntelligentOrchestrator()
-
-    print(f"\n✅ Working on project: {project_name}")
-    print("\nWhat would you like to work on today?\n")
-
-    # Main conversation loop
-    while True:
-        try:
-            # Get user input
-            user_message = input("💬 You: ").strip()
-
-            # Handle exit
-            if user_message.lower() in ['exit', 'quit', 'q']:
-                print("\n👋 Goodbye! Your work has been saved.")
-                context.save_to_db()
-                break
-
-            # Handle empty input
-            if not user_message:
-                continue
-
-            # Handle special commands
-            if user_message.lower() == 'help':
-                print_help()
-                continue
-
-            if user_message.lower() == 'legacy':
-                print("\n🔄 Switching to legacy menu mode...")
-                context.save_to_db()
-                project_management_loop()
-                break
-
-            # Add to context
-            context.add_message("user", user_message)
-
-            # Process message (orchestrator handles everything)
-            print("\n🤖 Assistant: ", end="", flush=True)
-
-            response, suggestions = orchestrator.process_user_message(
-                user_message,
-                context
-            )
-
-            # Print response
-            print(response)
-
-            # Add to context
-            context.add_message("assistant", response)
-
-            # Show suggestions
-            if suggestions:
-                print("\n💡 What would you like to do next?")
-                for suggestion in suggestions:
-                    print(f"   • {suggestion}")
-
-            print()  # Blank line before next input
-
-            # Save context periodically
-            if len(context.messages) % 4 == 0:  # Every 2 exchanges
-                context.save_to_db()
-
-        except KeyboardInterrupt:
-            print("\n\n👋 Goodbye! Your work has been saved.")
-            context.save_to_db()
-            break
-
-        except Exception as e:
-            print(f"\n❌ Error: {e}")
-            print("Please try again or type 'help' for assistance.\n")
-
-
 def main():
     """Main entry point."""
     # CRITICAL: Display disclaimer and exit if not acknowledged
     # Phase 1, Task 4 (2025-11-29) - Liability protection
     if not show_clinical_disclaimer():
+        import sys
         sys.exit(1)
 
     show_welcome()
 
-    # Launch conversational interface
-    main_conversational()
+    # Check if any projects exist
+    pm = get_project_manager()
+    projects = pm.list_projects()
+    active_project = pm.get_active_project()
+
+    if not projects:
+        print("\n📋 Welcome! Let's create your first project.")
+        project_name = input("\n📝 Enter project name: ").strip()
+
+        if project_name:
+            cli_create_project(project_name, add_milestones=True)
+        else:
+            print("\n⚠️  No project created. You can create one later with: new <name>")
+
+    elif not active_project:
+        print("\n⚠️  No active project selected.")
+        print("\n   Available projects:")
+        cli_list_projects()
+        print("\n   Use 'switch <project_name>' to select one")
+
+    # Enter project management loop
+    project_management_loop()
 
 
 if __name__ == "__main__":

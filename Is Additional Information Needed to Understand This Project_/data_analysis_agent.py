@@ -446,15 +446,6 @@ except Exception as _init_error:
         raise
 
 
-def get_data_analysis_agent():
-    """Factory function to get the DataAnalysisAgent instance.
-
-    Returns:
-        DataAnalysisAgent wrapper instance, or None if initialization failed.
-    """
-    return _data_analysis_agent_instance
-
-
 if __name__ == "__main__":
     if _data_analysis_agent_instance is not None:
         _data_analysis_agent_instance.run_with_error_handling()

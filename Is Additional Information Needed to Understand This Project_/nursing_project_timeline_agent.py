@@ -317,15 +317,6 @@ def show_usage_examples():
         print("❌ Project Timeline Agent not initialized")
 
 
-def get_project_timeline_agent():
-    """Factory function to get the ProjectTimelineAgent instance.
-
-    Returns:
-        ProjectTimelineAgent wrapper instance, or None if initialization failed.
-    """
-    return _project_timeline_agent_instance
-
-
 if __name__ == "__main__":
     if _project_timeline_agent_instance is not None:
         _project_timeline_agent_instance.run_with_error_handling()

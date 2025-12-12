@@ -70,14 +70,14 @@ class NursingResearchAgent(BaseAgent):
     6. DOAJ - Directory of Open Access Journals (free API)
     7. SafetyTools - OpenFDA device recalls and drug adverse events (public API)
     8. SerpAPI - Google search for official standards/guidelines (CDC, WHO, Joint Commission)
-    9. Exa - Neural web search for broader healthcare context and recent developments
 
-    DISABLED Tools:
+    DISABLED Tools (not appropriate for healthcare research):
     - ArXiv - DISABLED (tech/AI preprints, not peer-reviewed clinical studies)
+    - Exa - DISABLED (general web search, not healthcare-specific)
 
-    Note: ArXiv is intentionally disabled to prevent the agent from using non-peer-reviewed
-    tech/AI sources for clinical research. Exa is enabled to provide broader web context
-    for healthcare topics, recent developments, and organizational resources.
+    Note: ArXiv and Exa are intentionally disabled to prevent the agent from using
+    non-healthcare sources for clinical research. To re-enable for a tech/AI agent,
+    see the commented code in _create_tools().
     """
 
     def __init__(self):
@@ -137,19 +137,28 @@ class NursingResearchAgent(BaseAgent):
         serp_tool = create_serp_tools_safe(required=False)
         
         # =====================================================================
-        # ADDITIONAL SEARCH TOOLS
-        # ArXiv: Tech/AI preprints - kept disabled for healthcare focus
-        # Exa: Neural web search - ENABLED for broader healthcare context
+        # DISABLED TOOLS - Not appropriate for healthcare research
+        # These tools are commented out because:
+        # 1. Instructions alone cannot prevent the agent from using available tools
+        # 2. ArXiv contains tech/AI preprints, NOT peer-reviewed clinical studies
+        # 3. Exa is a general web search, NOT a healthcare-specific database
+        #
+        # TO RE-ENABLE (for a tech/AI research agent):
+        # Uncomment the following lines and add to build_tools_list()
+        # ---------------------------------------------------------------------
+        # arxiv_tool = create_arxiv_tools_safe(required=False)  # Tech/AI papers
+        # exa_tool = create_exa_tools_safe(required=False)      # General web search
         # =====================================================================
         arxiv_tool = None  # DISABLED - not for healthcare
-        exa_tool = create_exa_tools_safe(required=False)  # ENABLED - neural web search
+        exa_tool = None    # DISABLED - not for healthcare
 
         # LiteratureTools for saving findings to project database
         literature_tools = LiteratureTools()
         print("✅ LiteratureTools available (save findings to project DB)")
 
-        # Build tools list - Healthcare-focused with Exa for broader context
-        # Tool priority: PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI > Exa > LiteratureTools
+        # Build tools list - ONLY healthcare-appropriate tools
+        # Note: ArXiv and Exa intentionally excluded to prevent misuse
+        # Tool priority: PubMed > ClinicalTrials.gov > medRxiv > Semantic Scholar > CORE > DOAJ > SafetyTools > SerpAPI > LiteratureTools
         tools = build_tools_list(
             pubmed_tool,
             clinicaltrials_tool,
@@ -159,7 +168,6 @@ class NursingResearchAgent(BaseAgent):
             doaj_tool,
             safety_tool,
             serp_tool,
-            exa_tool,
             literature_tools
         )
 
@@ -220,14 +228,10 @@ class NursingResearchAgent(BaseAgent):
             print("✅ SerpAPI - Available (Google for standards/guidelines)")
         else:
             print("⚠️ SerpAPI - Unavailable (SERP_API_KEY not set)")
-
-        if exa_tool:
-            print("✅ Exa - Available (neural web search for broader context)")
-        else:
-            print("⚠️ Exa - Unavailable (EXA_API_KEY not set)")
-
-        # ArXiv remains disabled for healthcare focus
+        
+        # ArXiv and Exa are intentionally disabled for this healthcare agent
         print("🚫 ArXiv - DISABLED (not appropriate for healthcare research)")
+        print("🚫 Exa - DISABLED (not appropriate for healthcare research)")
             
         print("-" * 50)
 
@@ -634,18 +638,9 @@ class NursingResearchAgent(BaseAgent):
             print("  ⚠️ SerpAPI - NOT configured (optional)")
             print("     Set SERP_API_KEY for standards/guidelines search")
 
-        # Exa tool availability
-        if self._tool_status.get('exa'):
-            print("  ✅ Exa - Available (neural web search)")
-        elif api_status["exa"]["key_set"]:
-            print("  ⚠️ Exa - Key set but tool unavailable")
-            print("     Run: pip install exa-py")
-        else:
-            print("  ⚠️ Exa - NOT configured (optional)")
-            print("     Set EXA_API_KEY for neural web search")
-
-        # ArXiv is intentionally DISABLED for healthcare research
+        # ArXiv and Exa are intentionally DISABLED for healthcare research
         print("  🚫 ArXiv - DISABLED (not appropriate for healthcare)")
+        print("  🚫 Exa - DISABLED (not appropriate for healthcare)")
 
         print("-" * 60)
         print(f"  📦 Total tools loaded: {len(self.tools)}")
@@ -660,8 +655,8 @@ class NursingResearchAgent(BaseAgent):
         print("  📖 DOAJ               → High-quality open-access journals")
         print("  ⚠️  SafetyTools        → FDA device recalls & drug adverse events")
         print("  🏛️ SerpAPI            → Official standards, guidelines, regulations (Google)")
-        print("  🌐 Exa                → Neural web search for broader healthcare context")
         print("  🚫 ArXiv              → DISABLED (not for healthcare)")
+        print("  🚫 Exa                → DISABLED (not for healthcare)")
         print()
 
         # Warning if no search tools available
@@ -727,15 +722,6 @@ except Exception as _init_error:
     # Re-raise only if running as main module
     if __name__ == "__main__":
         raise
-
-
-def get_nursing_research_agent():
-    """Factory function to get the NursingResearchAgent instance.
-
-    Returns:
-        NursingResearchAgent wrapper instance, or None if initialization failed.
-    """
-    return _nursing_research_agent_instance
 
 
 if __name__ == "__main__":

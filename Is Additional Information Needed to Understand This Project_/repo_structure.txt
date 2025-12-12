@@ -1,0 +1,30 @@
+nurseRN Repository Structure (from GitHub)
+
+Main Directories:
+- .claude/
+- .github/
+- archived/
+- cookbook/
+- docs/phase_planning/
+- libs/
+- scripts/
+- src/
+- tests/
+
+Key Files Visible:
+- .cursorrules
+- .editorconfig
+- .env.example
+- .gitignore
+- AGENT_STATUS.md
+- BRANCH_COMPARISON.md
+- CODEOWNERS
+- CODE_OF_CONDUCT.md
+- CONTRIBUTING.md
+- GITHUB_SETUP_GUIDE.md
+- INTEGRATION_TEST_RESULTS.txt
+- INTEGRATION_TEST_SUMMARY.md
+
+Branch: claude/refactor-week1-019tf9ApiyUDheGnY3Z396k5
+Commits: 4,519
+Language: Python 99.6%

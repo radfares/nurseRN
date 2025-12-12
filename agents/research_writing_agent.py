@@ -397,6 +397,15 @@ except Exception as _init_error:
         raise
 
 
+def get_research_writing_agent():
+    """Factory function to get the ResearchWritingAgent instance.
+
+    Returns:
+        ResearchWritingAgent wrapper instance, or None if initialization failed.
+    """
+    return _research_writing_agent_instance
+
+
 if __name__ == "__main__":
     if _research_writing_agent_instance is not None:
         _research_writing_agent_instance.run_with_error_handling()
