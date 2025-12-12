@@ -19,6 +19,8 @@ from agno.knowledge.reader.web_search_reader import WebSearchReader
 from agno.knowledge.reader.arxiv_reader import ArxivReader
 from agno.knowledge.reader.csv_reader import CSVReader
 from agno.knowledge.reader.json_reader import JSONReader
+from agno.knowledge.chunking.semantic import SemanticChunking
+from agno.knowledge.chunking.row import RowChunking
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,8 @@ class DocumentReaderTools(Toolkit):
         self,
         project_name: str,
         project_db_path: str,
-        tavily_api_key: Optional[str] = None
+        tavily_api_key: Optional[str] = None,
+        semantic_similarity_threshold: float = 0.5,
     ):
         """
         Initialize document reader tools.
@@ -60,13 +63,17 @@ class DocumentReaderTools(Toolkit):
         self.project_name = project_name
         self.project_db_path = project_db_path
         self.tavily_api_key = tavily_api_key or os.getenv("TAVILY_API_KEY")
-        
-        # Initialize readers
-        self.pdf_reader = PDFReader()
-        self.pptx_reader = PPTXReader()
-        self.website_reader = WebsiteReader()
-        self.arxiv_reader = ArxivReader()
-        self.csv_reader = CSVReader()
+
+        # Initialize chunking strategies
+        self.semantic_chunking = SemanticChunking(similarity_threshold=semantic_similarity_threshold)
+        self.row_chunking = RowChunking()
+
+        # Initialize readers with chunking strategies
+        self.pdf_reader = PDFReader(chunking_strategy=self.semantic_chunking)
+        self.pptx_reader = PPTXReader(chunking_strategy=self.semantic_chunking)
+        self.website_reader = WebsiteReader(chunking_strategy=self.semantic_chunking)
+        self.arxiv_reader = ArxivReader(chunking_strategy=self.semantic_chunking)
+        self.csv_reader = CSVReader(chunking_strategy=self.row_chunking)
         self.json_reader = JSONReader()
         
         # Initialize Tavily reader if API key available
@@ -140,7 +147,10 @@ class DocumentReaderTools(Toolkit):
             # Combine all document content
             content = "\n\n".join([doc.content for doc in documents])
             
-            logger.info(f"Successfully read PDF: {file_path} ({len(content)} chars)")
+            logger.info(
+                f"Successfully read PDF with semantic chunking: {file_path} "
+                f"({len(documents)} chunks, {len(content)} chars)"
+            )
             return content
             
         except Exception as e:
@@ -169,7 +179,7 @@ class DocumentReaderTools(Toolkit):
                 return f"Error: PDF file not found: {file_path}"
             
             # Read password-protected PDF
-            reader = PDFReader(password=password)
+            reader = PDFReader(password=password, chunking_strategy=self.semantic_chunking)
             documents = reader.read(str(path))
             
             if not documents:
