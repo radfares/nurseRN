@@ -28,6 +28,9 @@ from agent_config import (
     is_reasoning_block_enabled,
 )
 
+# Import structured output schemas
+from src.schemas.research_schemas import DataAnalysisPlan
+
 # PHASE 2: Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
 
@@ -374,6 +377,8 @@ class DataAnalysisAgent(BaseAgent):
                 temperature=0,  # 0 for math reliability (Phase 2 requirement)
                 max_tokens=DATA_ANALYSIS_MAX_TOKENS,    # 1600 for JSON + prose
             ),
+            reasoning=True,  # Enable chain-of-thought reasoning
+            reasoning_model=OpenAIChat(id="gpt-4o", max_tokens=2000),  # Separate reasoning model
             tools=self.tools,
             instructions=STATISTICAL_EXPERT_PROMPT
             + reasoning_block

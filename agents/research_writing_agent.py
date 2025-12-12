@@ -25,6 +25,9 @@ from agno.tools.reasoning import ReasoningTools
 # Import centralized configuration
 from agent_config import get_db_path, is_reasoning_block_enabled
 
+# Import structured output schemas
+from src.schemas.research_schemas import PICOTQuestion, LiteratureSynthesis
+
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
 
@@ -94,6 +97,8 @@ class ResearchWritingAgent(BaseAgent):
             name="Research Writing Agent",
             role="Academic writing and research planning specialist",
             model=OpenAIChat(id="gpt-4o", temperature=0),  # Best model for writing quality
+            reasoning=True,  # Enable chain-of-thought reasoning
+            reasoning_model=OpenAIChat(id="gpt-4o", max_tokens=2000),  # Separate reasoning model
             tools=self.tools,
             description=dedent("""\
                 You are an expert Research Writing and Planning Specialist with deep knowledge of:
