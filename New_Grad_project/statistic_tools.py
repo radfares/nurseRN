@@ -3,8 +3,8 @@
 # Title: Agentic Statistical Toolkit for Nursing Research
 # Author: Gemini 1.5 Pro, based on 'Statistics for Nursing Research' by Grove & Cipher.
 # Created: 2025-12-08
-# Last Modified: 2025-12-12 03:22:00 UTC
-# Version: 1.0.1
+# Last Modified: 2025-12-12 03:25:00 UTC
+# Version: 1.0.2
 #
 # Purpose:
 # This file contains statistical rules and decision logic distilled from
@@ -15,10 +15,10 @@
 
 from typing import Dict, List, Optional, Union
 
-# ============================================================================ 
+# ============================================================================
 # Module 1: Levels of Measurement & Test Selection
 # Source: Nominal.md
-# ============================================================================ 
+# ============================================================================
 
 MEASUREMENT_LEVELS: Dict[str, Dict[str, Union[str, List[str]]]] = {
     "nominal": {
@@ -124,10 +124,10 @@ def get_statistical_test(
         return STATISTICAL_TEST_DECISION_TREE[level].get("3_or_more_groups")
 
 
-# ============================================================================ 
+# ============================================================================
 # Module 2: Correlation Interpretation
 # Source: statspart2.md
-# ============================================================================ 
+# ============================================================================
 
 def interpret_correlation(r_value: float) -> str:
     """
@@ -144,29 +144,29 @@ def interpret_correlation(r_value: float) -> str:
 
     abs_r = abs(r_value)
 
-    # Handle the special case for very weak or no correlation first
-    if abs_r < 0.2: # This now covers both 0.0 and 0.1 ranges correctly
-        if abs_r < 0.1:
-             return "Very weak or no correlation"
-        strength = "very weak"
-    elif abs_r >= 0.8:
+    if abs_r < 0.1:
+        return "Very weak or no correlation"
+    
+    if abs_r >= 0.8:
         strength = "very strong"
     elif abs_r >= 0.6:
         strength = "strong"
     elif abs_r >= 0.4:
         strength = "moderate"
-    else: # This case is now 0.2 <= abs_r < 0.4
+    elif abs_r >= 0.2:
         strength = "weak"
+    else: # This now correctly covers the 0.1 <= abs_r < 0.2 range
+        strength = "very weak"
 
     direction = "positive" if r_value > 0 else "negative"
     
     return f"A {strength} {direction} correlation."
 
 
-# ============================================================================ 
+# ============================================================================
 # Module 3: Multiple Linear Regression Assumptions
 # Source: statspart4.md
-# ============================================================================ 
+# ============================================================================
 
 REGRESSION_ASSUMPTIONS: List[str] = [
     "Linear relationship: The relationship between the independent and dependent variables is linear.",
@@ -177,10 +177,10 @@ REGRESSION_ASSUMPTIONS: List[str] = [
 ]
 
 
-# ============================================================================ 
+# ============================================================================
 # Module 4: Missing Data Handling
 # Source: statspart3.md
-# ============================================================================ 
+# ============================================================================
 
 MISSING_DATA_METHODS: Dict[str, str] = {
     "listwise_deletion": "Delete entire cases (rows) that have any missing data. Simple, but can reduce statistical power and introduce bias if data is not MCAR.",
@@ -206,7 +206,7 @@ if __name__ == '__main__':
 
     # Example 3: Interpreting a correlation coefficient
     interpretation1 = interpret_correlation(0.75)
-    print(f"Interpretation for r = 0.75: {interpretation1}") # Expected: A strong positive correlation. 
+    print(f"Interpretation for r = 0.75: {interpretation1}") # Expected: A strong positive correlation.
     
     interpretation2 = interpret_correlation(-0.25)
     print(f"Interpretation for r = -0.25: {interpretation2}") # Expected: A weak negative correlation.
