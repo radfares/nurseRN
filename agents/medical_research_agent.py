@@ -33,6 +33,9 @@ from agno.tools.reasoning import ReasoningTools
 # Import centralized configuration
 from agent_config import get_db_path, is_reasoning_block_enabled
 
+# Import structured output schemas
+from src.schemas.research_schemas import ResearchArticle
+
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
 
@@ -115,6 +118,8 @@ class MedicalResearchAgent(BaseAgent):
                 id="gpt-4o",
                 temperature=0,  # 🔴 CRITICAL FIX: Eliminate creativity/hallucination
             ),
+            reasoning=True,  # Enable chain-of-thought reasoning
+            reasoning_model=OpenAIChat(id="gpt-4o", max_tokens=2000),  # Separate reasoning model
             tools=self.tools,
             description=dedent("""\
                 You are a Medical Literature Search Specialist with access to PubMed,
