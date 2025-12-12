@@ -28,7 +28,8 @@ class TestGetDbPath:
             "academic_research",
             "research_writing",
             "project_timeline",
-            "data_analysis"
+            "data_analysis",
+            "citation_validation",
         ]
 
         for agent in valid_agents:
@@ -90,7 +91,8 @@ class TestGetModelId:
             "academic_research",
             "research_writing",
             "project_timeline",
-            "data_analysis"
+            "data_analysis",
+            "citation_validation",
         }
         assert set(DEFAULT_MODELS.keys()) == expected_agents, "All agents should have default models"
 
@@ -140,16 +142,17 @@ class TestDatabasePaths:
         assert len(paths) == len(set(paths)), "All database paths should be unique"
 
     def test_all_agents_have_paths(self):
-        """Ensure all 6 agents have database paths"""
+        """Ensure all agents have database paths"""
         expected_agents = {
             "nursing_research",
             "medical_research",
             "academic_research",
             "research_writing",
             "project_timeline",
-            "data_analysis"
+            "data_analysis",
+            "citation_validation",
         }
-        assert set(DATABASE_PATHS.keys()) == expected_agents, "All 6 agents should have paths"
+        assert set(DATABASE_PATHS.keys()) == expected_agents, "All agents should have paths"
 
     def test_all_paths_are_strings(self):
         """Ensure all paths are strings"""

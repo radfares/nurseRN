@@ -4,16 +4,7 @@ Tests the project_timeline_agent module
 """
 
 import pytest
-import sys
-from unittest.mock import Mock, MagicMock, patch
-
-# Mock all external dependencies before importing
-sys.modules['agno'] = MagicMock()
-sys.modules['agno.agent'] = MagicMock()
-sys.modules['agno.db'] = MagicMock()
-sys.modules['agno.db.sqlite'] = MagicMock()
-sys.modules['agno.models'] = MagicMock()
-sys.modules['agno.models.openai'] = MagicMock()
+from unittest.mock import Mock, patch
 
 import agents.nursing_project_timeline_agent as nursing_project_timeline_agent
 
@@ -40,9 +31,8 @@ class TestProjectTimelineAgentConfiguration:
 
     def test_agent_markdown_enabled(self):
         """Test that markdown is enabled"""
-        agent_mock = sys.modules['agno.agent'].Agent
-        agent_call = agent_mock.call_args_list[0]
-        assert agent_call.kwargs['markdown'] is True
+        assert nursing_project_timeline_agent.project_timeline_agent is not None
+        assert nursing_project_timeline_agent.project_timeline_agent.markdown is True
 
 
 class TestShowUsageExamples:

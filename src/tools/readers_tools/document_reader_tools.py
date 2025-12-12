@@ -14,9 +14,26 @@ from typing import List, Optional, Dict, Any
 from agno.tools import Toolkit
 
 # Import core readers that should always work
-from agno.knowledge.reader.pdf_reader import PDFReader
-from agno.knowledge.reader.website_reader import WebsiteReader
-from agno.knowledge.reader.web_search_reader import WebSearchReader
+try:
+    from agno.knowledge.reader.pdf_reader import PDFReader
+    PDF_READER_AVAILABLE = True
+except ImportError:
+    PDF_READER_AVAILABLE = False
+    PDFReader = None
+
+try:
+    from agno.knowledge.reader.website_reader import WebsiteReader
+    WEBSITE_READER_AVAILABLE = True
+except ImportError:
+    WEBSITE_READER_AVAILABLE = False
+    WebsiteReader = None
+
+try:
+    from agno.knowledge.reader.web_search_reader import WebSearchReader
+    WEB_SEARCH_READER_AVAILABLE = True
+except ImportError:
+    WEB_SEARCH_READER_AVAILABLE = False
+    WebSearchReader = None
 
 # Import chunking
 from agno.knowledge.chunking.semantic import SemanticChunking
@@ -72,8 +89,17 @@ class DocumentReaderTools(Toolkit):
         self.row_chunking = RowChunking()
 
         # Initialize core readers (always available)
-        self.pdf_reader = PDFReader(chunking_strategy=self.semantic_chunking)
-        self.website_reader = WebsiteReader(chunking_strategy=self.semantic_chunking)
+        if PDF_READER_AVAILABLE:
+            self.pdf_reader = PDFReader(chunking_strategy=self.semantic_chunking)
+        else:
+            self.pdf_reader = None
+            logger.warning("PDF reader unavailable: pypdf package not installed")
+            
+        if WEBSITE_READER_AVAILABLE:
+            self.website_reader = WebsiteReader(chunking_strategy=self.semantic_chunking)
+        else:
+            self.website_reader = None
+            logger.warning("Website reader unavailable: beautifulsoup4 package not installed")
 
         # Initialize PPTX reader (optional - requires python-pptx)
         try:
@@ -166,6 +192,9 @@ class DocumentReaderTools(Toolkit):
         Example:
             text = read_pdf("data/research_article.pdf")
         """
+        if not PDF_READER_AVAILABLE or self.pdf_reader is None:
+            return "Error: PDF reader unavailable - pypdf package not installed"
+            
         try:
             # Resolve path
             path = self._resolve_path(file_path)
@@ -206,6 +235,9 @@ class DocumentReaderTools(Toolkit):
         Example:
             text = read_pdf_with_password("data/confidential.pdf", "secret123")
         """
+        if not PDF_READER_AVAILABLE:
+            return "Error: PDF reader unavailable - pypdf package not installed"
+            
         try:
             # Resolve path
             path = self._resolve_path(file_path)
@@ -282,6 +314,9 @@ class DocumentReaderTools(Toolkit):
         Example:
             text = read_website("https://www.cdc.gov/hai/prevent/prevention.html")
         """
+        if not WEBSITE_READER_AVAILABLE or self.website_reader is None:
+            return "Error: Website reader unavailable - beautifulsoup4 package not installed"
+            
         try:
             # Read website
             documents = self.website_reader.read(url)
@@ -374,6 +409,9 @@ class DocumentReaderTools(Toolkit):
             - Get current guidelines and standards
             - Research best practices
         """
+        if not WEB_SEARCH_READER_AVAILABLE:
+            return "Error: Web search reader unavailable - ddgs package not installed"
+            
         try:
             # Create reader with specified parameters (fall back to env defaults)
             reader = WebSearchReader(

@@ -7,6 +7,7 @@ PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
 PHASE 2 COMPLETE (2025-11-26): Refactored to use BaseAgent inheritance
 SESSION 007 UPDATE (2025-12-12): Added DocumentReaderTools for reading papers
+SESSION 007 UPDATE (2025-12-12): Added reasoning=True and structured output schemas
 """
 
 import sys
@@ -27,6 +28,9 @@ from agent_config import get_db_path, is_reasoning_block_enabled
 
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
+
+# Import structured output schemas
+from src.schemas.research_schemas import PICOTQuestion, LiteratureSynthesis
 
 # Import DocumentReaderTools for reading PDFs, papers, etc.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -94,6 +98,7 @@ class ResearchWritingAgent(BaseAgent):
             name="Research Writing Agent",
             role="Academic writing and research planning specialist",
             model=OpenAIChat(id="gpt-4o", temperature=0),  # Best model for writing quality
+            reasoning=True,  # Enable chain-of-thought for PICOT development and synthesis
             tools=self.tools,
             description=dedent("""\
                 You are an expert Research Writing and Planning Specialist with deep knowledge of:
@@ -123,6 +128,12 @@ class ResearchWritingAgent(BaseAgent):
                 - Do not fabricate data or results
                 - Clearly distinguish between your suggestions and established facts
 
+                ABSOLUTE LAW #3: USE STRUCTURED OUTPUTS
+                - For PICOT questions: Use PICOTQuestion schema with all required fields
+                - For literature synthesis: Use LiteratureSynthesis schema
+                - Think through your response structure before writing
+                - Ensure all required fields are complete and clinically relevant
+
                 1. PICOT QUESTION DEVELOPMENT
                    - Help formulate clear, specific PICOT questions
                    - Population: Who is the study about?
@@ -131,6 +142,8 @@ class ResearchWritingAgent(BaseAgent):
                    - Outcome: What is the result?
                    - Time: How long/when?
                    - Ensure questions are measurable and clinically relevant
+                   - Provide at least 3 relevant search terms
+                   - Explain clinical significance
 
                 2. LITERATURE REVIEW WRITING
                    - Organize findings from multiple articles

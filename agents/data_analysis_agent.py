@@ -6,6 +6,7 @@ PHASE 1 UPDATE (2025-11-16): Added error handling, logging, centralized config
 PHASE 2 UPDATE (2025-11-16): Refactored to use base_agent utilities
 PHASE 2 COMPLETE (2025-11-26): Refactored to use BaseAgent inheritance
 SESSION 007 UPDATE (2025-12-12): Added DocumentReaderTools for CSV/JSON data files
+SESSION 007 UPDATE (2025-12-12): Added reasoning=True for chain-of-thought analysis
 """
 
 # Module exports
@@ -374,10 +375,11 @@ class DataAnalysisAgent(BaseAgent):
                 temperature=0,  # 0 for math reliability (Phase 2 requirement)
                 max_tokens=DATA_ANALYSIS_MAX_TOKENS,    # 1600 for JSON + prose
             ),
+            reasoning=True,  # Enable chain-of-thought reasoning for complex statistical analysis
             tools=self.tools,
             instructions=STATISTICAL_EXPERT_PROMPT
             + reasoning_block
-            + "\n\nABSOLUTE LAW #1: MATH RELIABILITY\n- Use temperature=0 for all calculations\n- Double-check all formulas\n- If sample size > 500, mark as INFEASIBLE",
+            + "\n\nABSOLUTE LAW #1: MATH RELIABILITY\n- Use temperature=0 for all calculations\n- Double-check all formulas\n- If sample size > 500, mark as INFEASIBLE\n\nUSE REASONING: Think through statistical assumptions, validate calculations, and explain your analytical approach.",
             output_schema=DataAnalysisOutput,  # CRITICAL: Enabled for JSON validation
             markdown=True,
             db=db,

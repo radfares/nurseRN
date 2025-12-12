@@ -5,17 +5,8 @@ Tests shared functionality, error handling, and BaseAgent class
 
 import pytest
 import logging
-import sys
 from unittest.mock import Mock, MagicMock, patch, call
 from abc import ABC
-
-# Mock agno modules before importing base_agent
-sys.modules['agno'] = MagicMock()
-sys.modules['agno.agent'] = MagicMock()
-sys.modules['agno.db'] = MagicMock()
-sys.modules['agno.db.sqlite'] = MagicMock()
-sys.modules['agno.models'] = MagicMock()
-sys.modules['agno.models.openai'] = MagicMock()
 
 from agents.base_agent import (
     setup_agent_logging,
@@ -51,14 +42,14 @@ class TestSetupAgentLogging:
         assert logger1.name == "agent_1"
         assert logger2.name == "agent_2"
 
-    @patch('base_agent.logging.getLogger')
+    @patch('agents.base_agent.logging.getLogger')
     def test_configures_root_logging_if_no_handlers(self, mock_get_logger):
         """Test that root logging is configured when no handlers exist"""
         mock_root = Mock()
         mock_root.hasHandlers.return_value = False
         mock_get_logger.return_value = mock_root
 
-        with patch('base_agent.logging.basicConfig') as mock_config:
+        with patch('agents.base_agent.logging.basicConfig') as mock_config:
             setup_agent_logging("test")
 
             # Verify basicConfig was called
@@ -68,14 +59,14 @@ class TestSetupAgentLogging:
             assert mock_config.called, "basicConfig should be called when no handlers exist"
             assert mock_config.call_count == 1, "basicConfig should be called exactly once"
 
-    @patch('base_agent.logging.getLogger')
+    @patch('agents.base_agent.logging.getLogger')
     def test_skips_config_if_handlers_exist(self, mock_get_logger):
         """Test that root logging config is skipped if handlers already exist"""
         mock_root = Mock()
         mock_root.hasHandlers.return_value = True
         mock_get_logger.return_value = mock_root
 
-        with patch('base_agent.logging.basicConfig') as mock_config:
+        with patch('agents.base_agent.logging.basicConfig') as mock_config:
             setup_agent_logging("test")
 
             # Verify basicConfig was NOT called

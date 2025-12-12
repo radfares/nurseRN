@@ -4,18 +4,8 @@ Tests the safe wrapper functions for new healthcare research APIs
 """
 
 import pytest
-import sys
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 import os
-
-# Mock all external dependencies before importing
-sys.modules['agno'] = MagicMock()
-sys.modules['agno.tools'] = MagicMock()
-sys.modules['agno.tools.clinicaltrials'] = MagicMock()
-sys.modules['agno.tools.medrxiv'] = MagicMock()
-sys.modules['agno.tools.semantic_scholar'] = MagicMock()
-sys.modules['agno.tools.core'] = MagicMock()
-sys.modules['agno.tools.doaj'] = MagicMock()
 
 from src.services.api_tools import (
     create_clinicaltrials_tools_safe,
@@ -26,6 +16,22 @@ from src.services.api_tools import (
     build_tools_list,
     get_api_status,
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_apply_in_place_wrapper(monkeypatch):
+    """
+    Prevent unit tests from mutating tool classes via apply_in_place_wrapper().
+
+    The production wrapper patches tool instances/classes for circuit breakers and
+    pickling support; unit tests here only validate safe-creation behavior.
+    """
+    import src.services.api_tools as api_tools_module
+
+    def _no_wrap(tool, method_names, breaker_factory):
+        return tool
+
+    monkeypatch.setattr(api_tools_module, "apply_in_place_wrapper", _no_wrap)
 
 
 class TestClinicalTrialsToolsSafe:
@@ -243,4 +249,3 @@ class TestBuildToolsList:
         assert tool1 in result
         assert tool2 in result
         assert tool3 in result
-

@@ -4,16 +4,7 @@ Tests the data_analysis_agent module
 """
 
 import pytest
-import sys
-from unittest.mock import Mock, MagicMock, patch
-
-# Mock all external dependencies before importing
-sys.modules['agno'] = MagicMock()
-sys.modules['agno.agent'] = MagicMock()
-sys.modules['agno.db'] = MagicMock()
-sys.modules['agno.db.sqlite'] = MagicMock()
-sys.modules['agno.models'] = MagicMock()
-sys.modules['agno.models.openai'] = MagicMock()
+from agno.agent import Agent
 
 import agents.data_analysis_agent as data_analysis_agent
 
@@ -319,14 +310,8 @@ class TestAgentConfiguration:
 
     def test_agent_uses_correct_model(self):
         """Test that agent configuration uses gpt-4o model"""
-        # Check that OpenAIChat was called with id="gpt-4o"
-        openai_mock = sys.modules['agno.models.openai'].OpenAIChat
-        found_gpt4o = False
-        for call in openai_mock.call_args_list:
-            if call.kwargs.get('id') == "gpt-4o":
-                found_gpt4o = True
-                break
-        assert found_gpt4o, "gpt-4o should be used for data analysis agent"
+        assert data_analysis_agent.data_analysis_agent is not None
+        assert data_analysis_agent.data_analysis_agent.model.id == "gpt-4o"
 
     def test_agent_uses_configured_temperature(self):
         """Test that agent uses configured temperature"""
@@ -354,11 +339,8 @@ class TestAgentConfiguration:
 
     def test_agent_has_description(self):
         """Test that agent is created with Agent class"""
-        # The agent was created using Agent() constructor
-        agent_mock = sys.modules['agno.agent'].Agent
-        assert agent_mock.called
-        # At least one agent was created
-        assert len(agent_mock.call_args_list) > 0
+        assert data_analysis_agent.data_analysis_agent is not None
+        assert isinstance(data_analysis_agent.data_analysis_agent, Agent)
 
     def test_agent_object_exists(self):
         """Test that data_analysis_agent object exists"""
