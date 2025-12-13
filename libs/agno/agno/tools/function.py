@@ -260,12 +260,12 @@ class Function(BaseModel):
                     ]
                 ]
             else:
-                # Mark a field as required if it has no default value (this would include optional fields)
+                # OpenAI requires ALL parameters in 'required' array, even those with defaults.
+                # Changed from checking param.default == param.empty to include all properties.
                 parameters["required"] = [
                     name
-                    for name, param in sig.parameters.items()
-                    if param.default == param.empty
-                    and name
+                    for name in parameters["properties"]
+                    if name
                     not in [
                         "agent",
                         "team",
@@ -399,11 +399,12 @@ class Function(BaseModel):
             if strict:
                 parameters["required"] = [name for name in parameters["properties"] if name not in excluded_params]
             else:
-                # Mark a field as required if it has no default value
+                # OpenAI requires ALL parameters in 'required' array, even those with defaults.
+                # Changed from checking param.default == param.empty to include all properties.
                 parameters["required"] = [
                     name
-                    for name, param in sig.parameters.items()
-                    if param.default == param.empty and name != "self" and name not in excluded_params
+                    for name in parameters["properties"]
+                    if name != "self" and name not in excluded_params
                 ]
 
             if params_set_by_user:
@@ -413,11 +414,12 @@ class Function(BaseModel):
                         name for name in self.parameters["properties"] if name not in excluded_params
                     ]
                 else:
-                    # Mark a field as required if it has no default value
+                    # OpenAI requires ALL parameters in 'required' array, even those with defaults.
+                    # Changed from checking param.default == param.empty to include all properties.
                     self.parameters["required"] = [
                         name
-                        for name, param in sig.parameters.items()
-                        if param.default == param.empty and name != "self" and name not in excluded_params
+                        for name in self.parameters["properties"]
+                        if name != "self" and name not in excluded_params
                     ]
 
             self.description = self.description or get_entrypoint_docstring(self.entrypoint)

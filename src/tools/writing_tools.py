@@ -5,16 +5,37 @@ Provides citation formatting, extraction, and validation tools.
 Enables structured communication with Citation Validation Agent.
 
 Created: 2025-12-07 (Phase A - Agent Optimization)
+FIXED: 2025-12-12 - Replaced List[Dict] with explicit Pydantic model to fix OpenAI schema error
 """
 import re
 import json
 import logging
 from typing import List, Dict, Optional
 from datetime import datetime
+from pydantic import BaseModel, Field
 
 from agno.tools import Toolkit
 
 logger = logging.getLogger(__name__)
+
+
+class CitationInput(BaseModel):
+    """Explicit schema for a single citation to avoid OpenAI propertyNames error.
+    
+    All fields are required (no defaults) because OpenAI strict mode requires
+    all properties to be in the 'required' array.
+    """
+    model_config = {"extra": "forbid"}  # Ensure no extra fields allowed
+    
+    authors: str = Field(..., description="Author names (e.g., 'Smith, J., & Jones, M.')")
+    year: str = Field(..., description="Publication year")
+    title: str = Field(..., description="Article title")
+    journal: str = Field(..., description="Journal name")
+    volume: str = Field(..., description="Volume number")
+    issue: str = Field(..., description="Issue number")
+    pages: str = Field(..., description="Page range")
+    doi: str = Field(..., description="Digital Object Identifier")
+    pmid: str = Field(..., description="PubMed ID")
 
 
 class WritingTools(Toolkit):
@@ -238,12 +259,12 @@ class WritingTools(Toolkit):
             "has_pmid": has_pmid
         })
     
-    def create_reference_list(self, citations: List[Dict]) -> str:
+    def create_reference_list(self, citations: List[CitationInput]) -> str:
         """
         Create a formatted reference list from citation data.
         
         Args:
-            citations: List of citation dicts with title, authors, year, etc.
+            citations: List of CitationInput objects with title, authors, year, etc.
             
         Returns:
             Formatted reference list in APA 7 style
@@ -254,17 +275,25 @@ class WritingTools(Toolkit):
         formatted_refs = []
         
         for i, cite in enumerate(citations, 1):
+            # Handle both Pydantic model and dict inputs for flexibility
+            if hasattr(cite, 'model_dump'):
+                cite_dict = cite.model_dump()
+            elif isinstance(cite, dict):
+                cite_dict = cite
+            else:
+                cite_dict = {"title": str(cite)}
+            
             # Format each citation
             ref = self.format_citation_apa7(
-                title=cite.get("title", ""),
-                authors=cite.get("authors", ""),
-                year=cite.get("year", ""),
-                journal=cite.get("journal", ""),
-                volume=cite.get("volume", ""),
-                issue=cite.get("issue", ""),
-                pages=cite.get("pages", ""),
-                doi=cite.get("doi", ""),
-                pmid=cite.get("pmid", "")
+                title=cite_dict.get("title", ""),
+                authors=cite_dict.get("authors", ""),
+                year=cite_dict.get("year", ""),
+                journal=cite_dict.get("journal", ""),
+                volume=cite_dict.get("volume", ""),
+                issue=cite_dict.get("issue", ""),
+                pages=cite_dict.get("pages", ""),
+                doi=cite_dict.get("doi", ""),
+                pmid=cite_dict.get("pmid", "")
             )
             ref_data = json.loads(ref)
             formatted_refs.append(ref_data["formatted_citation"])

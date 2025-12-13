@@ -129,7 +129,9 @@ def create_document_reader_tools_safe(
             logger.error(f"Error in safe_read_website: {e}", exc_info=True)
             return f"Error reading website: {str(e)}"
     
-    def safe_extract_url(url: str, format: str = "markdown") -> str:
+    def safe_extract_url(url: str, format: str) -> str:
+        # OpenAI requires all parameters in 'required' array, so no defaults in signature
+        format = format or "markdown"  # Handle empty string or None
         try:
             return tavily_breaker.call(original_extract_url, url, format)
         except CircuitBreakerError:

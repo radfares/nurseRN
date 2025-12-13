@@ -32,7 +32,10 @@ def safe_get_content(run_output: Any, default: Optional[str] = None) -> Optional
     if run_output is None:
         return default
     
-    content = getattr(run_output, "content", default)
+    if isinstance(run_output, dict):
+        content = run_output.get("content", default)
+    else:
+        content = getattr(run_output, "content", default)
     
     # If content exists but is None, return default
     if content is None:
@@ -130,7 +133,10 @@ def safe_get_metadata(run_output: Any, default: Optional[Dict] = None) -> Dict:
     if run_output is None:
         return default
     
-    metadata = getattr(run_output, "metadata", default)
+    if isinstance(run_output, dict):
+        metadata = run_output.get("metadata", default)
+    else:
+        metadata = getattr(run_output, "metadata", default)
     
     # If metadata exists but is None or not a dict, return default
     if metadata is None or not isinstance(metadata, dict):

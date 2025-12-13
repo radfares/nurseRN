@@ -992,6 +992,21 @@ class Agent:
             # Check for cancellation before model call
             raise_if_cancelled(run_response.run_id)  # type: ignore
 
+            # PHASE 1 DEBUG: Print tool schemas to identify OpenAI 400 blockers
+            import os
+            import json
+            if os.getenv("DEBUG_TOOL_SCHEMAS") == "true" and _tools:
+                print("\n" + "="*80)
+                print("DEBUG: Tool schemas being sent to OpenAI")
+                print("="*80)
+                for i, tool in enumerate(_tools):
+                    if isinstance(tool, dict) and "function" in tool:
+                        print(f"\nTool[{i}]: {tool['function'].get('name', 'UNNAMED')}")
+                        print(f"Schema: {json.dumps(tool, indent=2)}")
+                    else:
+                        print(f"\nTool[{i}]: {tool}")
+                print("="*80 + "\n")
+
             # 6. Generate a response from the Model (includes running function calls)
             self.model = cast(Model, self.model)
             model_response: ModelResponse = self.model.response(

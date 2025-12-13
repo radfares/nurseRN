@@ -29,6 +29,7 @@ from agents.base_agent import BaseAgent
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.services.api_tools import (
     create_arxiv_tools_safe,
+    create_semantic_scholar_tools_safe,
     build_tools_list,
     get_api_status
 )
@@ -57,6 +58,9 @@ class AcademicResearchAgent(BaseAgent):
         # Arxiv is free and doesn't require authentication
         arxiv_tool = create_arxiv_tools_safe(required=False)
 
+        # Semantic Scholar for AI-powered paper discovery and citation analysis
+        semantic_scholar_tool = create_semantic_scholar_tools_safe(required=False)
+
         # Document readers for PDFs, PPTX, websites, etc.
         doc_reader_tools = create_document_reader_tools_safe(required=False)
 
@@ -69,13 +73,18 @@ class AcademicResearchAgent(BaseAgent):
             print(f"⚠️ LiteratureTools unavailable: {exc}")
 
         # Build tools list, filtering out None values (ReasoningTools first)
-        tools = build_tools_list(reasoning_tools, arxiv_tool, doc_reader_tools, literature_tools)
+        tools = build_tools_list(reasoning_tools, arxiv_tool, semantic_scholar_tool, doc_reader_tools, literature_tools)
 
         # Log tool availability (using print since self.logger not available yet)
         if arxiv_tool:
             print("✅ Arxiv search available")
         else:
             print("⚠️ Arxiv search unavailable (tool creation failed)")
+
+        if semantic_scholar_tool:
+            print("✅ Semantic Scholar search available")
+        else:
+            print("⚠️ Semantic Scholar search unavailable (tool creation failed)")
 
         if doc_reader_tools:
             print("✅ DocumentReaders available (PDF/PPTX/Web/ArXiv/CSV/JSON)")
@@ -95,18 +104,19 @@ class AcademicResearchAgent(BaseAgent):
             model=OpenAIChat(id="gpt-4o", temperature=0),
             tools=self.tools,
             description=dedent("""\
-                You are an Academic Research Specialist with access to Arxiv,
-                a repository of academic papers across science, mathematics, computer science,
-                and quantitative fields. You help find cutting-edge research, theoretical
-                studies, and interdisciplinary papers.
+                You are an Academic Research Specialist with access to Arxiv and
+                Semantic Scholar. You help find cutting-edge research, theoretical
+                studies, interdisciplinary papers, and perform citation analysis.
+                Arxiv provides preprints across science, mathematics, and computer science,
+                while Semantic Scholar offers AI-powered paper discovery and citation networks.
                 """),
             instructions=dedent("""\
-                EXPERTISE: Arxiv Academic Paper Search
+                EXPERTISE: Academic Paper Search & Citation Analysis
 
                 ABSOLUTE LAW #1: GROUNDING POLICY
-                - You can ONLY cite articles that came from Arxiv tool output
-                - If Arxiv returns "[]" → MUST say "No articles found"
-                - NEVER generate Arxiv IDs or titles from your training data
+                - You can ONLY cite articles that came from Arxiv or Semantic Scholar tool output
+                - If search returns "[]" → MUST say "No articles found"
+                - NEVER generate Arxiv IDs, DOIs, or titles from your training data
                 - "I don't know" is a valid response if data is missing
 
                 ABSOLUTE LAW #2: REFUSAL OVER HELPFULNESS
@@ -116,9 +126,27 @@ class AcademicResearchAgent(BaseAgent):
 
                 ABSOLUTE LAW #3: VERIFICATION CHECKLIST
                 Before citing ANY paper, you must verify:
-                1. Did this specific Arxiv ID appear in the tool output?
+                1. Did this specific ID (Arxiv/DOI/Paper ID) appear in the tool output?
                 2. Do the title and authors match exactly?
                 3. If you cannot verify it, do NOT cite it.
+
+                TOOL SELECTION:
+                ===============
+                - Arxiv: Use for preprints in physics, math, CS, statistics, quantitative biology
+                - Semantic Scholar: Use for citation analysis, finding related papers, broader academic search
+
+                When to use Semantic Scholar:
+                - Finding papers that cite a specific work
+                - Discovering related papers and research connections
+                - Getting citation counts and impact metrics
+                - Finding papers across multiple databases (includes PubMed, ArXiv, etc.)
+                - AI-powered paper recommendations
+
+                When to use Arxiv:
+                - Latest preprints in specific domains (physics, math, CS)
+                - Mathematical and theoretical research
+                - Machine learning and AI methodology papers
+                - Quantitative methods and statistical techniques
 
                 SEARCH STRATEGY:
                 1. Search across multiple scientific domains
@@ -126,6 +154,7 @@ class AcademicResearchAgent(BaseAgent):
                 3. Look for interdisciplinary research when relevant
                 4. Include theoretical frameworks and methodologies
                 5. Find systematic approaches and novel techniques
+                6. Use Semantic Scholar for citation networks and paper discovery
 
                 ARXIV CATEGORIES RELEVANT TO HEALTHCARE:
                 - Computer Science (AI/ML in healthcare)
@@ -153,11 +182,19 @@ class AcademicResearchAgent(BaseAgent):
                 - Systems analysis approaches
 
                 EXAMPLES OF GOOD SEARCHES:
+
+                Arxiv searches:
                 - "Statistical analysis healthcare quality improvement"
                 - "Machine learning patient fall prediction"
                 - "Data analysis methods clinical trials"
                 - "Epidemiological models hospital infections"
                 - "Quality metrics healthcare systems"
+
+                Semantic Scholar searches:
+                - "Find papers citing PMID:12345678" (citation analysis)
+                - "Papers related to transformer models in healthcare"
+                - "Machine learning patient outcome prediction" (broad search)
+                - "Find highly-cited papers on deep learning medical imaging"
                 """) + (
                 "\n"
                 + dedent("""\
@@ -339,6 +376,7 @@ class AcademicResearchAgent(BaseAgent):
 
         # Arxiv info
         print("  ✅ Arxiv - No authentication required (free access)")
+        print("  ✅ Semantic Scholar - No authentication required (free access)")
 
         print("-" * 60)
 
@@ -348,33 +386,37 @@ class AcademicResearchAgent(BaseAgent):
             print("   This is unusual - check logs for errors.")
             print()
 
-        print("\n📚 Academic Research Agent (Arxiv) Ready!")
-        print("\nSpecialized for academic and theoretical research")
+        print("\n📚 Academic Research Agent (Arxiv + Semantic Scholar) Ready!")
+        print("\nSpecialized for academic research, theoretical studies, and citation analysis")
         print("\nExample queries:")
         print("-" * 60)
 
-        print("\n1. Find statistical methods:")
+        print("\n1. Find statistical methods (Arxiv):")
         print('   response = academic_research_agent.run("""')
         print('   Find papers on statistical analysis methods for')
         print('   healthcare quality improvement""")')
 
-        print("\n2. Search for AI/ML applications:")
+        print("\n2. Search for AI/ML applications (Arxiv):")
         print('   response = academic_research_agent.run("""')
         print('   Find research on machine learning for predicting')
         print('   patient outcomes""")')
 
-        print("\n3. Methodological papers:")
+        print("\n3. Citation analysis (Semantic Scholar):")
         print('   response = academic_research_agent.run("""')
-        print('   Find papers about data collection and analysis')
-        print('   methods in clinical research""")')
+        print('   Find papers that cite the transformer architecture paper')
+        print('   and show citation counts""")')
 
-        print("\n4. With Streaming:")
+        print("\n4. Paper discovery (Semantic Scholar):")
+        print('   response = academic_research_agent.run("""')
+        print('   Find highly-cited papers on deep learning in medical imaging""")')
+
+        print("\n5. With Streaming:")
         print('   academic_research_agent.print_response("""')
         print('   Find statistical methods papers""", stream=True)')
 
         print("\n" + "-" * 60)
-        print("\n💡 TIP: Arxiv is great for theoretical and methodological research!")
-        print("Use it when you need advanced analysis techniques.")
+        print("\n💡 TIP: Use Arxiv for preprints and theoretical research!")
+        print("💡 TIP: Use Semantic Scholar for citation analysis and paper discovery!")
         print("Use stream=True for real-time response generation.")
 
 

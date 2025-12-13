@@ -31,12 +31,16 @@ class CoreTools(Toolkit):
         """Use this function to search CORE for open-access research papers.
 
         Args:
-            query (str): The search query.
+            query (str): The search query. REQUIRED - must be a non-empty string.
             max_results (int, optional): Maximum number of results to return. Defaults to 10.
 
         Returns:
             str: A JSON string containing the search results with paper details.
         """
+        # Defensive guard: validate query parameter
+        if not query or not isinstance(query, str):
+            raise ValueError("search_core requires a non-empty string query")
+
         try:
             log_debug(f"Searching CORE for: {query}")
             max_results = max_results or self.max_results or 10

@@ -28,12 +28,16 @@ class ClinicalTrialsTools(Toolkit):
         """Use this function to search ClinicalTrials.gov for clinical trials.
 
         Args:
-            query (str): The search query (condition, intervention, or study details).
+            query (str): The search query (condition, intervention, or study details). REQUIRED - must be a non-empty string.
             max_results (int, optional): Maximum number of results to return. Defaults to 10.
 
         Returns:
             str: A JSON string containing the search results with trial details.
         """
+        # Defensive guard: validate query parameter
+        if not query or not isinstance(query, str):
+            raise ValueError("search_clinicaltrials requires a non-empty string query")
+
         try:
             log_debug(f"Searching ClinicalTrials.gov for: {query}")
             max_results = max_results or self.max_results or 10

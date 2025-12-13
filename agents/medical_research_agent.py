@@ -46,6 +46,7 @@ from src.services.agent_audit_logger import get_audit_logger
 from src.services.api_tools import (
     build_tools_list,
     create_pubmed_tools_safe,
+    create_clinicaltrials_tools_safe,
     get_api_status,
 )
 # Import LiteratureTools for saving findings to project database
@@ -81,9 +82,12 @@ class MedicalResearchAgent(BaseAgent):
         """Create PubMed tools with safe fallback + LiteratureTools for saving."""
         # Add ReasoningTools for structured medical reasoning
         reasoning_tools = ReasoningTools(add_instructions=True)
-        
+
         # PubMed doesn't require API keys (just email), so it's generally available
         pubmed_tool = create_pubmed_tools_safe(required=False)
+
+        # ClinicalTrials.gov for clinical trial searches (free public API)
+        clinicaltrials_tool = create_clinicaltrials_tools_safe(required=False)
 
         # LiteratureTools for saving findings to project database
         try:
@@ -94,13 +98,18 @@ class MedicalResearchAgent(BaseAgent):
             print(f"⚠️ LiteratureTools unavailable: {exc}")
 
         # Build tools list, filtering out None values (ReasoningTools first)
-        tools = build_tools_list(reasoning_tools, pubmed_tool, literature_tools)
+        tools = build_tools_list(reasoning_tools, pubmed_tool, clinicaltrials_tool, literature_tools)
 
         # Log tool availability (using print since self.logger not available yet)
         if pubmed_tool:
             print("✅ PubMed search available")
         else:
             print("⚠️ PubMed search unavailable (tool creation failed)")
+
+        if clinicaltrials_tool:
+            print("✅ ClinicalTrials.gov search available")
+        else:
+            print("⚠️ ClinicalTrials.gov search unavailable (tool creation failed)")
 
         if not tools:
             print(
@@ -122,10 +131,10 @@ class MedicalResearchAgent(BaseAgent):
             reasoning_model=OpenAIChat(id="gpt-4o", max_tokens=2000),  # Separate reasoning model
             tools=self.tools,
             description=dedent("""\
-                You are a Medical Literature Search Specialist with access to PubMed,
-                the premier database for biomedical and healthcare research. You help
-                find peer-reviewed studies, clinical trials, systematic reviews, and
-                nursing research articles.
+                You are a Medical Literature Search Specialist with access to PubMed
+                and ClinicalTrials.gov, premier databases for biomedical and healthcare
+                research. You help find peer-reviewed studies, clinical trials, systematic
+                reviews, and nursing research articles.
                 """),
             instructions=dedent("""\
                 YOU ARE A STRICT VERIFICATION-FIRST AGENT.
@@ -141,12 +150,12 @@ class MedicalResearchAgent(BaseAgent):
                 CRITICAL INSTRUCTION: YOU MUST CALL THE TOOL
                 =============================================
                 You are a research engine. Your ONLY purpose is to query the database.
-                
+
                 RULES OF ENGAGEMENT:
                 1. When the user asks a question, your FIRST and ONLY action is to call `search_pubmed`.
                 2. Do NOT plan. Do NOT explain. Do NOT say "I will search".
                 3. JUST CALL THE TOOL.
-                
+
                 VERIFICATION PROTOCOL (Apply AFTER tool use):
                 - You can ONLY cite articles that came from PubMed tool output
                 - If PubMed returns "[]" or empty results → MUST say "No articles found"
@@ -230,13 +239,25 @@ class MedicalResearchAgent(BaseAgent):
                 4. Look for systematic reviews and meta-analyses when available
                 5. Include clinical trials and observational studies
 
+                TOOL SELECTION:
+                ===============
+                - PubMed: Use for published peer-reviewed articles, systematic reviews, meta-analyses
+                - ClinicalTrials.gov: Use for ongoing/completed clinical trial data, study protocols, trial status
+
+                When to use ClinicalTrials.gov:
+                - User asks about "clinical trials" or "ongoing studies"
+                - Looking for trial protocols or recruitment status
+                - Need to find NCT numbers or trial designs
+                - Researching intervention effectiveness in controlled trials
+
                 SEARCH TYPES:
                 =============
-                - Clinical studies and trials
-                - Systematic reviews and meta-analyses
-                - Nursing research and quality improvement
-                - Evidence-based practice guidelines
-                - Case studies and cohort studies
+                - Clinical studies and trials (PubMed + ClinicalTrials.gov)
+                - Systematic reviews and meta-analyses (PubMed)
+                - Nursing research and quality improvement (PubMed)
+                - Evidence-based practice guidelines (PubMed)
+                - Case studies and cohort studies (PubMed)
+                - Trial protocols and recruitment data (ClinicalTrials.gov)
 
                 QUALITY INDICATORS:
                 ===================
@@ -248,11 +269,23 @@ class MedicalResearchAgent(BaseAgent):
 
                 EXAMPLES OF GOOD SEARCHES:
                 ==========================
+                PubMed searches:
                 - "Fall prevention interventions elderly hospitalized patients"
                 - "Catheter-associated urinary tract infection prevention"
                 - "Pressure ulcer prevention protocols nursing homes"
                 - "Medication reconciliation effectiveness"
                 - "Patient safety culture healthcare"
+
+                ClinicalTrials.gov searches:
+                - "Find ongoing trials for pressure injury prevention"
+                - "Clinical trials for fall prevention in elderly"
+                - "Active studies on CAUTI reduction interventions"
+
+                STRUCTURED OUTPUT USAGE:
+                ========================
+                - When returning article information: Use ResearchArticle schema with complete metadata
+                - Ensure PMIDs, titles, authors, and evidence levels are accurate
+                - Think through your response structure before writing
                 """) + (
                 "\n"
                 + dedent("""\
@@ -409,9 +442,9 @@ class MedicalResearchAgent(BaseAgent):
             if verified_pmids:
                 try:
                     from src.tools.citation_validation_tools import CitationValidationTools
-                    
+
                     validator = CitationValidationTools()
-                    
+
                     # Build article list from verified PMIDs
                     articles_to_validate = []
                     for pmid in verified_pmids:
@@ -427,12 +460,12 @@ class MedicalResearchAgent(BaseAgent):
                             "abstract": "",  # Not available in response
                             "publication_date": "",  # Not available in response
                         })
-                    
+
                     # Validate each article
                     import json
                     validation_results = []
                     retracted_pmids = []
-                    
+
                     for article in articles_to_validate:
                         result_json = validator.validate_single_article(
                             pmid=article["pmid"],
@@ -442,10 +475,10 @@ class MedicalResearchAgent(BaseAgent):
                         )
                         result = json.loads(result_json)
                         validation_results.append(result)
-                        
+
                         if result.get("is_retracted"):
                             retracted_pmids.append(article["pmid"])
-                    
+
                     # Build validation report
                     validation_report = {
                         "total_validated": len(validation_results),
@@ -453,13 +486,13 @@ class MedicalResearchAgent(BaseAgent):
                         "retracted_pmids": retracted_pmids,
                         "results": validation_results,
                     }
-                    
+
                     # Log validation
                     self.audit_logger.log_tool_result(
                         tool_name="citation_validation",
                         result=validation_report,
                     )
-                    
+
                     # If retractions found, add warning to response
                     if retracted_pmids:
                         retraction_warning = (
@@ -469,7 +502,7 @@ class MedicalResearchAgent(BaseAgent):
                             "Please exclude these from your research."
                         )
                         response_text += retraction_warning
-                        
+
                 except ImportError:
                     # Validation tools not available - continue without
                     pass
@@ -632,22 +665,26 @@ class MedicalResearchAgent(BaseAgent):
             print()
 
         print("\n" + "=" * 60)
-        print("🏥 Medical Research Agent (PubMed) Ready!")
+        print("🏥 Medical Research Agent (PubMed + ClinicalTrials.gov) Ready!")
         print("=" * 60)
 
         print("\n✨ CAPABILITIES:")
         print("  • Find Specific Study Types: Systematic Reviews, Clinical Trials, Nursing Research")
-        print("  • Detailed Metadata: DOI links, PMIDs, Abstracts, Journal info")
+        print("  • Detailed Metadata: DOI links, PMIDs, NCT IDs, Abstracts, Journal info")
         print("  • Anti-Hallucination: 100% Verified Citations (No made-up papers)")
         print("  • Smart Search: Uses MeSH terms to find relevant articles")
+        print("  • Clinical Trial Data: Search ClinicalTrials.gov for trial protocols and status")
 
         print("\n🔍 EXAMPLE QUERIES:")
         print('  1. "Find a systematic review on pressure ulcer prevention (last 5 years)"')
         print('  2. "What are the latest clinical guidelines for sepsis management?"')
         print('  3. "Find qualitative nursing studies on patient comfort in ICU"')
         print('  4. "Search for foley catheter care protocols"')
+        print('  5. "Find ongoing clinical trials for fall prevention in elderly patients"')
+        print('  6. "Are there any active trials studying CAUTI reduction?"')
 
         print("\n💡 TIP: Be specific! You can ask for 'recent', 'peer-reviewed', or specific journals.")
+        print("💡 TIP: Mention 'clinical trials' or 'ongoing studies' to search ClinicalTrials.gov.")
         print("=" * 60 + "\n")
 
 

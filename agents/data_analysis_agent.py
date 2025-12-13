@@ -378,12 +378,8 @@ class DataAnalysisAgent(BaseAgent):
                 temperature=0,  # 0 for math reliability (Phase 2 requirement)
                 max_tokens=DATA_ANALYSIS_MAX_TOKENS,    # 1600 for JSON + prose
             ),
-<<<<<<< HEAD
             reasoning=True,  # Enable chain-of-thought reasoning for complex statistical analysis
-=======
-            reasoning=True,  # Enable chain-of-thought reasoning
             reasoning_model=OpenAIChat(id="gpt-4o", max_tokens=2000),  # Separate reasoning model
->>>>>>> ba513b6d45734b4a8e1307b221c1e84bb975c1b7
             tools=self.tools,
             instructions=STATISTICAL_EXPERT_PROMPT
             + reasoning_block

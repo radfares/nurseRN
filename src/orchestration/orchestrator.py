@@ -17,6 +17,8 @@ from src.orchestration.context_manager import ContextManager
 from src.orchestration.safe_accessors import safe_get_content, safe_get_messages, safe_get_metadata
 from src.orchestration.log_sanitizer import sanitize_log_entry
 from src.models.agent_handoff import create_handoff
+from src.orchestration.mcp import new_task, to_json_line
+from src.orchestration.mcp_dispatch import dispatch_mcp
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -85,31 +87,36 @@ class WorkflowOrchestrator:
             # Log start (sanitized)
             logger.info(sanitize_log_entry(f"Starting execution for agent {agent_name}"))
             
-            # Execute agent using safe method hierarchy:
-            # 1. run_with_grounding_check (preferred - includes validation)
-            # 2. print_response (standard interface)
-            # 3. agent.run (raw agno method - last resort)
-            response = None
-            content = None
+            # Execute agent using safe method hierarchy wrapped in MCP envelope:
+            # 1. New Task
+            # 2. Dispatch (validates & executes)
+            # 3. Unpack Result
             
-            if hasattr(agent, 'run_with_grounding_check'):
-                # Use grounding-checked method if available
-                result = agent.run_with_grounding_check(query, **kwargs)
-                content = result.get("content") if isinstance(result, dict) else str(result)
-            elif hasattr(agent, 'agent') and hasattr(agent.agent, 'run'):
-                # BaseAgent pattern: use inner agent.run but capture output
-                response = agent.agent.run(query, **kwargs)
-                content = safe_get_content(response)
-            elif hasattr(agent, 'run'):
-                # Direct run method (MockAgent or simple agents)
-                response = agent.run(query, **kwargs)
-                content = safe_get_content(response) if response else str(response)
-            else:
-                raise ValueError(f"Agent {agent_name} has no compatible run method")
-            
-            # Extract metadata safely
-            metadata = safe_get_metadata(response) if response else {}
+            task_msg = new_task(
+                sender="WorkflowOrchestrator",
+                recipient=agent_name,
+                content=query,
+                metadata={"workflow_id": workflow_id, "agent_kwargs_keys": list(kwargs.keys())},
+            )
 
+            # Log outbound envelope
+            logger.debug(f"MCP Outbound: {to_json_line(task_msg)}")
+
+            result_msg = dispatch_mcp(agent, task_msg, **kwargs)
+            
+            # Log inbound envelope
+            logger.debug(f"MCP Inbound: {to_json_line(result_msg)}")
+
+            if result_msg.message_type == "error":
+                raise ValueError(result_msg.content)
+            
+            if result_msg.message_type != "result":
+                raise RuntimeError(f"MCP dispatch failed: {result_msg.content}")
+
+            content = result_msg.content
+            metadata = (result_msg.metadata or {}).get("agent_metadata", result_msg.metadata or {})
+            metadata["mcp_task_id"] = result_msg.task_id
+            
             # Create a structured handoff payload (non-breaking; stored alongside raw content)
             handoff = create_handoff(
                 agent_name=agent_name,

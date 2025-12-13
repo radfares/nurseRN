@@ -143,12 +143,22 @@ class PubmedTools(Toolkit):
         """Use this function to search PubMed for articles.
 
         Args:
-            query (str): The search query.
+            query (str): The search query. REQUIRED - must be a non-empty string.
             max_results (int): The maximum number of results to return (default 10).
 
         Returns:
             str: A JSON string containing the search results.
         """
+        # PHASE 2 TRACE: Log entry point with actual parameter values
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"🔍 PHASE2 TRACE: search_pubmed called with query={query!r} max_results={max_results}")
+
+        # Defensive guard: validate query parameter
+        if not query or not isinstance(query, str):
+            logger.error(f"❌ PHASE2 TRACE: Invalid query parameter: query={query!r} type={type(query)}")
+            raise ValueError("search_pubmed requires a non-empty string query")
+
         try:
             log_debug(f"Searching PubMed for: {query}")
             max_results = max_results or self.max_results or 10

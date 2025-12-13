@@ -158,6 +158,17 @@ def _parse_individual_json(content: str, output_schema: Type[BaseModel]) -> Opti
 def parse_response_model_str(content: str, output_schema: Type[BaseModel]) -> Optional[BaseModel]:
     structured_output = None
 
+    # Log raw content before any processing for debugging
+    try:
+        from pathlib import Path
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        log_file = Path("/tmp") / f"agno_raw_{timestamp}.txt"
+        log_file.write_text(f"=== RAW CONTENT ===\n{content}\n\n=== SCHEMA ===\n{output_schema.__name__}", encoding="utf-8")
+        logger.debug(f"Logged raw content to: {log_file}")
+    except Exception as e:
+        logger.debug(f"Failed to log raw content: {e}")
+
     # Extract thinking content first to prevent <think> tags from corrupting JSON
     from agno.utils.reasoning import extract_thinking_content
 
@@ -179,7 +190,9 @@ def parse_response_model_str(content: str, output_schema: Type[BaseModel]) -> Op
             data = json.loads(cleaned_content)
             structured_output = output_schema.model_validate(data)
         except (ValidationError, json.JSONDecodeError) as e:
+            # Log failure with context
             logger.warning(f"Failed to parse cleaned JSON: {e}")
+            logger.debug(f"Cleaned content (first 500 chars): {cleaned_content[:500]}")
 
             # Third attempt: Extract individual JSON objects
             candidate_jsons = _extract_json_objects(cleaned_content)

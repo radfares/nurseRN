@@ -337,16 +337,16 @@ class DocumentReaderTools(Toolkit):
     def extract_url_content(self, url: str, format: str = "markdown") -> str:
         """
         Extract content from a URL using Tavily (more comprehensive than basic website reading).
-        
+
         Args:
             url: URL to extract content from
-            format: Output format ("markdown" or "text")
+            format: Output format - "markdown" or "text" (default: markdown)
         
         Returns:
             Extracted content in specified format
         
         Example:
-            content = extract_url_content("https://www.jointcommission.org/standards/")
+            content = extract_url_content("https://www.jointcommission.org/standards/", "markdown")
         
         Note:
             Requires TAVILY_API_KEY environment variable
@@ -355,13 +355,16 @@ class DocumentReaderTools(Toolkit):
             return "Error: Tavily API key not configured. Set TAVILY_API_KEY environment variable."
         
         try:
+            # Validate format parameter
+            format_str = format if format in ("markdown", "text") else "markdown"
+
             # Update format if needed
-            if format != self.tavily_reader.extract_format:
+            if format_str != self.tavily_reader.extract_format:
                 try:
                     from agno.knowledge.reader.tavily_reader import TavilyReader
                     self.tavily_reader = TavilyReader(
                         api_key=self.tavily_api_key,
-                        extract_format=format,
+                        extract_format=format_str,
                         extract_depth="basic",
                         chunk=True
                     )
@@ -385,18 +388,18 @@ class DocumentReaderTools(Toolkit):
             return f"Error extracting content: {str(e)}"
     
     def search_and_extract(
-        self, 
-        query: str, 
+        self,
+        query: str,
         max_results: int = 5,
         search_engine: str = "duckduckgo"
     ) -> str:
         """
         Search the web and extract content from top results.
-        
+
         Args:
             query: Search query
             max_results: Maximum number of results to extract (default: 5)
-            search_engine: Search engine to use ("duckduckgo", "google", "bing")
+            search_engine: Search engine - "duckduckgo", "google", or "bing" (default: duckduckgo)
         
         Returns:
             Combined extracted content from search results
@@ -411,12 +414,16 @@ class DocumentReaderTools(Toolkit):
         """
         if not WEB_SEARCH_READER_AVAILABLE:
             return "Error: Web search reader unavailable - ddgs package not installed"
-            
+
         try:
+            # Validate search_engine parameter
+            valid_engines = ("duckduckgo", "google", "bing")
+            engine_str = search_engine if search_engine in valid_engines else "duckduckgo"
+
             # Create reader with specified parameters (fall back to env defaults)
             reader = WebSearchReader(
                 max_results=max_results or self._web_search_defaults["max_results"],
-                search_engine=search_engine or self._web_search_defaults["search_engine"],
+                search_engine=engine_str or self._web_search_defaults["search_engine"],
                 chunk=True
             )
             
@@ -443,7 +450,7 @@ class DocumentReaderTools(Toolkit):
     def search_arxiv(
         self,
         topics: List[str],
-        max_results: int = 5
+        max_results: int
     ) -> str:
         """
         Search ArXiv for academic papers on specified topics.

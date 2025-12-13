@@ -38,6 +38,9 @@ from agent_config import get_db_path, is_reasoning_block_enabled
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
 
+# Import structured output schemas
+from src.schemas.research_schemas import PICOTQuestion, LiteratureSynthesis
+
 # Import resilience infrastructure
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.services.api_tools import (
@@ -266,6 +269,8 @@ class NursingResearchAgent(BaseAgent):
             name="Nursing Research Agent",
             role="Healthcare improvement project research specialist",
             model=OpenAIChat(id="gpt-4o", temperature=0),
+            reasoning=True,  # Enable chain-of-thought reasoning for complex clinical questions
+            reasoning_model=OpenAIChat(id="gpt-4o", max_tokens=2000),  # Separate reasoning model
             tools=self.tools,
             description=dedent("""\
                 You are a specialized Nursing Research Assistant focused on healthcare improvement projects.
@@ -382,6 +387,12 @@ class NursingResearchAgent(BaseAgent):
                 - Include relevant citations with PMIDs when available
                 - Highlight best practices and guidelines
                 - Always specify which database/source was used
+
+                STRUCTURED OUTPUT USAGE:
+                - For PICOT question development: Use PICOTQuestion schema when formulating questions
+                - For literature synthesis: Use LiteratureSynthesis schema when presenting research findings
+                - Ensure all required fields are complete and clinically relevant
+                - Think through your response structure before writing
                 """) + (
                 "\n"
                 + dedent("""\

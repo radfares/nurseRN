@@ -31,13 +31,17 @@ class MedRxivTools(Toolkit):
         """Use this function to search medRxiv or bioRxiv for medical/biological preprints.
 
         Args:
-            query (str): The search query.
+            query (str): The search query. REQUIRED - must be a non-empty string.
             max_results (int, optional): Maximum number of results to return. Defaults to 10.
             server (str, optional): Which server to search - "medrxiv" or "biorxiv". Defaults to "medrxiv".
 
         Returns:
             str: A JSON string containing the search results with preprint details.
         """
+        # Defensive guard: validate query parameter
+        if not query or not isinstance(query, str):
+            raise ValueError("search_medrxiv requires a non-empty string query")
+
         try:
             log_debug(f"Searching {server} for: {query}")
             max_results = max_results or self.max_results or 10

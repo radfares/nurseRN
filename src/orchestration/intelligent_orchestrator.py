@@ -19,6 +19,8 @@ from src.orchestration.conversation_context import ConversationContext
 from src.orchestration.agent_registry import AgentRegistry
 from src.orchestration.response_synthesizer import ResponseSynthesizer
 from src.orchestration.suggestion_engine import SuggestionEngine
+from src.orchestration.mcp import new_task, to_json_line
+from src.orchestration.mcp_dispatch import dispatch_mcp
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +94,7 @@ class IntelligentOrchestrator:
 
             # Step 2: Execute plan
             logger.info(f"Executing plan with {len(plan)} tasks")
-            results = self._execute_plan(plan, context)
+            results = self._execute_plan(plan, context, user_message=message)
 
             # Step 3: Synthesize results into coherent response
             logger.info("Synthesizing results")
@@ -150,15 +152,23 @@ class IntelligentOrchestrator:
 
     def _parse_plan(self, plan_json: Dict[str, Any]) -> List[AgentTask]:
         """Convert JSON plan into AgentTask objects."""
+        # PHASE 2 TRACE: Log the raw plan from LLM
+        logger.info(f"🔍 PHASE2 TRACE: Raw plan from LLM: {json.dumps(plan_json, indent=2)}")
+
         tasks: List[AgentTask] = []
         for task_dict in plan_json.get("tasks", []):
-            tasks.append(AgentTask(
+            task = AgentTask(
                 task_id=task_dict.get("task_id", f"task_{len(tasks)+1}"),
                 agent_name=task_dict.get("agent_name", "nursing_research"),
                 action=task_dict.get("action", "search"),
                 params=task_dict.get("params", {}),
                 depends_on=task_dict.get("depends_on", [])
-            ))
+            )
+
+            # PHASE 2 TRACE: Log each task's params
+            logger.info(f"🔍 PHASE2 TRACE: Task {task.task_id} params: {task.params}")
+
+            tasks.append(task)
 
         logger.info(f"Created plan with {len(tasks)} tasks")
         return tasks
@@ -239,9 +249,9 @@ Examples:
   means search about fall prevention
 
 Available agents and their capabilities:
-- nursing_research: PICOT development, web search, healthcare standards, Joint Commission guidelines
-- medical_research: PubMed search, clinical studies, systematic reviews, peer-reviewed articles
-- academic_research: ArXiv search, statistical methods, research methodologies
+- nursing_research: PICOT development, PubMed search, ClinicalTrials.gov, medRxiv preprints, Semantic Scholar, CORE open-access, DOAJ journals, SafetyTools (FDA recalls), Google search (standards/guidelines), healthcare literature
+- medical_research: PubMed search (peer-reviewed articles), ClinicalTrials.gov (trial data), systematic reviews, clinical studies, evidence-based research
+- academic_research: ArXiv search (preprints), Semantic Scholar (citation analysis, paper discovery), statistical methods, research methodologies, theoretical research
 - research_writing: Literature synthesis, PICOT refinement, drafting sections, citation formatting
 - project_timeline: Milestone tracking, deadline reminders, project phase management
 - data_analysis: Sample size calculation, statistical test selection, power analysis
@@ -258,7 +268,7 @@ IMPORTANT RULES FOR PLANNING:
 
 3. **Be Helpful, Not Strict**: If a user asks about a nursing/healthcare topic, create a research plan. Don't return empty tasks.
 
-4. **Interpret Conversational Queries**: 
+4. **Interpret Conversational Queries**:
    - "what do you recommend" → suggest next steps based on context
    - "what are promising research topics" → search for trending topics
    - "how does X help Y" → research the relationship between X and Y
@@ -284,11 +294,34 @@ IMPORTANT RULES FOR PLANNING:
    - User message is gibberish or completely unrelated to healthcare
    - User is just chatting without a request
 
+AGENT SELECTION GUIDE:
+======================
+When to use each agent:
+- nursing_research: Broad healthcare topics, PICOT questions, nursing practice, quality improvement, FDA device safety, Joint Commission standards
+- medical_research: Clinical trials (use ClinicalTrials.gov), peer-reviewed medical literature (PubMed), systematic reviews
+- academic_research: Statistical methods, AI/ML research, theoretical frameworks, citation analysis (Semantic Scholar), paper discovery
+- research_writing: Synthesizing findings, drafting sections, formatting citations
+- project_timeline: Project management, deadlines, milestones
+- data_analysis: Statistical calculations, sample size, power analysis
+- citation_validation: Checking article quality, evidence levels, retractions
+
+TOOL-SPECIFIC QUERIES:
+======================
+- "Find clinical trials for X" → medical_research (ClinicalTrials.gov tool)
+- "Latest preprints on X" → nursing_research (medRxiv tool) or academic_research (ArXiv)
+- "Papers citing PMID:X" → academic_research (Semantic Scholar citation analysis)
+- "FDA recalls for device X" → nursing_research (SafetyTools)
+- "Open access articles on X" → nursing_research (CORE/DOAJ tools)
+- "Joint Commission standards for X" → nursing_research (Google search tool)
+
 Common workflows:
 1. Research topic → [research_writing: generate_picot] → [medical_research: search_pubmed] → [citation_validation: validate] → [research_writing: synthesize]
-2. Timeline query → [project_timeline: get_milestones]
-3. Statistical question → [data_analysis: calculate_sample_size]
-4. Validate articles → [citation_validation: grade_evidence]
+2. Clinical trial search → [medical_research: search_clinicaltrials]
+3. Citation analysis → [academic_research: search_semantic_scholar]
+4. Timeline query → [project_timeline: get_milestones]
+5. Statistical question → [data_analysis: calculate_sample_size]
+6. Validate articles → [citation_validation: grade_evidence]
+7. Device safety check → [nursing_research: check_fda_recalls]
 
 Return a JSON object with a "tasks" array. Each task has:
 - task_id: Unique identifier (e.g., "task_1")
@@ -365,6 +398,45 @@ Example output for "generate a PICOT" (when discussing nurse-aide communication)
   ]
 }
 
+Example output for "Find clinical trials for fall prevention":
+{
+  "tasks": [
+    {
+      "task_id": "task_1",
+      "agent_name": "medical_research",
+      "action": "search_clinicaltrials",
+      "params": {"query": "fall prevention elderly"},
+      "depends_on": []
+    }
+  ]
+}
+
+Example output for "Find papers citing PMID:12345678":
+{
+  "tasks": [
+    {
+      "task_id": "task_1",
+      "agent_name": "academic_research",
+      "action": "search_semantic_scholar",
+      "params": {"query": "PMID:12345678 citations"},
+      "depends_on": []
+    }
+  ]
+}
+
+Example output for "Check FDA recalls for urinary catheters":
+{
+  "tasks": [
+    {
+      "task_id": "task_1",
+      "agent_name": "nursing_research",
+      "action": "search",
+      "params": {"query": "urinary catheter FDA recalls"},
+      "depends_on": []
+    }
+  ]
+}
+
 BE GENEROUS WITH TASK CREATION. When in doubt, create a research workflow. Users want help, not rejection.
 """
 
@@ -410,7 +482,8 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
     def _execute_plan(
         self,
         plan: List[AgentTask],
-        context: ConversationContext
+        context: ConversationContext,
+        user_message: str = ""
     ) -> Dict[str, Any]:
         """
         Execute plan with dependency resolution.
@@ -423,6 +496,21 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
 
                 # Resolve dependencies
                 resolved_params = self._resolve_dependencies(task.params, results)
+
+                # FIX #1: Force valid query for search actions
+                if task.action in ("search_pubmed", "search", "search_arxiv", "search_clinicaltrials"):
+                    query = resolved_params.get("query")
+                    if not query or not isinstance(query, str) or not query.strip():
+                        # Use user's original message as fallback query
+                        fallback_query = user_message or context.get_last_user_message() if hasattr(context, 'get_last_user_message') else user_message
+                        if fallback_query and fallback_query.strip():
+                            logger.warning(f"⚠️ Planner did not generate query for {task.action}. Using user message: '{fallback_query[:50]}...'")
+                            resolved_params["query"] = fallback_query.strip()
+                        else:
+                            raise ValueError(f"Planner did not generate a query for {task.action} and no fallback available")
+
+                # PHASE 2 TRACE: Log resolved params after dependency resolution
+                logger.info(f"🔍 PHASE2 TRACE: Resolved params for {task.task_id}: {resolved_params}")
 
                 # Get agent
                 agent = self.agent_registry.get_agent(task.agent_name)
@@ -530,15 +618,28 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         # Build query for agent based on action and params
         query = self._build_agent_query(action, params)
 
-        # Run agent - prefer grounding-checked method
-        if hasattr(agent, 'run_with_grounding_check'):
-            response = agent.run_with_grounding_check(query)
-        elif hasattr(agent, 'agent') and hasattr(agent.agent, 'run'):
-            response = agent.agent.run(query)
-        elif hasattr(agent, 'run'):
-            response = agent.run(query)
-        else:
-            raise ValueError(f"Agent has no compatible run method")
+        # Run agent using MCP envelope (with raw return for structured output)
+        recipient = getattr(agent, "agent_name", getattr(agent, "name", "Agent"))
+        task_msg = new_task(
+            sender="IntelligentOrchestrator",
+            recipient=recipient,
+            content=query,
+            metadata={"action": action, "params": params},
+        )
+
+        # Log outbound envelope
+        logger.debug(f"MCP Outbound: {to_json_line(task_msg)}")
+
+        result_msg, response = dispatch_mcp(agent, task_msg, return_raw=True, **{}) # No extra kwargs here currently
+
+        # Log inbound envelope
+        logger.debug(f"MCP Inbound: {to_json_line(result_msg)}")
+
+        if result_msg.message_type == "error":
+            raise ValueError(result_msg.content)
+
+        if response is None:
+            raise RuntimeError("Expected raw agent response but got None")
 
         # Extract structured output
         output = self._extract_agent_output(response, action)
@@ -554,6 +655,9 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         """
         Build natural language query for agent based on action and params.
         """
+        # PHASE 2 TRACE: Log inputs to query builder
+        logger.info(f"🔍 PHASE2 TRACE: _build_agent_query(action={action!r}, params={params})")
+
         query_templates = {
             "generate_picot": "Generate a PICOT question for research on {topic}",
             "search_pubmed": "Search PubMed for articles about: {query}",
@@ -569,52 +673,40 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         template = query_templates.get(action)
         if template:
             try:
-                return template.format(**params)
-            except KeyError:
+                built_query = template.format(**params)
+                # PHASE 2 TRACE: Log the built natural language query
+                logger.info(f"🔍 PHASE2 TRACE: Built agent query: {built_query!r}")
+                return built_query
+            except KeyError as e:
+                logger.warning(f"⚠️ PHASE2 TRACE: Missing key in template formatting: {e}")
                 pass
 
         # Fallback: combine action and params
         if params:
             param_str = ", ".join(f"{k}={v}" for k, v in params.items())
-            return f"{action}: {param_str}"
-        return action
+            fallback_query = f"{action}: {param_str}"
+        else:
+            fallback_query = action
+
+        logger.info(f"🔍 PHASE2 TRACE: Using fallback query: {fallback_query!r}")
+        return fallback_query
 
     def _extract_agent_output(self, response: Any, action: str) -> Any:
         """
-        Extract structured output from agent response.
+        Extract structured output from agent response using robust JSON parsing.
+
+        Uses the robust JSON parser to handle:
+        - JSON + commentary
+        - Multiple JSON objects (takes first only)
+        - Malformed JSON
+
+        Logs raw output to /tmp on failures for debugging.
         """
-        # Handle Pydantic models (from data_analysis_agent)
-        if hasattr(response, 'model_dump'):
-            return response.model_dump()
-        elif hasattr(response, 'dict'):  # Older Pydantic versions
-            return response.dict()
+        from src.utils.json_parser import parse_json_from_response
 
-        # Handle dict responses (from grounding check)
-        if isinstance(response, dict):
-            return response
-
-        # Try to get content from response object
-        content = None
-        if hasattr(response, 'content'):
-            content = response.content
-        elif hasattr(response, 'messages') and response.messages:
-            content = response.messages[-1].content if hasattr(response.messages[-1], 'content') else str(response.messages[-1])
-        else:
-            content = str(response)
-
-        # Try to parse as JSON
-        if content and isinstance(content, str):
-            try:
-                if "{" in content and "}" in content:
-                    start = content.index("{")
-                    end = content.rindex("}") + 1
-                    json_str = content[start:end]
-                    return json.loads(json_str)
-            except (json.JSONDecodeError, ValueError):
-                pass
-
-        # Return as text
-        return {"text": content if content else str(response)}
+        # Use robust parser with context for debugging
+        context = f"{action}_extraction"
+        return parse_json_from_response(response, context=context, fallback_to_text=True)
 
     def _handle_unclear_intent(
         self,

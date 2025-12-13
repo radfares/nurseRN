@@ -62,14 +62,19 @@ class ResearchWritingAgent(BaseAgent):
         Create tools for the writing agent.
 
         Tools include:
-        - ReasoningTools: Structured academic reasoning
         - DocumentReaders: Read papers, PDFs for context and citations
         - WritingTools: Citation formatting and extraction
+        
+        NOTE: ReasoningTools disabled due to OpenAI schema incompatibility.
+              The 'think' tool schema is missing 'required' array for 'action'.
+              Chain-of-thought is still enabled via reasoning=True on the agent.
         """
         from src.services.api_tools import build_tools_list
 
-        # Add ReasoningTools for structured writing/planning
-        reasoning_tools = ReasoningTools(add_instructions=True)
+        # DISABLED: ReasoningTools has incompatible schema with OpenAI
+        # Error: "Missing 'action'" in required array
+        # reasoning_tools = ReasoningTools(add_instructions=True)
+        # print("✅ ReasoningTools available - structured academic reasoning enabled")
 
         # Document readers for reading papers, PDFs for citations and context
         doc_reader_tools = create_document_reader_tools_safe(required=False)
@@ -90,10 +95,11 @@ class ResearchWritingAgent(BaseAgent):
         else:
             print("⚠️ DocumentReaders unavailable - dependency or initialization issue")
 
-        print("✅ ReasoningTools available - structured academic reasoning enabled")
+        # NOTE: Reasoning via chain-of-thought is still enabled via reasoning=True
+        print("ℹ️ Chain-of-thought reasoning enabled (reasoning=True) - no external tool needed")
 
         # Build tools list, filtering out None values
-        return build_tools_list(reasoning_tools, doc_reader_tools, writing_tools)
+        return build_tools_list(doc_reader_tools, writing_tools)
 
     def _create_agent(self) -> Agent:
         """Create and configure the Research Writing Agent."""
@@ -101,12 +107,8 @@ class ResearchWritingAgent(BaseAgent):
             name="Research Writing Agent",
             role="Academic writing and research planning specialist",
             model=OpenAIChat(id="gpt-4o", temperature=0),  # Best model for writing quality
-<<<<<<< HEAD
             reasoning=True,  # Enable chain-of-thought for PICOT development and synthesis
-=======
-            reasoning=True,  # Enable chain-of-thought reasoning
             reasoning_model=OpenAIChat(id="gpt-4o", max_tokens=2000),  # Separate reasoning model
->>>>>>> ba513b6d45734b4a8e1307b221c1e84bb975c1b7
             tools=self.tools,
             description=dedent("""\
                 You are an expert Research Writing and Planning Specialist with deep knowledge of:

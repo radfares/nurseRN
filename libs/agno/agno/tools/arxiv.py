@@ -40,11 +40,14 @@ class ArxivTools(Toolkit):
         """Use this function to search arXiv for a query and return the top articles.
 
         Args:
-            query (str): The query to search arXiv for.
+            query (str): The query to search arXiv for. REQUIRED - must be a non-empty string.
             num_articles (int, optional): The number of articles to return. Defaults to 10.
         Returns:
             str: A JSON of the articles with title, id, authors, pdf_url and summary.
         """
+        # Defensive guard: validate query parameter
+        if not query or not isinstance(query, str):
+            raise ValueError("search_arxiv_and_return_articles requires a non-empty string query")
 
         articles = []
         log_debug(f"Searching arxiv for: {query}")
