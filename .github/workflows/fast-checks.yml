@@ -1,0 +1,15 @@
+name: Fast Wrapping Checks
+on: [pull_request]
+jobs:
+  fast-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install -r requirements.txt pytest
+      - name: Run fast tests
+        run: pytest tests/test_discovery.py::test_methods_present tests/test_wrapping.py::test_methods_are_bound tests/test_wrapping.py::test_pickling_roundtrip -q

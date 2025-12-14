@@ -1,0 +1,12 @@
+agno
+anthropic
+exa_py
+fastapi[standard]
+mcp
+nest_asyncio
+openai
+pgvector
+psycopg[binary]
+sqlalchemy
+yfinance
+youtube-transcript-api
