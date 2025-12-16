@@ -23,34 +23,105 @@ class EvidenceLevel(str, Enum):
 
 class PICOTQuestion(BaseModel):
     """
-    Structured PICOT question output.
+    Enhanced Structured PICOT question output targeting ≥90/100 quality score.
 
-    Ensures all PICOT components are present and clinically relevant.
+    Includes all fields required by PICOT_RUBRIC.md for "Excellent" rating.
+    Based on rubric categories: Specificity (25pts), Measurability (20pts),
+    Achievability (20pts), Relevance (20pts), Time-Bound (15pts).
     """
+    # Core PICOT components
     population: str = Field(
-        description="Population (P) - Who is the patient population?",
-        min_length=5
+        description="Population (P) - Who is the patient population? Include age range, diagnosis/condition, and setting",
+        min_length=10
     )
     intervention: str = Field(
-        description="Intervention (I) - What is the intervention or therapy?",
-        min_length=5
+        description="Intervention (I) - What is the intervention or therapy? Include specific protocol details",
+        min_length=10
     )
     comparison: str = Field(
-        description="Comparison (C) - What is the alternative or comparison?",
-        min_length=3
-    )
-    outcome: str = Field(
-        description="Outcome (O) - What is the desired outcome?",
+        description="Comparison (C) - What is the alternative or comparison? Explicitly state current practice",
         min_length=5
     )
+    outcome: str = Field(
+        description="Outcome (O) - What is the desired outcome? Include measurable metric with units",
+        min_length=10
+    )
     timeframe: str = Field(
-        description="Timeframe (T) - What is the time period?",
-        min_length=3
+        description="Timeframe (T) - What is the time period? Include specific start and end dates",
+        min_length=10
     )
     full_question: str = Field(
-        description="Complete PICOT question in proper format",
-        min_length=20
+        description="Complete PICOT question in proper format with all components",
+        min_length=50
     )
+
+    # Enhanced Specificity fields (Rubric: 25 pts)
+    setting: str = Field(
+        description="Specific clinical setting (e.g., '32-bed medical-surgical unit, Community General Hospital')"
+    )
+    inclusion_criteria: str = Field(
+        description="Patient inclusion criteria (e.g., 'Morse Fall Scale score ≥45 (high fall risk)')"
+    )
+    exclusion_criteria: Optional[str] = Field(
+        default=None,
+        description="Patient exclusion criteria if applicable"
+    )
+    intervention_components: List[str] = Field(
+        description="List of 3-5 specific intervention protocol components",
+        min_items=3,
+        max_items=8
+    )
+    delivered_by: str = Field(
+        description="Who delivers the intervention (e.g., 'RNs and CNAs, all shifts')"
+    )
+
+    # Measurability fields (Rubric: 20 pts)
+    baseline_rate: str = Field(
+        description="Current baseline measurement with units and timeframe (e.g., '5.2 falls per 1,000 patient-days (Q1-Q3 2025)')"
+    )
+    benchmark: Optional[str] = Field(
+        default=None,
+        description="National/industry benchmark if available (e.g., 'NDNQI benchmark: 3.44 per 1,000 pt-days')"
+    )
+    numeric_target: str = Field(
+        description="Specific numeric target/reduction (e.g., '≥30% reduction to ≤3.64 per 1,000 pt-days')"
+    )
+    secondary_outcomes: Optional[List[str]] = Field(
+        default=None,
+        description="2-3 secondary outcomes to measure",
+        max_items=5
+    )
+    data_source: str = Field(
+        description="Where/how data will be collected (e.g., 'Incident reporting system + EHR audit')"
+    )
+
+    # Achievability fields (Rubric: 20 pts)
+    sample_size_estimate: str = Field(
+        description="Estimated sample size with justification (e.g., 'n=120 patients over study period based on 85% occupancy, 4.2 day LOS, 40% high-risk prevalence')"
+    )
+
+    # Time-Bound fields (Rubric: 15 pts)
+    start_date: str = Field(
+        description="Project start date (e.g., 'January 6, 2026')"
+    )
+    end_date: str = Field(
+        description="Project end date (e.g., 'June 30, 2026')"
+    )
+    milestones: List[str] = Field(
+        description="4-6 key milestones with dates (IRB approval, training, go-live, audits, analysis)",
+        min_items=4,
+        max_items=8
+    )
+
+    # Relevance fields (Rubric: 20 pts)
+    institutional_alignment: str = Field(
+        description="How this aligns with institutional goals/standards (e.g., 'Joint Commission NPSG 09.02.01, Hospital strategic goal: Top quartile patient safety by 2027')"
+    )
+    evidence_summary: str = Field(
+        description="Brief evidence base (2-3 key studies with outcomes, e.g., 'Meade et al., 2006, AJN: 50-60% fall reduction')"
+    )
+
+    # Legacy fields for backwards compatibility
     clinical_significance: str = Field(
         description="Why this question matters clinically and to patient care",
         min_length=50
@@ -61,19 +132,8 @@ class PICOTQuestion(BaseModel):
         max_items=10
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "population": "Elderly patients (65+) in acute care hospitals",
-                "intervention": "Hourly rounding by nursing staff",
-                "comparison": "Standard nursing care without structured rounding",
-                "outcome": "Reduction in patient falls",
-                "timeframe": "Over 6 months",
-                "full_question": "In elderly hospitalized patients (P), does hourly nursing rounding (I) compared to standard care (C) reduce patient falls (O) over 6 months (T)?",
-                "clinical_significance": "Patient falls are a leading cause of injury and extended hospital stays in elderly patients. Hourly rounding is a low-cost intervention that could significantly reduce fall rates and improve patient safety outcomes.",
-                "search_terms": ["patient falls", "elderly hospitalized", "hourly rounding", "fall prevention", "nursing intervention", "acute care"]
-            }
-        }
+    # NO HARDCODED EXAMPLES - This is production research software
+    # Examples would contain fake data inappropriate for real research
 
 
 class ResearchArticle(BaseModel):
@@ -129,25 +189,7 @@ class ResearchArticle(BaseModel):
         description="Article abstract (if available)"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "pmid": "12345678",
-                "doi": "10.1001/jama.2020.12345",
-                "title": "Effect of Hourly Rounding on Patient Falls in Acute Care Settings",
-                "authors": ["Smith J", "Johnson M", "Williams K"],
-                "year": 2020,
-                "journal": "JAMA Internal Medicine",
-                "evidence_level": "I",
-                "is_retracted": False,
-                "relevance_score": 0.95,
-                "key_findings": [
-                    "Hourly rounding reduced falls by 50% (p<0.001)",
-                    "No significant increase in nursing workload",
-                    "Patient satisfaction scores improved by 20%"
-                ]
-            }
-        }
+    # NO HARDCODED EXAMPLES - Real research data only
 
 
 class LiteratureSynthesis(BaseModel):
@@ -201,34 +243,7 @@ class LiteratureSynthesis(BaseModel):
         min_items=1
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "topic": "Hourly rounding for fall prevention in elderly hospitalized patients",
-                "picot_question": "In elderly hospitalized patients, does hourly nursing rounding compared to standard care reduce patient falls over 6 months?",
-                "articles_reviewed": 12,
-                "evidence_summary": "Systematic review of 12 studies (5 RCTs, 7 quasi-experimental) shows consistent evidence that hourly rounding reduces falls by 30-50% in acute care settings. Effects are most pronounced in elderly patients and when rounding includes specific safety checks.",
-                "key_findings": [
-                    "Hourly rounding reduces falls by 30-50% across multiple studies",
-                    "Most effective when including toileting assistance and environment checks",
-                    "Minimal increase in nursing workload when integrated into workflow",
-                    "Improves patient satisfaction and nurse-patient communication"
-                ],
-                "recommendations": [
-                    "Implement structured hourly rounding in all acute care units with elderly patients",
-                    "Include specific safety checklist items: toileting, positioning, environment",
-                    "Provide staff training on effective rounding techniques"
-                ],
-                "evidence_quality": "Moderate to high quality evidence from multiple RCTs and well-designed quasi-experimental studies. Some heterogeneity in implementation protocols.",
-                "gaps_identified": [
-                    "Long-term sustainability beyond 6 months unclear",
-                    "Cost-effectiveness analysis needed",
-                    "Optimal rounding frequency not yet determined"
-                ],
-                "confidence_level": 0.85,
-                "citations": ["12345678", "23456789", "34567890"]
-            }
-        }
+    # NO HARDCODED EXAMPLES - Real research data only
 
 
 class DataAnalysisPlan(BaseModel):
@@ -290,42 +305,7 @@ class DataAnalysisPlan(BaseModel):
         description="Anticipated study limitations"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "study_design": "Quasi-experimental pre-post intervention study",
-                "sample_size_required": 388,
-                "sample_size_justification": "Based on power analysis for detecting 30% reduction in fall rate with 80% power, alpha=0.05, assuming baseline fall rate of 5 per 1000 patient days",
-                "statistical_tests": [
-                    "Interrupted time series analysis for fall rate trends",
-                    "Chi-square test for categorical outcomes",
-                    "Independent t-test for pre-post comparison"
-                ],
-                "power": 0.80,
-                "alpha": 0.05,
-                "effect_size": 0.30,
-                "effect_size_justification": "Based on meta-analysis showing hourly rounding reduces falls by 30-50%",
-                "data_collection_plan": [
-                    "Collect baseline fall data for 3 months pre-intervention",
-                    "Implement hourly rounding intervention",
-                    "Collect fall data for 6 months post-intervention",
-                    "Record all falls with incident reports",
-                    "Document rounding compliance via electronic records"
-                ],
-                "analysis_timeline": "9 months total: 3 months baseline, 6 months intervention",
-                "potential_confounders": [
-                    "Patient acuity levels",
-                    "Staffing ratios",
-                    "Seasonal variations",
-                    "Environmental changes"
-                ],
-                "limitations": [
-                    "Lack of randomization",
-                    "Potential Hawthorne effect",
-                    "Single-site study limiting generalizability"
-                ]
-            }
-        }
+    # NO HARDCODED EXAMPLES - Real research data only
 
 
 # Export all schemas

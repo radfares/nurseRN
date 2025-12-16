@@ -64,6 +64,9 @@ from src.tools.readers_tools.document_reader_service import create_document_read
 # Import PersonalLibraryTools for searching personal document library
 from src.knowledge.personal_library_tool import create_personal_library_tools_safe
 
+# Phase 3: RAG Enhancement Integration
+from src.services.rag_enhancement import get_rag_enhancer
+
 
 class NursingResearchAgent(BaseAgent):
     """
@@ -97,6 +100,8 @@ class NursingResearchAgent(BaseAgent):
             agent_key="nursing_research",
             tools=tools
         )
+        # Phase 3: Initialize RAG enhancer for knowledge retrieval
+        self.rag_enhancer = get_rag_enhancer(cache_ttl=300)
 
     def _create_tools(self) -> List:
         """
@@ -417,6 +422,126 @@ class NursingResearchAgent(BaseAgent):
                 - For literature synthesis: Use LiteratureSynthesis schema when presenting research findings
                 - Ensure all required fields are complete and clinically relevant
                 - Think through your response structure before writing
+
+                ═══════════════════════════════════════════════════════════════════
+                PICOT DEVELOPMENT REQUIREMENTS (Target Score ≥90/100)
+                ═══════════════════════════════════════════════════════════════════
+
+                CRITICAL: When developing PICOT questions, you MUST populate ALL fields
+                in the PICOTQuestion schema to achieve "Excellent" (≥90/100) rating per
+                PICOT_RUBRIC.md. Incomplete PICOTs score ≤68 ("Fair") and waste user time.
+
+                POPULATION (P) Requirements - Score 10/10 Specificity:
+                ✓ Age range with specific bounds (e.g., "65-85 years" not "elderly")
+                ✓ Clinical condition or diagnosis (e.g., "high fall risk, Morse Scale ≥45")
+                ✓ Setting details: unit type, bed count, hospital name
+                ✓ Inclusion criteria: specific risk stratification or screening score
+                ✓ Exclusion criteria if applicable
+                ✓ Sample size estimate with calculation rationale (occupancy, LOS, prevalence)
+
+                INTERVENTION (I) Requirements - Score 8/8 Specificity:
+                ✓ List 3-5 specific protocol components (not just "hourly rounding")
+                ✓ Who delivers: specific roles (RN, CNA, PT, etc.)
+                ✓ Frequency and timing (e.g., "hourly 0600-2200, Q2H overnight")
+                ✓ Training requirements (duration, competency validation)
+                ✓ Implementation details (tools, checklists, identifiers)
+
+                COMPARISON (C) Requirements - Score 4/4 Specificity:
+                ✓ Current practice defined explicitly (not just "standard care")
+                ✓ Baseline measurement with data source and timeframe
+                ✓ Baseline rate with units (e.g., "5.2 falls per 1,000 patient-days, Q1-Q3 2025")
+                ✓ National/industry benchmark if available (NDNQI, AHRQ, CDC)
+
+                OUTCOME (O) Requirements - Score 13/13 Measurability:
+                ✓ Primary metric with specific units (e.g., "per 1,000 patient-days")
+                ✓ Numeric target with percentage or absolute value (e.g., "≥30% reduction")
+                ✓ Target calculation showing baseline → goal (e.g., "5.2 → ≤3.64")
+                ✓ 2-3 secondary outcomes (injury rate, call light usage, satisfaction)
+                ✓ Data source explicitly stated (incident reports, EHR, surveys)
+                ✓ Measurement method clear (chart audit, direct observation, survey tool)
+
+                TIMEFRAME (T) Requirements - Score 15/15 Time-Bound:
+                ✓ Exact start date (month/day/year, e.g., "January 6, 2026")
+                ✓ Exact end date with duration calculation (e.g., "June 30, 2026 (6 months)")
+                ✓ 4-6 milestones with specific dates:
+                  - IRB or Nursing Practice Council approval deadline
+                  - Staff training completion deadline (with % target)
+                  - Go-live date
+                  - Compliance audit dates (with % targets)
+                  - Mid-point analysis date
+                  - Final data analysis and report deadline
+
+                RELEVANCE & SIGNIFICANCE Requirements - Score 20/20:
+                ✓ Institutional alignment examples:
+                  - Joint Commission National Patient Safety Goals (cite specific NPSG)
+                  - CMS Quality Measures or Hospital-Acquired Condition penalties
+                  - Hospital strategic plan alignment (cite year/goal)
+                  - State regulations or accreditation requirements
+                ✓ Evidence summary with 2-3 key citations:
+                  - Author, year, journal
+                  - Magnitude of effect (%, rate reduction, cost savings)
+                  - Study design noted (RCT, quasi-experimental, systematic review)
+                ✓ Clinical significance quantified:
+                  - Patient impact (deaths, injuries, LOS)
+                  - Financial impact (cost per fall, reimbursement penalties)
+                  - Current vs. benchmark gap with percentage difference
+                  - Estimated preventable events per year
+
+                ACHIEVABILITY Requirements - Score 20/20:
+                ✓ Sample size justified by:
+                  - Unit capacity/occupancy rate
+                  - Average length of stay
+                  - Prevalence or incidence rate
+                  - Statistical power calculation (if applicable)
+                ✓ Resource assessment:
+                  - Staff time per patient per intervention
+                  - Training costs (hours × staff × rate)
+                  - Materials/equipment costs
+                  - IT/EHR template development hours
+                ✓ Feasibility barriers identified with mitigation:
+                  - Night shift compliance → charge RN audits
+                  - Documentation burden → simplified flowsheet
+                  - Competing priorities → leadership buy-in
+
+                VERIFICATION CHECKLIST - Use before submitting PICOTQuestion:
+                □ All required fields populated (no None/empty strings for required fields)
+                □ Numeric target specified with baseline → goal calculation shown
+                □ Setting includes unit type AND facility name
+                □ Intervention has ≥3 specific components listed
+                □ Milestones include at least: IRB, training, go-live, audit, analysis
+                □ Evidence summary cites ≥2 studies with authors/years/outcomes
+                □ Institutional alignment names specific standard/goal/regulation
+                □ Sample size estimate shows calculation rationale
+                □ Baseline rate includes units and data timeframe
+                □ Start and end dates are specific (not "in 6 months")
+
+                EXAMPLE STRUCTURE TEMPLATE (Fair → Excellent):
+
+                ❌ VAGUE/INCOMPLETE (Score ~68):
+                Population: "[General age group] in [general setting]"
+                Intervention: "[Generic intervention name]"
+                Comparison: "Standard care"
+                Outcome: "[General improvement goal]"
+                Timeframe: "[Duration without dates]"
+
+                ✅ SPECIFIC/COMPLETE (Score ≥90):
+                Population: "[Specific age range] with [clinical condition/risk score] on a [#-bed unit type], [Facility name]"
+                Intervention: "[Intervention name]: (1) [Component 1 with timing], (2) [Component 2], (3) [Component 3], (4) [Documentation requirement], (5) [Safety protocol]"
+                Comparison: "[Current practice description] (baseline: [X.X metric per timeframe, data source])"
+                Outcome: "[Metric with units], [≥X% reduction/improvement] from [baseline] to [target]"
+                Timeframe: "[Start date] to [End date] ([duration])"
+                + All enhanced fields (setting, milestones, evidence_summary, etc.)
+
+                COMMON MISTAKES TO AVOID:
+                ✗ Vague age: Use specific age ranges, not general terms
+                ✗ No baseline: Always include actual baseline measurement with units
+                ✗ Generic intervention: List 3-5 specific protocol components with timing
+                ✗ No dates: Use exact calendar dates, not just durations
+                ✗ Missing milestones: Include IRB, training, go-live, audits, analysis with dates
+                ✗ No evidence: Search literature and cite 2-3 real studies with outcomes
+                ✗ No institutional tie: Reference specific standards or organizational goals
+                ✗ Sample size omitted: Calculate from actual unit data (occupancy, LOS, prevalence)
+
                 """) + (
                 "\n"
                 + dedent("""\
@@ -449,6 +574,21 @@ class NursingResearchAgent(BaseAgent):
         if self.audit_logger:
             self.audit_logger.log_query_received(query, project_name)
 
+        # Phase 3: Pre-retrieve RAG context before agent execution
+        # This enriches the agent's knowledge base for more accurate responses
+        rag_context = []
+        try:
+            rag_results = self.rag_enhancer.retrieve(
+                query=query,
+                agent_hint="nursing_research",
+                k=5,
+                use_cache=True
+            )
+            rag_context = [r.content for r in rag_results[:3]]
+            self.logger.debug(f"Retrieved {len(rag_context)} RAG context items")
+        except Exception as e:
+            self.logger.warning(f"RAG retrieval failed: {e}")
+
         stream_requested = bool(kwargs.get("stream"))
         
         try:
@@ -465,15 +605,26 @@ class NursingResearchAgent(BaseAgent):
                 return response
                 
             self._validate_run_output(response)
-            
+
             # Audit Logging: Response Generated
             if self.audit_logger:
+                # Phase 3: Include RAG grounding metadata in audit log
+                try:
+                    if rag_context:
+                        rag_results_final = self.rag_enhancer.retrieve(
+                            query=query, agent_hint="nursing_research", k=5, use_cache=True
+                        )
+                        grounding = self.rag_enhancer.extract_grounding_metadata(rag_results_final)
+                        self.logger.info(f"RAG grounding: {grounding.get('all_citations', [])}")
+                except:
+                    pass
+
                 self.audit_logger.log_response_generated(
                     response=str(response.content),
                     response_type="success",
                     validation_passed=True # If we got here, validation passed (or didn't raise)
                 )
-                
+
             return response
             
         except Exception as e:

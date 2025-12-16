@@ -1,0 +1,69 @@
+# Knowledge Module Configuration
+# All settings can be overridden via environment variables with KNOWLEDGE_ prefix
+# Example: KNOWLEDGE_DB_PATH overrides db_path below
+
+# ChromaDB storage path
+db_path: "data/chroma_db"
+
+# Embedder configuration
+embedder:
+  provider: "openai"
+  model: "text-embedding-3-small"
+  dimensions: 1536
+  batch_size: 100
+
+# Chunking strategies per document type
+chunking:
+  clinical:
+    strategy: "semantic"       # Paragraph-based chunking
+    chunk_size: 500           # Tokens per chunk
+    overlap: 50               # Token overlap
+  procedural:
+    strategy: "sentence"       # Sentence-based chunking
+    chunk_size: 400
+    overlap: 50
+    sentences_per_chunk: 5
+    overlap_sentences: 1
+  research:
+    strategy: "token"          # Token-based chunking
+    chunk_size: 400
+    overlap: 50
+  default:
+    strategy: "token"
+    chunk_size: 400
+    overlap: 50
+
+# Store routing (store_type -> collection configuration)
+stores:
+  personal:
+    collection_name: "personal_docs"
+    store_type: "personal"
+  clinical:
+    collection_name: "clinical_knowledge"
+    store_type: "clinical"
+  procedural:
+    collection_name: "procedural_knowledge"
+    store_type: "procedural"
+  research:
+    collection_name: "research_cache"
+    store_type: "research"
+
+# Cache configuration
+cache:
+  enabled: true
+  db_path: "data/cache/knowledge_cache.db"
+  chunk_cache_enabled: true
+  embedding_cache_enabled: true
+  max_entries: 100000
+  ttl_days: 30
+
+# Supported file extensions for ingestion
+supported_extensions:
+  - ".pdf"
+  - ".docx"
+  - ".pptx"
+  - ".txt"
+  - ".md"
+  - ".markdown"
+  - ".csv"
+  - ".json"

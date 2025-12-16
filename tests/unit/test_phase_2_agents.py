@@ -8,12 +8,22 @@ from pathlib import Path
 # Skip entire module if agno is mocked/polluted by other tests
 pytest.importorskip("agno.models.response", reason="agno module polluted by other tests")
 
-from agents.medical_research_agent import MedicalResearchAgent
-from agents.nursing_research_agent import NursingResearchAgent
-from agents.academic_research_agent import AcademicResearchAgent
-from agents.research_writing_agent import ResearchWritingAgent
-from agents.nursing_project_timeline_agent import ProjectTimelineAgent
-from agents.data_analysis_agent import DataAnalysisAgent
+try:
+    from agents.medical_research_agent import MedicalResearchAgent
+    from agents.nursing_research_agent import NursingResearchAgent
+    from agents.academic_research_agent import AcademicResearchAgent
+    from agents.research_writing_agent import ResearchWritingAgent
+    from agents.nursing_project_timeline_agent import ProjectTimelineAgent
+    from agents.data_analysis_agent import DataAnalysisAgent
+except ImportError:
+    # Try src.agents if top level agents not found
+    from src.agents.medical_research_agent import MedicalResearchAgent
+    from src.agents.nursing_research_agent import NursingResearchAgent
+    from src.agents.academic_research_agent import AcademicResearchAgent
+    from src.agents.research_writing_agent import ResearchWritingAgent
+    from src.agents.nursing_project_timeline_agent import ProjectTimelineAgent
+    from src.agents.data_analysis_agent import DataAnalysisAgent
+
 from src.services.agent_audit_logger import AuditLogger
 
 # Fixture to clean up audit logs after tests
@@ -95,7 +105,7 @@ class TestPhase2ValidationSystems:
     def test_medical_research_validation(self):
         agent = MedicalResearchAgent()
         assert hasattr(agent, "run_with_grounding_check")
-        assert hasattr(agent, "_extract_verified_pmids_from_output")
+        assert hasattr(agent, "_extract_documents_from_output")  # Renamed after repurposing to document synthesis
 
     def test_nursing_research_validation(self):
         agent = NursingResearchAgent()

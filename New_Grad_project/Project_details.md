@@ -1,72 +1,78 @@
-Each month the NR will report out their project progress
-• NR to be present and fulfill all of the time allotted for project work
-• If completed with the month's tasks), move to the next month
-• No more than 2 in a group, you can work alone
-• Remember to obtain contact information for those in your group. Always have access to what each member has accomplished.
-• Each NR needs to identify key stakeholders that are to be consulted during project work. (e.g. infection control, wound care nurse, fall expert, etc.)
-The project will be placed into the HFH poster format.
-Nov 19, 2025 2 hours
-Introduction to improvement project and guidelines
-• PICOT education from CNS lead
-You will be given time during this session to discuss/think about the topic and brainstorm issues surrounding the issue/question/occurrence.
-Each group/person will discuss an idea and decide what to adopt with their CNS facilitator.
-• Connect with Nurse Manager to discuss project. Have NM sign topic confirmation form and return to Kelly Miller, CNS kmille45@hfhs.org @hfhs.orgby next month.
-Dec 17, 2025
-2.0 hours
-NM confirmation form to be signed and returned by this month.
-• PICOT statement to be reviewed and approved by the CNS lead in order to move forward.
-Next, decide what the major issue is related to—is it adherence to policy and procedure, failure to rescue, ease of practice, educational need, complicated order set, lack of commitment to patient safety, lack of resources, provision of care, etc.
-Email Laura (Laurie) Arrick, the Wyandotte Medical Librarian who can assist with literature searches by end of day today. Larrick1@hfhs.org
-Find some reasons why it would be important to improve the process/ issue.
-Nursing Standards, Joint Commission accreditation criteria, Core Measures, ethics, medication safety, National Patient Safety Goals, infection control standards, policy and procedure, best practices, high reliability, nursing sensitive indicators, financial, wound and skin guidelines, etc.
-Jan 21, 2026
-1.0 hour
-Look for literature related to the issue and about how to improve the practice issue.
-Choose three (3) research articles. Analyze the articles.
-What are some of the issues in the articles that can be applied to the topic?
-What are the best practice recommendations regarding improvement?
-References need to be summarized and highlights described at presentation time.
+# Nursing Residency Improvement Project: Guidelines and Timeline
 
-2026
-and
-Mar 18, 2026
-1.0 hour each session
-Outline and plan realistic steps of how to improve the problem.
-Maybe start with what kind of data you want to have prior to and after the proposed intervention.
-Key stakeholders invited to hear about project and offer insight and next steps.
-Include how you would know that the intervention is successful.
-What measurements would be needed in order to say that the issue is resolved.
-A Nurse Manager touch base is needed during this month to discuss project and progress.
-Would any tools need to be created to improve the practice?
-Who would be the people involved in the intervention?
-Would any other departments be needed to assist?
-CNS lead to introduce presentation evaluation tool to the group.
+This document outlines the structure, monthly tasks, and deadlines for the Nurse Resident (NR) improvement project.
 
-Apr 22, 2026
-2.0 hour
-Prepare the poster board according to the template. Include content asked for on the template:
-• PICOT statement that has been approved
-• RL/problem/issue content
-• Issue to be improved/background information (elevator speech)
-Standard(s) associated with the issue
-Literature search results summary based on 3 articles
-• Intervention Recommendations for Process Implementation in sequential steps
-• What data should be collected prior to and after the intervention
-Other considerations, conclusions, recommendations for nursing related to the topic
-April 22 IS THE PROJECT DEADLINE.
-POWERPOINT OF POSTER TEMPLATE IS TO BE COMPLETED AND EMAILED TO CNS LEAD:
-Kelly Miller, CNS kmille45@hfhs.org
-May 20, 2026
-1.0 hour
-Practice Day
-You will practice presenting using your completed poster board content.
-Business causal dress/scrubs are expected at presentations on June 17, 2026
-• NO sweatpants, jeans, shorts, hoodies, sleeveless tops, etc.
-June 17,2026
-Last Session
-Presentation &
-Graduation
-Poster Board Presentations & Graduation Ceremony
-• Present using a poster board presentation
-• Each member of the group is to speak about some component of the process
-• Nurse Managers, Directors, Educators
+---
+
+### **I. Core Project Guidelines**
+
+*   **Group Size:** You may work alone or in a group of no more than two.
+    *   If in a group, ensure all members have access to shared work and contact information.
+*   **Reporting:** NRs will report their project progress monthly.
+*   **Time Commitment:** NRs are expected to be present and fulfill all allotted project work time. If you complete a month's tasks early, you may move on to the next month's requirements.
+*   **Stakeholders:** Each NR/group must identify and consult key stakeholders relevant to their project (e.g., Infection Control, Wound Care Nurse, Fall Expert).
+*   **Final Format:** The final project will be formatted into the standard HFH poster template.
+
+---
+
+### **II. Project Timeline and Monthly Tasks**
+
+**Month 1: Introduction & Topic Selection (November 19, 2025 - 2 hours)**
+*   **Task:** Attend the introduction session covering the improvement project, guidelines, and PICOT question education led by the CNS.
+*   **Action:**
+    1.  Brainstorm and discuss potential project topics and issues with your CNS facilitator.
+    2.  Decide on a project topic.
+    3.  Connect with your Nurse Manager (NM) to discuss the project.
+*   **Deadline:** Have the NM sign the **Topic Confirmation Form** and return it to Kelly Miller, CNS, by the December session.
+
+**Month 2: PICOT & Literature Search Prep (December 17, 2025 - 2 hours)**
+*   **Task:** Finalize your PICOT statement and identify the core problem.
+*   **Action:**
+    1.  Get your PICOT statement reviewed and approved by the CNS lead.
+    2.  Define the primary issue (e.g., policy adherence, education need, patient safety).
+    3.  Identify why improving this issue is important, referencing standards like:
+        *   The Joint Commission, Core Measures, National Patient Safety Goals
+        *   Infection control standards, best practices, nursing sensitive indicators
+*   **Deadline:** Email Laura (Laurie) Arrick, the Medical Librarian, at `Larrick1@hfhs.org` by the end of the day to get assistance with your literature search.
+
+**Month 3: Literature Review (January 21, 2026 - 1 hour)**
+*   **Task:** Find and analyze literature related to your project.
+*   **Action:**
+    1.  Select three (3) relevant research articles.
+    2.  Analyze the articles to identify applicable findings and best practice recommendations.
+*   **Deliverable:** Be prepared to present a summary and highlights of these references during your final presentation.
+
+**Month 4-5: Intervention Planning (February & March 18, 2026 - 1 hour each)**
+*   **Task:** Outline the steps for your proposed improvement plan.
+*   **Action:**
+    1.  Define the data you will collect before and after your intervention.
+    2.  Establish the measurements needed to determine if the issue is resolved.
+    3.  Consider if any new tools need to be created.
+    4.  Identify all personnel and departments that would be involved.
+*   **Meeting:** Schedule a touch-base with your Nurse Manager this month to discuss project progress.
+*   **Note:** The CNS lead will introduce the presentation evaluation tool during this period.
+
+**Month 6: Poster Preparation (April 22, 2026 - 2 hours)**
+*   **Task:** Prepare your poster board content using the provided template.
+*   **Content to Include:**
+    *   Approved PICOT statement
+    *   Problem/Issue background (your "elevator speech")
+    *   Associated standards
+    *   Literature search summary (from your 3 articles)
+    *   Recommended intervention steps
+    *   Data collection plan (pre- and post-intervention)
+    *   Conclusions and recommendations for nursing practice
+*   **PROJECT DEADLINE:** The completed PowerPoint poster template must be emailed to Kelly Miller, CNS, by **April 22, 2026**.
+
+---
+
+### **III. Final Presentation & Graduation**
+
+**Practice Day (May 20, 2026 - 1 hour)**
+*   You will practice your presentation using your completed poster content.
+
+**Presentation & Graduation Day (June 17, 2026 - Last Session)**
+*   **Event:** Poster Board Presentations & Graduation Ceremony.
+*   **Audience:** Nurse Managers, Directors, and Educators will be in attendance.
+*   **Requirement:** Each group member must speak on a component of the project.
+*   **Dress Code:** Business casual or scrubs are required. (No sweatpants, jeans, hoodies, etc.)

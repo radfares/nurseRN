@@ -54,6 +54,9 @@ from src.tools.literature_tools import LiteratureTools
 from src.knowledge.personal_library_tool import create_personal_library_tools_safe
 from src.tools.document_synthesis_tools import create_document_synthesis_tools_safe
 
+# Phase 3: RAG Enhancement Integration
+from src.services.rag_enhancement import get_rag_enhancer
+
 
 # =============================================================================
 # STRUCTURED OUTPUT SCHEMAS FOR FILE-BASED SYNTHESIS
@@ -179,6 +182,8 @@ class LiteratureSynthesisAgent(BaseAgent):
         self.audit_logger = get_audit_logger(
             "document_synthesis", "Document Synthesis Agent"
         )
+        # Phase 3: Initialize RAG enhancer for knowledge retrieval
+        self.rag_enhancer = get_rag_enhancer(cache_ttl=300)
         self.loaded_documents = []  # Track documents for source validation
 
     def _create_tools(self) -> list:
@@ -397,6 +402,18 @@ class LiteratureSynthesisAgent(BaseAgent):
             self.audit_logger.set_session(session_id, project_name)
             self.audit_logger.log_query_received(query, project_name)
 
+            # Phase 3: Optionally enhance with RAG retrieval for background knowledge
+            # Only if no explicit file paths provided (agent uses personal library search anyway)
+            supplementary_context = []
+            if not file_paths:
+                try:
+                    rag_results = self.rag_enhancer.retrieve(
+                        query=query, agent_hint="document_synthesis", k=3
+                    )
+                    supplementary_context = [r.content for r in rag_results[:2]]
+                except Exception as e:
+                    self.logger.warning(f"RAG supplementary retrieval failed: {e}")
+
             # Build the full query with file paths if provided
             full_query = query
             if file_paths:
@@ -408,6 +425,18 @@ class LiteratureSynthesisAgent(BaseAgent):
             response_text = str(
                 run_output.content if hasattr(run_output, "content") else run_output
             )
+
+            # Phase 3: Extract grounding metadata from RAG results if used
+            grounding_refs = []
+            if supplementary_context:
+                try:
+                    rag_results_used = self.rag_enhancer.retrieve(
+                        query=query, agent_hint="document_synthesis", k=3, use_cache=True
+                    )
+                    grounding = self.rag_enhancer.extract_grounding_metadata(rag_results_used)
+                    grounding_refs = grounding.get('all_citations', [])
+                except:
+                    pass
 
             # Extract document sources from tool results
             documents_used = self._extract_documents_from_output(run_output)
@@ -579,9 +608,14 @@ def get_medical_research_agent():
     return get_document_synthesis_agent()
 
 
+# Backward compatibility alias for class name
+MedicalResearchAgent = LiteratureSynthesisAgent
+
+
 # Exports
 __all__ = [
     'LiteratureSynthesisAgent',
+    'MedicalResearchAgent',  # Backward compatibility alias
     'get_document_synthesis_agent',
     'get_literature_synthesis_agent',
     'get_medical_research_agent',

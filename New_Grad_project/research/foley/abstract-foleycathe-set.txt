@@ -1,0 +1,1845 @@
+1. JAMA Surg. 2025 Jun 1;160(6):701-707. doi: 10.1001/jamasurg.2025.0565.
+
+Foley Catheter Management: A Review.
+
+Cameron AP(1), Werneburg GT(1).
+
+Author information:
+(1)Department of Urology, University of Michigan, Ann Arbor.
+
+IMPORTANCE: About 100 million urinary catheters are used globally each year. 
+Urinary catheters are effective to establish bladder drainage, but they are 
+associated with risks, including infection and encrustation. To mitigate the 
+associated risks, an understanding of urinary catheter indications, placement 
+and removal techniques, and maintenance is necessary.
+OBSERVATIONS: This review describes catheter management and complications. 
+Specifically, catheter indications and alternatives, catheter types, insertion 
+and removal techniques, and catheter maintenance are reviewed. 
+Catheter-associated complications and strategies to minimize risk are described.
+CONCLUSIONS AND RELEVANCE: Using best practices related to catheter management 
+optimizes bladder drainage while minimizing the associated risks, including 
+catheter-associated urinary tract infection, catheter encrustations, bladder 
+spasms, and catheter-associated pain.
+
+DOI: 10.1001/jamasurg.2025.0565
+PMID: 40202755 [Indexed for MEDLINE]
+
+
+2. Female Pelvic Med Reconstr Surg. 2022 Mar 1;28(3):e55-e61. doi: 
+10.1097/SPV.0000000000001147.
+
+Methenamine Hippurate With Cranberry Capsules Versus Cranberry Alone for Urinary 
+Tract Infection Prevention in a Short-Term Indwelling Foley Catheter Population 
+After Urogynecologic Surgery: A Double-Blinded Randomized Controlled Trial.
+
+Tam TY(1), Aldrich ER(1), Crisp CC(1), Yook E(2), Yeung J(1), Pauls RN(1).
+
+Author information:
+(1)From the TriHealth, Division of FPMRS.
+(2)TriHealth Hatton Research Institute, Cincinnati, OH.
+
+IMPORTANCE: There is little consensus on an effective nonantibiotic agent for 
+the prevention of urinary tract infection (UTI) after pelvic reconstructive 
+surgery.
+OBJECTIVE: The aim of the study was to investigate the impact of methenamine 
+hippurate with cranberry capsules on rates of UTI after pelvic reconstructive 
+surgery, among patients requiring short-term catheterization.
+STUDY DESIGN: In this randomized, double-blinded placebo-controlled trial, 
+patients discharged with a catheter after pelvic reconstructive surgery were 
+approached to participate. Participants were randomized to receive cranberry 
+with methenamine or cranberry with placebo. Primary outcome was number of UTIs 
+treated within 1 week after surgery. Secondary outcomes included incidence of 
+UTIs treated within 6 weeks postoperatively, bacterial species on culture, 
+urinary pH, catheter duration, patient adherence, and satisfaction. A sample 
+size of 88 participants per arm was planned.
+RESULTS: From June 2019 to July 2021, 185 patients were randomized and 182 
+analyzed; 89 received placebo and 93 received methenamine. Both groups were 
+similar. Incidence of UTI at 1 week was significantly higher in the placebo 
+group (79.8%) compared with the methenamine group (66.7%; odds ratio, 1.97; 95% 
+confidence interval, 1.01-3.87; P = 0.048). This difference increased by 6 weeks 
+postoperatively (89.9% vs 72.0%; odds ratio, 3.45; 95% confidence interval, 
+1.51-7.87; P = 0.003). There were fewer pseudomonal UTIs in the methenamine 
+group (P = 0.041). Duration of catheterization and urinary pH were similar. 
+Overall adherence and level of satisfaction was high.
+CONCLUSIONS: In this high-risk population, methenamine was well tolerated and 
+significantly reduced UTI rates. Methenamine with cranberry should be considered 
+as an effective prophylactic therapy to reduce this common complication after 
+pelvic surgery.
+
+Copyright © 2022 American Urogynecologic Society. All rights reserved.
+
+DOI: 10.1097/SPV.0000000000001147
+PMID: 35272334 [Indexed for MEDLINE]
+
+Conflict of interest statement: The authors have declared they have no conflicts 
+of interest.
+
+
+3. Eur Urol Focus. 2024 Sep;10(5):713-719. doi: 10.1016/j.euf.2024.09.015. Epub 
+2024 Sep 28.
+
+Innovating Indwelling Catheter Design to Counteract Urinary Tract Infection.
+
+Drake MJ(1), Clavica F(2), Murphy C(3), Fader MJ(3).
+
+Author information:
+(1)Department of Surgery and Cancer, Imperial College, London, UK; Department of 
+Urology, Charing Cross Hospital, London, UK. Electronic address: 
+marcus.drake@imperial.ac.uk.
+(2)ARTORG Center for Biomedical Engineering Research, University of Bern, Bern, 
+Switzerland; Department of Urology, Inselspital, Bern University Hospital, 
+University of Bern, Bern, Switzerland.
+(3)School of Health Sciences, University of Southampton, Southampton, UK.
+
+BACKGROUND AND OBJECTIVE: Bacteriuria is anticipated in long-term indwelling 
+catheter (IDC) use, and urinary tract infections (UTIs) and related issues are 
+common. Defence mechanisms against infection are undermined by the presence of a 
+Foley catheter, and adjustments to design could influence UTI risk.
+METHODS: We reviewed the various aspects of IDCs and ureteric stent designs to 
+discuss potential impact on UTI risk.
+KEY FINDINGS AND LIMITATIONS: Design adaptations have focussed on reducing the 
+sump of undrained urine, potential urinary tract trauma, and bacterial 
+adherence. Experimental and computational studies on ureteral stents found an 
+interplay between urine flow, bacterial microcolony formation, and accumulation 
+of encrusting particles. The most critical regions for biofilm and crystal 
+accumulation are associated with low shear stress. The full drainage system is 
+the functioning unit, not just the IDC in isolation. This means reliably keeping 
+the drainage system closed and considering whether a valve is preferred to a 
+collection bag. Other developments may include one-way valves, obstacles to 
+"bacterial swimming", and ultrasound techniques. Preventing or clearing IDC 
+blockage can exploit access via the lumen or retaining balloon. Progress in 
+computational fluid dynamics, energy delivery, and soft robotics may increase 
+future options. Clinical data on the effectiveness of IDC design features are 
+lacking, which is partly due to reliance on proxy measures and the challenges of 
+undertaking trials.
+CONCLUSIONS AND CLINICAL IMPLICATIONS: Design changes are legitimate lines of 
+development, but are only indirect for UTI prevention. Modifications may be 
+advantageous, but might potentially bring problems in other ways. Education of 
+health care professionals can improve UTIs and should be prioritised.
+PATIENT SUMMARY: Catheters used to help bladder drainage can cause urinary 
+infections, and improvements in design might reduce the risk. Several approaches 
+are described in this review. However, proving that these approaches work is a 
+challenge. Training professionals in the key aspects of catheter care is 
+important.
+
+Copyright © 2024 The Author(s). Published by Elsevier B.V. All rights reserved.
+
+DOI: 10.1016/j.euf.2024.09.015
+PMID: 39341718 [Indexed for MEDLINE]
+
+
+4. Cureus. 2024 Aug 5;16(8):e66235. doi: 10.7759/cureus.66235. eCollection 2024 
+Aug.
+
+Medicated Foley Catheters Do Not Prevent Catheter-Associated Urinary Tract 
+Infection: A Systematic Review of Randomized Controlled Trials.
+
+Banerjee I(1), Robinson J(2), Banerjee I(3).
+
+Author information:
+(1)Department of Urology and Robotic Surgery, Penn Highlands Healthcare, Dubois, 
+USA.
+(2)Department of Surgery, Sir Seewosagur Ramgoolam Medical College, Belle Rive, 
+MUS.
+(3)Department of Pharmacology, Sir Seewosagur Ramgoolam Medical College, Belle 
+Rive, MUS.
+
+Infections of the urinary tract are among some of the most common infections 
+treated in clinical practice. Numerous risk factors play an intrinsic role in 
+the development of such infections, namely: age, sexual intercourse, prolonged 
+use of feminine hygiene products, instrumentation, pregnancy, sexually 
+transmitted infections, obstructive uropathy such as prostatic enlargement or 
+urethral strictures, compromised immunity, and constipation. A major cause of 
+urinary tract infections (UTIs) in hospitalized patients is catheter-associated 
+urinary tract infections (CAUTIs). This systematic review aims to identify the 
+causative agents and risk factors and to determine whether nitrofurazone, silver 
+alloy, or zinc oxide-impregnated or coated/medicated Foley catheters, or 
+non-medicated (standard) Foley catheters, can reduce the incidence of CAUTIs. A 
+systematic review was conducted on the following databases: PubMed, Cochrane 
+Central Register of Controlled Trials (CENTRAL), Trip medical database, and 
+Google Scholar. A combination of keywords and Boolean operators was used 
+((((urinary tract infections) OR (urinary catheterization)) OR (prevention AND 
+control)) ) AND (catheter-associated infections) for data extraction. All the 
+randomized controlled clinical trials (RCTs) completed and available between 
+January 1, 2005, and June 30, 2024, which focused on the prevention of CAUTIs, 
+were screened thoroughly and were included in this systematic review. The 
+Cochrane risk-of-bias tool for randomized trials (RoB 2) tool was used for risk 
+of bias assessment. The Robvis visualization tool (McGuinness, LA, Higgins, JPT. 
+Risk-of-bias VISualization (robvis): An R package and Shiny web app for 
+visualizing risk-of-bias assessments. Res Syn Meth. 2020; 1-7) was used for 
+development of traffic light plots and weighted bar plots for risk of bias. The 
+literature search conducted produced 41,909 articles. Among these 19,076 were 
+noted as duplicates and were excluded in the initial analysis; 22,833 
+manuscripts were thus screened after deduplication. Abstracts, case studies, 
+reports, editorials, viewpoints, cross-sectional studies, cohort studies, 
+case-control studies, case series, and letters to the editor/correspondence 
+manuscripts (n = 22,745) were additionally excluded. A total of 88 full-text 
+articles were assessed for eligibility. An in-depth evaluation and analysis 
+further excluded 82 articles from the analysis quality assessment based on 
+inclusion and exclusion criteria. Six RCTs were finally assessed regarding the 
+prevention of CAUTIs and were ultimately included in the systematic review. The 
+primary causative agents involved in the CAUTIs were found to be mainly 
+Gram-negative bacteria such as Escherichia coli, Pseudomonas aeruginosa, and 
+Enterococcus faecalis. The risk factors noted for the development of these 
+CAUTIs ranged from urethral trauma, overdistention of the bladder, prolonged 
+catheterization, to improper handling of the urine bag. No significant advantage 
+was noted between the use of medicated and non-medicated standard Foley 
+catheters. The aseptic technique and indications followed for the 
+catheterization play a vital role in the prevention of CAUTIs, and more 
+cognizance thereof will aid in the reduction of the development of CAUTIs.
+
+Copyright © 2024, Banerjee et al.
+
+DOI: 10.7759/cureus.66235
+PMCID: PMC11375116
+PMID: 39238721
+
+Conflict of interest statement: Conflicts of interest: In compliance with the 
+ICMJE uniform disclosure form, all authors declare the following: 
+Payment/services info: All authors have declared that no financial support was 
+received from any organization for the submitted work. Financial relationships: 
+All authors have declared that they have no financial relationships at present 
+or within the previous three years with any organizations that might have an 
+interest in the submitted work. Other relationships: All authors have declared 
+that there are no other relationships or activities that could appear to have 
+influenced the submitted work.
+
+
+5. Top Spinal Cord Inj Rehabil. 2023 Winter;29(1):94-107. doi: 
+10.46292/sci22-00009. Epub 2023 Feb 15.
+
+Is It Really the Foley? A Systematic Review of Bladder Management and Infection 
+Risk.
+
+Davis M(1), Jethani L(1), Robbins E(1), Kaner M(1).
+
+Author information:
+(1)Department of Physical Medicine and Rehabilitation, McGovern Medical School, 
+Houston, Texas.
+
+BACKGROUND: The belief that intermittent catheterization results in fewer 
+infections than indwelling catheters is commonly expressed in the spinal cord 
+injury literature. Some practice guidelines strongly recommend intermittent over 
+indwelling catheterization due to concerns about infections and other 
+complications. However, studies on this topic are of low quality. Guidelines 
+from the Consortium for Spinal Cord Medicine suggest the data regarding 
+infection risk are mixed, and they do not recommend one bladder management 
+method over the other.
+OBJECTIVES: To compare risk of bias in studies reporting higher rates of urinary 
+tract infection (UTI) with indwelling catheters to studies that found equal 
+rates of UTI between indwelling and intermittent catheterization, and to 
+describe implications in clinical decision-making.
+METHODS: A systematic search of PubMed, CINAHL, Embase, and SCOPUS databases 
+from January 1, 1980, to September 15, 2020, was conducted. Eligible studies 
+compared symptomatic UTI rates between indwelling and intermittent 
+catheterization. We used a risk of bias assessment tool to evaluate each study.
+RESULTS: Twenty-four studies were identified. Only three of these reported 
+significantly higher UTI risk with indwelling catheters, and all three 
+demonstrated a critical risk of bias. More than half of the studies reported 
+differences in UTI risk of less than 20% between the two methods. Studies with 
+larger (nonsignificant) differences favoring intermittent catheterization were 
+more susceptible to bias from confounding.
+CONCLUSION: The hypothesis that indwelling catheters cause more UTIs than 
+intermittent catheterization is not supported by the scientific literature. Most 
+studies failed to demonstrate a significant difference in UTI risk, and studies 
+with nonsignificant trends favoring intermittent catheterization were more 
+susceptible to bias from confounding. Perceived risk of infection should not 
+influence a patient's choice of catheter type.
+
+©2023 American Spinal Injury Association.
+
+DOI: 10.46292/sci22-00009
+PMCID: PMC9936901
+PMID: 36819923 [Indexed for MEDLINE]
+
+Conflict of interest statement: Conflicts of Interest The authors declare no 
+conflicts of interest.
+
+
+6. Antimicrob Resist Infect Control. 2021 Feb 25;10(1):40. doi: 
+10.1186/s13756-021-00907-w.
+
+Foley catheter with noble metal alloy coating for preventing catheter-associated 
+urinary tract infections: a large, multi-center clinical trial.
+
+Kai-Larsen Y(1), Grass S(2), Mody B(3), Upadhyay S(4), Trivedi HL(5), Pal DK(6), 
+Babu S(7), Bawari B(8), Singh SK(9).
+
+Author information:
+(1)Bactiguard AB, Alfred Nobels Allé 150, 146 48, Tullinge, Stockholm, Sweden. 
+ylva.kai-larsen@bactiguard.com.
+(2)Bactiguard AB, Alfred Nobels Allé 150, 146 48, Tullinge, Stockholm, Sweden.
+(3)Ethitrials Clinical Research Solution, Navrangpura, Ahmedabad, India.
+(4)Apollo Hospitals International Limited, GIDC Estate, Bhat, India.
+(5)Institute of Kidney Diseases and Research Centre (IKDRC), Institute of 
+Transplantation Sciences (ITS), B. J. Medical College and Civil Hospital Campus, 
+Ahmedabad, Gujarat, India.
+(6)Institute of Post Graduate Medical Education and Research, Bose Road, 
+Kolkata, India.
+(7)Department of General Surgery, Gandhi Hospital, Musheerabad, Secunderabad, 
+Telangana, India.
+(8)Marwari Hospital and Research Centre S.J. Road, Athagaon, Assam, India.
+(9)Department of Urology, Postgraduate Institute of Medical Education and 
+Research, Chandigarh, India.
+
+BACKGROUND: Catheter-associated urinary tract infections (CAUTI) are among the 
+most frequent healthcare-associated infections in the world. They are associated 
+with increased mortality, prolonged hospital stay and increased healthcare 
+costs. The objective of this study was to evaluate the efficacy of the noble 
+metal alloy (NMA) coated BIP Foley Catheter in preventing the incidence of 
+symptomatic CAUTI in a large cohort of patients in India.
+METHODS: This multi-center, prospective study included 1000 adult patients 
+admitted to six hospitals across India for urology, surgery and ICU requiring 
+urethral catheterization and admission for ≥ 48 h. Patients were allocated to 
+the NMA-coated BIP Foley Catheter group or a non-coated control catheter group, 
+with a randomization ratio of 3:1. CAUTI surveillance was conducted at study 
+entry, upon catheter removal, and 2 days after catheter removal. For statistical 
+analysis, categorical data (e.g. gender) were compared using the chi-square or 
+Fischer test, and numerical data were compared using the two-sample t-test. 
+Associations were evaluated using logistic regression.
+RESULTS AND CONCLUSIONS: The incidence of symptomatic CAUTI was reduced by 69% 
+in the BIP Foley Catheter group compared to the control group (6.5 vs 20.8 
+CAUTI/1000 catheter days), with an incidence rate ratio of 0.31 (95% confidence 
+interval: 0.21-0.46; p < 0.001). A reduction in the cumulative CAUTI incidence 
+was evident in the BIP Foley Catheter group within 3 days after catheterization; 
+this reduction was maintained up to ~ 30 days, and the largest reductions were 
+seen between 3 and 11 days. There were no serious adverse events related to 
+either catheter, and the percentage of patients with ≥ 1 adverse event was 
+significantly lower in the NMA-coated BIP Foley Catheter group than in the 
+control group (21.6% vs. 48.4%; p = 0.001). In conclusion, the NMA-coated BIP 
+Foley Catheter was effective in reducing CAUTI and was well tolerated, with a 
+lower incidence of adverse events compared to the uncoated catheter. Trial 
+registration This study was registered prospectively (28 September 2015) in the 
+Clinical Trials Registry of India (trial number CTRI/2015/09/006220; 
+http://ctri.nic.in/Clinicaltrials/showallp.php?mid1=12631&EncHid=&userName=bactiguard 
+).
+
+DOI: 10.1186/s13756-021-00907-w
+PMCID: PMC7953677
+PMID: 33706795 [Indexed for MEDLINE]
+
+Conflict of interest statement: Bactiguard was the sponsor of this study, and 
+the authors SG and YKL are Bactiguard employees/stock owners. No other authors 
+have any conflict of interest to declare.
+
+
+7. Crit Rev Microbiol. 2024 Mar;50(2):168-195. doi: 10.1080/1040841X.2023.2167593. 
+Epub 2023 Jan 18.
+
+A comprehensive status update on modification of foley catheter to combat 
+catheter-associated urinary tract infections and microbial biofilms.
+
+Chadha J(1), Thakur N(1), Chhibber S(1), Harjai K(1).
+
+Author information:
+(1)Department of Microbiology, Panjab University, Chandigarh, India.
+
+Present-day healthcare employs several types of invasive devices, including 
+urinary catheters, to improve medical wellness, the clinical outcome of disease, 
+and the quality of patient life. Among urinary catheters, the Foley catheter is 
+most commonly used in patients for bladder drainage and collection of urine. 
+Although such devices are very useful for patients who cannot empty their 
+bladder for various reasons, they also expose patients to catheter-associated 
+urinary tract infections (CAUTIs). Catheter provides an ideal surface for 
+bacterial colonization and biofilm formation, resulting in persistent bacterial 
+infection and severe complications. Hence, rigorous efforts have been made to 
+develop catheters that harbour antimicrobial and anti-fouling properties to 
+resist colonization by bacterial pathogens. In this regard, catheter 
+modification by surface functionalization, impregnation, blending, or coating 
+with antibiotics, bioactive compounds, and nanoformulations have proved to be 
+effective in controlling biofilm formation. This review attempts to illustrate 
+the complications associated with indwelling Foley catheters, primarily 
+focussing on challenges in fighting CAUTI, catheter colonization, and biofilm 
+formation. In this review, we also collate scientific literature on catheter 
+modification using antibiotics, plant bioactive components, bacteriophages, 
+nanoparticles, and studies demonstrating their efficacy through in vitro and 
+in vivo testing.
+
+DOI: 10.1080/1040841X.2023.2167593
+PMID: 36651058 [Indexed for MEDLINE]
+
+
+8. Hong Kong Med J. 2017 Jun;23(3):239-45. doi: 10.12809/hkmj164906. Epub 2017 Feb 
+17.
+
+A prospective interventional study to examine the effect of a silver alloy and 
+hydrogel-coated catheter on the incidence of catheter-associated urinary tract 
+infection.
+
+Chung PH(1), Wong CW(1), Lai CK(2), Siu HK(3), Tsang DN(2)(3), Yeung KY(4), Ip 
+DK(5), Tam PK(1).
+
+Author information:
+(1)Department of Surgery, Li Ka Shing Faculty of Medicine, The University of 
+Hong Kong, Pokfulam, Hong Kong.
+(2)Department of Pathology, Queen Elizabeth Hospital, Jordan, Hong Kong.
+(3)Chief Infection Control Officer's Office, Hospital Authority, Hong Kong.
+(4)Infection Control Team, Central Nursing Department, Kowloon Hospital, Argyle 
+Street, Hong Kong.
+(5)School of Public Health, Li Ka Shing Faculty of Medicine, The University of 
+Hong Kong, Pokfulam, Hong Kong.
+
+INTRODUCTION: Catheter-associated urinary tract infection is a major 
+hospital-acquired infection. This study aimed to analyse the effect of a silver 
+alloy and hydrogel-coated catheter on the occurrence of catheter-associated 
+urinary tract infection.
+METHODS: This was a 1-year prospective study conducted at a single centre in 
+Hong Kong. Adult patients with an indwelling urinary catheter for longer than 24 
+hours were recruited. The incidence of catheter-associated urinary tract 
+infection in patients with a conventional latex Foley catheter without hydrogel 
+was compared with that in patients with a silver alloy and hydrogel-coated 
+catheter. The most recent definition of urinary tract infection was based on the 
+latest surveillance definition of the National Healthcare Safety Network managed 
+by Centers for Disease Control and Prevention.
+RESULTS: A total of 306 patients were recruited with a similar ratio between 
+males and females. The mean (standard deviation) age was 81.1 (10.5) years. The 
+total numbers of catheter-days were 4352 and 7474 in the silver-coated and 
+conventional groups, respectively. The incidences of catheter-associated urinary 
+tract infection per 1000 catheter-days were 6.4 and 9.4, respectively (P=0.095). 
+There was a 31% reduction in the incidence of catheter-associated urinary tract 
+infection per 1000 catheter-days in the silver-coated group. Escherichia coli 
+was the most commonly involved pathogen (36.7%) of all cases. Subgroup analysis 
+revealed that the protective effect of silver-coated catheter was more 
+pronounced in long-term users as well as female patients with a respective 48% 
+(P=0.027) and 42% (P=0.108) reduction in incidence of catheter-associated 
+urinary tract infection. The mean catheterisation time per person was the 
+longest in patients using a silver-coated catheter (17.0 days) compared with 
+those using a conventional (10.8 days) or both types of catheter (13.6 days) 
+[P=0.01].
+CONCLUSIONS: Silver alloy and hydrogel-coated catheters appear to be effective 
+in preventing catheter-associated urinary tract infection based on the latest 
+surveillance definition. The effect is perhaps more prominent in long-term users 
+and female patients.
+
+DOI: 10.12809/hkmj164906
+PMID: 28211358 [Indexed for MEDLINE]
+
+
+9. Scand J Urol. 2025 Jun 24;60:124-129. doi: 10.2340/sju.v60.43994.
+
+A prospective randomised pilot study evaluating the safety of the novel 
+LubriShield™ Foley catheter: a permanently coated indwelling urinary catheter.
+
+Andreasson A(1), Andersson J(2), Larsson H(3), Ekerhult T(4), Stranne J(4).
+
+Author information:
+(1)Department of Urology, Institute of Clinical Sciences, Sahlgrenska Academy, 
+University of Gothenburg, Gothenburg, Sweden; Department of Urology, Region 
+Västra Götaland, Sahlgrenska University Hospital, Gothenburg, Sweden. 
+anders.l.andreasson@vgregion.se.
+(2)Department of Medicine, Karolinska Institutet, Stockholm, Sweden.
+(3)Department of Urology, Capio Gastro Center, Gothenburg, Sweden.
+(4)Department of Urology, Institute of Clinical Sciences, Sahlgrenska Academy, 
+University of Gothenburg, Gothenburg, Sweden; Department of Urology, Region 
+Västra Götaland, Sahlgrenska University Hospital, Gothenburg, Sweden.
+
+OBJECTIVE: Catheter-associated urinary tract infections (CAUTIs) are prevalent 
+healthcare-associated infections, arising from biofilm-forming bacteria. This 
+may be prevented by coating the catheter with an antifouling substance. The 
+novel LubriShield™ Foley catheter is coated with a superhydrophilic surface and 
+a covalently bonded antifouling ligand. Preclinical studies revealed that the 
+coating established a persistent local antifouling environment, inhibiting 
+uropathogenic bacteria from forming biofilms. No substance release has been 
+detected from the coating. The coating achieved a 28-fold reduction in surface 
+friction compared to an uncoated catheter. The aim of this study is to assess 
+the clinical safety of the catheter in patients.
+MATERIALS & METHODS: In a prospective single-centre randomised study, 30 
+patients undergoing transurethral resection of bladder tumour were enrolled and 
+randomly assigned to receive either a standard control catheter or the novel 
+LubriShield™ catheter. Urinary cultures were obtained twice. The duration of 
+catheterisation for the patients ranged from 3 to 24 h. The primary outcome was 
+the assessment of device-specific adverse events (AEs). Secondary outcomes 
+included evaluations of pain, irritation and discomfort, measured using the 
+Numeric Rating Scale (NRS) (0-10) via a patient questionnaire.
+RESULTS: There were no serious adverse events (SAEs) or AEs reported for the 
+coated catheters. Urinary cultures showed no significant differences between the 
+coated and uncoated catheters. Both patients and healthcare professionals rated 
+the NRS equally for the two types of catheters.
+CONCLUSIONS: The novel-coated LubriShield™ catheter was found to be safe for 
+short-term clinical use.
+
+DOI: 10.2340/sju.v60.43994
+PMID: 40552721 [Indexed for MEDLINE]
+
+
+10. J Am Coll Surg. 2022 Jun 1;234(6):1101-1109. doi: 10.1097/XCS.0000000000000180. 
+Epub 2022 Apr 8.
+
+Multidisciplinary Project to Prevent Postoperative Urinary Tract Infection.
+
+Wilson SB(1), Shaikh SP(2), Rosenkranz P(1), Rush I(1), Kandadai P(1)(2), Wang 
+DS(1)(2), McAneny D(1)(2).
+
+Author information:
+(1)From Boston Medical Center, Boston, MA (Wilson, Rosenkranz, Rush, Kandadai, 
+Wang, McAneny).
+(2)Boston University School of Medicine, Boston, MA (Shaikh, Kandadai, Wang, 
+McAneny).
+
+Comment in
+    J Am Coll Surg. 2022 Jun 1;234(6):1109-1110. doi: 
+10.1097/XCS.0000000000000194.
+
+BACKGROUND: Postoperative urinary tract infections (UTIs) are associated with 
+increased lengths of stay, inpatient costs, and mortality. Review of 
+institutional data from the American College of Surgeons (ACS) NSQIP revealed 
+opportunities to improve practices with respect to urinary catheter (Foley) 
+insertion, catheter care, adherence to diagnosis and prevention protocols, and 
+ACS NSQIP reporting.
+STUDY DESIGN: A multidisciplinary quality improvement team convened and 
+implemented interventions based on a literature review and analysis of 
+institutional drivers of postoperative UTI. The team educated the ACS NSQIP 
+surgical clinical reviewers and clinical teams about UTI diagnostic criteria and 
+prevention, trained staff in proper catheterization technique, and provided 
+performance feedback. The team also developed kits with supplies and 
+instructions for patients who were discharged home with catheters, along with an 
+instructional video. The investigators evaluated project effectiveness by 
+comparing pre- and postintervention process measures and rates of postoperative 
+UTI.
+RESULTS: After interventions, compliance rates improved for hand hygiene (62% to 
+83%, p = 0.04), precleansing of the periurethral area (66% to 97%, p = 0.001), 
+and catheter positioning (41% to 93%, p < 0.001), and the composite performance 
+(10% to 73%, p < 0.001). Surgery residents' scores on a UTI knowledge assessment 
+improved from 71% to 81% (p = 0.005). The majority of residents and staff 
+strongly agreed that the training sessions would change their practice (57% and 
+69%, respectively). The unadjusted rate of postoperative UTIs at our institution 
+decreased from 1.55% to 0.69% (p = 0.016), corresponding to an improvement in 
+the ACS NSQIP odds ratio from 1.51 to 0.86.
+CONCLUSIONS: A series of interventions, including provider training, patient 
+education, and audits of practice with performance feedback, are associated with 
+improvements in both practice and the incidence of postoperative UTI.
+
+Copyright © 2022 by the American College of Surgeons. Published by Wolters 
+Kluwer Health, Inc. All rights reserved.
+
+DOI: 10.1097/XCS.0000000000000180
+PMID: 35703805 [Indexed for MEDLINE]
+
+
+11. J Endourol. 2016 Jul;30(7):822-7. doi: 10.1089/end.2015.0827. Epub 2016 May 24.
+
+In Vivo Trial of a Novel Atraumatic Urinary Catheter Design for Prevention of 
+Catheter-Induced Trauma.
+
+Azar R(1), Shadpour P(2).
+
+Author information:
+(1)1 Iran University of Medical Sciences (IUMS) , Tehran, Iran .
+(2)2 Hasheminejad Kidney Center (HKC), Hospital Management Research Center 
+(HMRC), Iran University of Medical Sciences (IUMS) , Tehran, Iran .
+
+PURPOSE: Clinically significant urinary tract infection may be the most familiar 
+complication of urinary catheterization; however, catheter-associated trauma can 
+entail even more significant morbidity. We have designed and patented a novel 
+atraumatic urinary catheter (AUC) and through this study, we compare its 
+efficacy with the conventional Foley catheter (FC) in vivo.
+MATERIALS AND METHODS: Forty male rabbits were divided into two equal groups for 
+FC and AUC. The animals were catheterized on day 4 for 8 hours to compare the 
+maintenance of the tubes and sedated before standardized forcible extraction of 
+the catheter under sedation with the balloon still inflated. They were then 
+examined visually and by cystoscopy.
+RESULTS: In a number of animals in either group, the catheters failed to drain 
+urine effectively due to anatomical issues. Those were excluded from the study. 
+At the extraction phase, evidence of urethral trauma was found in 13 of 15 FC 
+rabbits, but only in 4 of 14 in the AUC group (p = 0.009). Major trauma, 
+however, was exclusively seen in the FC group, with 12 of 15 subjects sustaining 
+deep lacerations or urethral disruption.
+CONCLUSION: The two catheters bear similar efficacy for maintaining urine 
+drainage; however, traumatic injury is significantly less common following 
+forceful extraction of the AUC than a conventional Foley.
+
+DOI: 10.1089/end.2015.0827
+PMID: 27125268 [Indexed for MEDLINE]
+
+
+12. J Am Vet Med Assoc. 2018 Nov 15;253(10):1289-1293. doi: 
+10.2460/javma.253.10.1289.
+
+Effects of the use of silver-coated urinary catheters on the incidence of 
+catheter-associated bacteriuria and urinary tract infection in dogs.
+
+Ogilvie AT, Brisson BA, Gow WR, Wainberg S, Singh A, Weese JS.
+
+OBJECTIVE To determine the effects of silver-coated versus standard silicone 
+urinary catheters on the incidence of catheter-associated bacteriuria (CAB) and 
+catheter-associated urinary tract infection (CAUTI) in dogs. DESIGN Randomized 
+controlled clinical trial. ANIMALS 36 dogs requiring urinary bladder 
+catheterization for ≥ 24 hours. PROCEDURES Dogs were randomly assigned to 
+receive a silver-coated or non-silver-coated (control) silicone Foley catheter. 
+Urine samples for cytologic examination and bacterial culture were collected at 
+the time of catheter insertion and daily until catheters were removed (≥ 24 
+hours to 7 days later). Results were compared between groups. RESULTS No 
+significant differences were identified between catheter groups in the incidence 
+of CAB or CAUTI. Although the median time to development of cytologically 
+detected bacteriuria, culture-detected bacteriuria, and CAUTI did not differ 
+significantly between groups, median time to CAB development (either method) was 
+significantly longer for dogs that received a control catheter rather than a 
+silver-coated catheter. For both types of catheters combined, older age was a 
+significant predictor of culture-detected bacteriuria, and longer duration of 
+catheterization was a significant predictor of culture-detected bacteriuria and 
+overall CAB. CONCLUSIONS AND CLINICAL RELEVANCE Silver-coated urinary catheters 
+provided no clinical benefit over standard urinary catheters for the dogs of 
+this study and were associated with earlier development of CAB but not CAUTI. A 
+larger prospective study is required to definitively determine whether the use 
+of silver-coated urinary catheters should or should not be considered to reduce 
+the risk of CAB or CAUTI in dogs.
+
+DOI: 10.2460/javma.253.10.1289
+PMID: 30398417 [Indexed for MEDLINE]
+
+
+13. Am J Obstet Gynecol MFM. 2024 May;6(5):101308. doi: 
+10.1016/j.ajogmf.2024.101308. Epub 2024 Feb 8.
+
+Self bladder emptying compared with Foley catheter placement for planned 
+cesarean delivery: a randomized controlled trial.
+
+Mohd Yassin NA(1), Kamarudin M(2), Hamdan M(1), Tan PC(1).
+
+Author information:
+(1)Department of Obstetrics and Gynaecology, Faculty of Medicine, Universiti 
+Malaya, Kuala Lumpur, Malaysia.
+(2)Department of Obstetrics and Gynaecology, Faculty of Medicine, Universiti 
+Malaya, Kuala Lumpur, Malaysia.. Electronic address: maherah@um.edu.my.
+
+Comment in
+    Am J Obstet Gynecol MFM. 2024 May;6(5):101367. doi: 
+10.1016/j.ajogmf.2024.101367.
+
+BACKGROUND: The global cesarean delivery rate is high and continues to increase. 
+A bladder catheter is usually placed for the cesarean delivery because a 
+distended bladder is assumed to be at higher risk of injury during surgery and 
+to compromise surgical field exposure. Preliminary data suggest that self 
+bladder emptying (no catheter) at cesarean delivery may have advantages and be 
+safe.
+OBJECTIVE: This study aimed to compare the effects of self bladder emptying and 
+indwelling Foley bladder catheterization for planned cesarean delivery on the 
+rate of postpartum urinary retention and maternal satisfaction.
+STUDY DESIGN: A randomized controlled trial was conducted in a tertiary 
+university hospital from January 10, 2022 to March 22, 2023. A total of 400 
+participants scheduled for planned cesarean delivery were randomized: 200 each 
+to self bladder emptying or indwelling Foley catheter. The primary outcomes were 
+postpartum urinary retention (overt and covert) and maternal satisfaction with 
+allocated bladder care. Analyses were performed using t test, Mann-Whitney U 
+test, chi-square test, or Fisher exact test, as appropriate. Logistic regression 
+was used to adjust for differences in characteristics.
+RESULTS: Postpartum urinary retention rates were 1 per 200 (0.6%) and 0 per 200 
+(P>.99) (a solitary case of covert retention) and maternal satisfaction scores 
+(0-10 visual numerical rating scale), expressed as median (interquartile range) 
+were 9 (8-9.75) and 8 (8-9) (P=.003) in the self bladder emptying and indwelling 
+Foley catheter arms, respectively. Regarding secondary outcomes, time to flatus 
+passage, satisfactory ambulation, urination, satisfactory urination, 
+satisfactory breastfeeding, and postcesarean hospital discharge was quickened in 
+the self bladder emptying group. Pain scores at first urination were decreased 
+and no lower urinary tract symptom was more likely to be reported with self 
+bladder emptying. Surgical field view, operative blood loss, duration of 
+surgery, culture-derived urinary tract infection, postvoid residual volume, and 
+pain score at movement were not different. There was no bladder injury.
+CONCLUSION: Self bladder emptying increased maternal satisfaction without 
+adversely affecting postpartum urinary retention. Recovery was enhanced and 
+urinary symptoms were improved. The surgeon was not impeded at operation. No 
+safety concern was found.
+
+Copyright © 2024. Published by Elsevier Inc.
+
+DOI: 10.1016/j.ajogmf.2024.101308
+PMID: 38336174 [Indexed for MEDLINE]
+
+
+14. Int J Antimicrob Agents. 2024 Nov;64(5):107335. doi: 
+10.1016/j.ijantimicag.2024.107335. Epub 2024 Sep 7.
+
+Epidemiology of subsequent carbapenem-resistant enterobacterales (CRE) infection 
+among rectal carriers: A meta-analysis of incidence, risk factors and their 
+association with geographic region and age.
+
+Wei Y(1), Luo H(1), Chen X(1), Yan Q(2).
+
+Author information:
+(1)Department of Clinical Laboratory, Xiangya Hospital, Central South 
+University, Changsha, Hunan, China.
+(2)Department of Clinical Laboratory, Xiangya Hospital, Central South 
+University, Changsha, Hunan, China; National Clinical Research Center for 
+Geriatric Disorders, Xiangya Hospital, Central South University, Changsha, 
+Hunan, China. Electronic address: yanqun@csu.edu.cn.
+
+BACKGROUND: This study aimed to assess the incidence and risk factors of 
+subsequent carbapenem-resistant Enterobacterales (CRE) infection among rectal 
+carriers, and their association with geographic region and age.
+METHODS: A meta-analysis of studies investigating incidence and/or risk factors 
+of subsequent CRE infection among rectal carriers was conducted, with subgroup 
+analyses by geographic region and age. PubMed, Embase, Web of Science, and 
+Cochrane Library were searched (published from inception to 31 January 2024). 
+This study is registered with PROSPERO (CRD42023444420).
+RESULTS: Of 4459 studies identified, 24 studies with 8188 CRE rectal carriers 
+were included. The pooled incidence of subsequent CRE infection was 20.6% (95% 
+CI 15.9-25.8). The highest incidence was seen in America (23.6%, 95% CI 
+14.2-34.5), followed by Europe (20.9%, 95% CI 12.5-30.8) and Asia (19.8%, 95% CI 
+12.7-27.9). Children had a greater incidence (26.7%, 95% CI 21.3-32.3) than 
+adults (19.8%, 95% CI 14.9-25.2). Fourteen factors were associated with 
+subsequent CRE infection. In Asia, the most notable risk factor was gastritis 
+(odds ratio [OR] 4.95 95% CI 1.87-13.11). In Europe, admission to the intensive 
+care unit was prominent (OR 2.76 95% CI 1.14-6.65). In the America, the use of a 
+urinary Foley catheter (OR 4.33 95% CI 1.06-17.70) was dominant. Admission to 
+the intensive care unit was most notable in adults (OR 3.01 95% CI 1.80-5.02), 
+while mechanical ventilation was shown the greatest significance in children (OR 
+15.61 95% CI 4.39-55.47).
+CONCLUSIONS: Risk of subsequent CRE infection among rectal carriers was 
+critical. Identifying the risk factors for subsequent infection could help in 
+developing more potent prevention and control measures to reduce CRE infection.
+
+Copyright © 2024 Elsevier Ltd and International Society of Antimicrobial 
+Chemotherapy. All rights reserved.
+
+DOI: 10.1016/j.ijantimicag.2024.107335
+PMID: 39245325 [Indexed for MEDLINE]
+
+
+15. Actas Urol Esp (Engl Ed). 2024 Nov;48(9):658-664. doi: 
+10.1016/j.acuroe.2024.06.004. Epub 2024 Jul 1.
+
+Single-center, double-blind, randomized, placebo-controlled pilot study of 
+Canoxidin® for prevention of catheter encrustation in patients with indwelling 
+catheters.
+
+[Article in English, Spanish]
+
+Borau A(1), Amaya E(2), Delía P(2), Alves MJ(3), Morcillo M(4), Ustrell A(4), 
+Opisso E(5).
+
+Author information:
+(1)Servicio de Neurourología, Institut Guttmann, Badalona, Barcelona, Spain. 
+Electronic address: aborau31@gmail.com.
+(2)Servicio de Neurourología, Institut Guttmann, Badalona, Barcelona, Spain.
+(3)Servicio de Urología, Hospital Germans Trias i Pujol, Badalona, Barcelona, 
+Spain.
+(4)Área de Enfermería, Institut Guttmann, Badalona, Barcelona, Spain.
+(5)Oficina de Innovación e Investigación, Institut Guttmann, Badalona, 
+Barcelona, Spain.
+
+INTRODUCTION AND OBJECTIVES: Long-term use of an indwelling catheter is 
+associated with complications such as catheter encrustation and infection. 
+Canoxidin® is a novel oral treatment that can potentially prevent catheter 
+encrustation, as it contains a urine acidifier and a combination of two 
+crystallization inhibitors. This study aimed to evaluate the effects of 
+Canoxidin® on catheter encrustation in patients with indwelling Foley catheters.
+PATIENTS AND METHODS: This was a single-center, double-blind, randomized, 
+placebo-controlled study. Neuro-urology patients aged ≥18 years with an 
+indwelling catheter (urethral or suprapubic) were randomized to treatment 
+consisting of either Canoxidin® or placebo for one month. Foley catheters (two 
+per patient, one before treatment and one after treatment) were removed for 
+analysis of the presence and degree of encrustation.
+RESULTS: A total of 40 patients were enrolled and randomized, 28 of whom had 
+analyzable catheters (13 assigned to Canoxidin® and 15 assigned to placebo). The 
+patients had a mean age of 51.8 years, and eight (28.6%) were female. Two 
+patients (13.3%) in the placebo group and eight patients (61.5%) in the 
+Canoxidin® group experienced an improvement (less encrustation). There was a 
+significant association between Canoxidin® and improvement (odds ratio: 10.4, 
+95% confidence interval: 1.6 to 66.9, P = 0.016). No adverse effects 
+attributable to the treatment were reported.
+CONCLUSIONS: The overall rate of catheter encrustation was high among those with 
+indwelling Foley catheters. One-month treatment with Canoxidin® reduced the 
+formation of these encrustations, with an excellent short-term safety profile.
+
+Copyright © 2024 AEU. Published by Elsevier España, S.L.U. All rights reserved.
+
+DOI: 10.1016/j.acuroe.2024.06.004
+PMID: 38960062 [Indexed for MEDLINE]
+
+
+16. Crit Rev Ther Drug Carrier Syst. 2022;39(5):51-82. doi: 
+10.1615/CritRevTherDrugCarrierSyst.2022040452.
+
+Exploration of 3D Printing of Anti-Infective Urinary Catheters: Materials and 
+Approaches to Combat Catheter-Associated Urinary Tract Infections (CAUTIs) - A 
+Review.
+
+Menon A(1), Durairajan R(2), Durai R(1), Paramasivam N(2), Narayanan VB(3).
+
+Author information:
+(1)Pharmaceutical Technology Laboratory, ASK-2, Lab No. 214, School of Chemical 
+& Biotechnology, SASTRA Deemed University, Tirumalaisamudram, Thanjavur, 613 
+401, Tamil Nadu, India.
+(2)Biofilm Biology Laboratory, Centre for Research on Infectious Diseases 
+(CRID), School of Chemical & Biotechnology, SASTRA Deemed University, 
+Tirumalaisamudram, Thanjavur, 613 401, Tamil Nadu, India.
+(3)Pharmaceutical Technology Laboratory, ASK-2, Lab No. 214, School of Chemical 
+& Biotechnology, SASTRA Deemed University, Tirumalaisamudram, Thanjavur, 613 
+401, Tamil Nadu, India; Centre of Molecular and Macromolecular Studies in Łódź, 
+Polish Academy of Sciences, Sienkiewicza 112, 90-363 Lodz, Poland.
+
+Three-dimensional (3D) printing is a pioneering technology that has gained 
+increased popularity in the fields of tissue engineering, drug design, drug 
+delivery systems and biomedical devices. Thus, it enables us to explore this 
+technique for fabricating 3D-printed catheters. Owing to its enhanced 
+productivity and cost-efficiency, this technique can be utilized to fabricate 
+any material for manufacturing or designing catheters with antimicrobial 
+properties. From 1930s, Foley's catheter had been widely used to drain the 
+urinary bladder of patients with impaired bladder function. Despite the 
+complications like catheter-associated urinary tract infections (CAUTIs), kidney 
+damage, chronic infections, encrustations and personal discomfort during 
+inflation of the balloon, Foley's catheter was used universally without any 
+changes in product design. Currently, marketed catheters have been reported for 
+reducing CAUTI, but the prevention of limitations by coating drugs onto the 
+catheter is very expensive. Altering the physical properties of the catheter by 
+biopolymer blend might ease the discomfort. Thus, new technologies have to be 
+adopted to manufacture ideal catheters that are biocompatible and provide 
+antimicrobial and anti-fouling properties. Herein, we provide an overview of 3D 
+printing techniques along with different materials opted for manufacturing 
+catheters to overcome the existing challenges and limitations.
+
+DOI: 10.1615/CritRevTherDrugCarrierSyst.2022040452
+PMID: 35993996 [Indexed for MEDLINE]
+
+
+17. Rev Inst Med Trop Sao Paulo. 2025 Oct 3;67:e61. doi: 
+10.1590/S1678-9946202567061. eCollection 2025.
+
+Effective interventions to prevent catheter-associated urinary tract infections: 
+a systematic review.
+
+Li N(1), Shi R(1), Sun Y(1), Chen Q(1).
+
+Author information:
+(1)The First Affiliated Hospital of Nanjing Medical University, Jiangsu, 
+Nanjing, China.
+
+Catheter-associated urinary tract infections (CAUTIs) are a prevalent and 
+preventable healthcare-associated infection that significantly impacts 
+healthcare systems, contributing to increased patient morbidity, length of stay, 
+and costs. This systematic review aims to evaluate the effectiveness of various 
+interventions in reducing CAUTI incidence in healthcare settings. Following the 
+PRISMA guidelines, we conducted a thorough literature search across multiple 
+databases-Web of Science, Scopus, PubMed, MEDLINE, EMBASE, Cochrane Central 
+Register of Controlled Trials, and Google Scholar-up to August 8, 2024. Eligible 
+studies included randomized controlled trials, case-control studies, and 
+experimental designs that met inclusion criteria, namely CAUTIs prevention among 
+hospitalized adult patients. After screening 9,476 titles and abstracts, we 
+reviewed 163 texts in full. Of these, 12 studies were included in this review. 
+Results showed that antiseptic solutions like chlorhexidine, specialized 
+catheters (e.g., BIP Foley and silver alloy-coated types) and educational 
+sessions all significantly reduced CAUTI rates, with some interventions 
+achieving reductions as high as 94%. Reminder systems promoting timely catheter 
+removal and amikacin bladder washing also showed notable effectiveness. Adverse 
+effects were minimal. This review underscores the importance of evidence-based 
+CAUTI prevention strategies and the need for consistent implementation across 
+healthcare facilities. Enhanced catheter maintenance practices and judicious 
+catheter use can significantly reduce CAUTI rates, thereby improving patient 
+outcomes and reducing healthcare-associated costs. Future research should 
+continue exploring diverse, context-specific interventions to address barriers 
+to CAUTI prevention.
+
+DOI: 10.1590/S1678-9946202567061
+PMCID: PMC12499511
+PMID: 41059852 [Indexed for MEDLINE]
+
+Conflict of interest statement: CONFLICT OF INTERESTS: The authors declare that 
+there is no conflict of interests related to this systematic review.
+
+
+18. J Clin Med. 2025 Jun 2;14(11):3915. doi: 10.3390/jcm14113915.
+
+Antibiotic Prophylaxis After Urethroplasty: A Review of the Literature.
+
+Cahill EM(1), Patel HV(2), Koch GE(2)(3), Sterling J(1).
+
+Author information:
+(1)Department of Urology, Yale University School of Medicine, New Haven, CT 
+06510, USA.
+(2)Department of Urology, The Ohio State University Wexner Medical Center, 
+Columbus, OH 43210, USA.
+(3)Department of Urology, The University of Washington, Seattle, WA 98195, USA.
+
+Urethroplasty is a highly effective surgical treatment for urethral stricture 
+disease. While overall complication rates are low, surgical site infections and 
+urinary tract infections (UTIs) represent the most common complications. Due to 
+the prolonged need for catheterization following reconstruction, many urologists 
+place patients on extended antibiotic prophylaxis postoperatively. However, 
+antibiotic stewardship is important given the risks of antibiotic overuse 
+including opportunistic infections and the emergence of multidrug-resistant 
+organisms. There are currently no established guidelines for the management of 
+antibiotics for patients undergoing urethroplasty, specifically with regard to 
+postoperative prophylaxis through the time of foley catheter removal. In this 
+review, we examine the current literature regarding antibiotic prophylaxis and 
+urethroplasty. Research has shown no clear benefit for extended antibiotic 
+prophylaxis in preventing symptomatic urinary tract infections or stricture 
+recurrence. This is congruent with evidence from other urologic procedures 
+requiring indwelling catheters and/or stents including radical prostatectomy, 
+hypospadias repair, and pyeloplasty. Prospective, randomized trials are needed 
+to further understand the impact of antibiotic prophylaxis on both urethroplasty 
+outcomes and its broader impact on recurrent UTIs and microbial resistance.
+
+DOI: 10.3390/jcm14113915
+PMCID: PMC12156196
+PMID: 40507677
+
+Conflict of interest statement: The authors declare no relevant conflicts of 
+interest.
+
+
+19. Neurourol Urodyn. 2020 Jun;39(5):1264-1275. doi: 10.1002/nau.24411. Epub 2020 
+May 29.
+
+A systematic review of best practices for the perioperative management of 
+abdominal sacrocolpopexy.
+
+Nemirovsky A(1), Herbert AS(1), Gorman EF(2), Malik RD(1).
+
+Author information:
+(1)Division of Urology, Department of Surgery, University of Maryland Medical 
+Center, Baltimore, Maryland.
+(2)Health Sciences and Human Services Library, University of Maryland, 
+Baltimore, Maryland.
+
+Comment in
+    Int Braz J Urol. 2021 Nov-Dec;47(6):1270-1271. doi: 
+10.1590/S1677-5538.IBJU.2021.06.05.
+
+PURPOSE: Enhanced recovery after surgery (ERAS) pathways have been shown to 
+reduce surgical morbidity and length of stay across various procedures. Our 
+objective was to systematically evaluate the literature for best practices of 
+ERAS elements in abdominal sacrocolpopexy (ASC), to determine if there is 
+sufficient evidence to create best practice guidelines for this procedure.
+MATERIALS AND METHODS: Following the preferred reporting items for systematic 
+review and meta-analysis (PRISMA) statement, we performed a review using Pubmed, 
+Embase, and Cochrane Library. Eligible articles contained ERAS components and 
+postoperative outcomes of ASC published in English since 1997. Thirty-five 
+full-text articles were selected for final qualitative analysis.
+RESULTS: Poor functional status before ASC was associated with a longer length 
+of hospital stay. Laparoscopic ASC was associated with a shorter postoperative 
+hospital stay, with no difference between laparoscopic and robotic approaches. 
+Epidural analgesia in addition to spinal anesthesia lowered levels of pain 
+throughout the postoperative stay in laparoscopic ASC. A multimodal bowel 
+regimen shortened time to first bowel movement compared to a single agent 
+regimen. Removing a Foley catheter may lead to sooner first spontaneous void but 
+may result in higher rates of urinary retention and urinary tract infection. 
+Studies investigating preoperative bowel preparation, preanesthesia medication, 
+and multidose antimicrobial prophylaxis did not show significant benefit.
+CONCLUSIONS: Best practices for ASC can be developed based on current findings 
+from the literature and extrapolation of evidence from other surgeries where 
+ASC-specific elements are missing, with the ability to modify the pathways as 
+new data become available.
+
+© 2020 Wiley Periodicals LLC.
+
+DOI: 10.1002/nau.24411
+PMID: 32469449 [Indexed for MEDLINE]
+
+
+20. Investig Clin Urol. 2022 May;63(3):334-340. doi: 10.4111/icu.20210436. Epub 2022 
+Mar 28.
+
+Catheter-associated urinary tract infections in patients who have undergone 
+radical cystectomy for bladder cancer: A prospective randomized clinical study 
+of two silicone catheters (clinical benefit of antibiotic silicone material).
+
+Tae BS(1), Oh JJ(2), Jeong BC(3), Ku JH(4).
+
+Author information:
+(1)Department of Urology, Korea University Ansan Hospital, Korea University 
+College of Medicine, Ansan, Korea.
+(2)Department of Urology, Seoul National University Bundang Hospital, Seongnam, 
+Korea.
+(3)Department of Urology, Samsung Medical Center, Sungkyunkwan University School 
+of Medicine, Seoul, Korea.
+(4)Department of Urology, Seoul National University Hospital, Seoul, Korea. 
+kuuro70@snu.ac.kr.
+
+PURPOSE: The prevalence of catheter-associated urinary tract infections (CAUTIs) 
+varies from 5% to 8.2%, and the risk of infection increases by 5% to 7% per day 
+of primary indwelling. We investigated whether a novel biofilm inhibitory 
+mechanism using an inhibitory silicone urethral catheter (a coated Foley 
+catheter) can reduce CAUTIs compared to conventional non-coated Foley catheters.
+MATERIALS AND METHODS: This study prospectively analyzed the difference in the 
+incidence of CAUTIs in patients who underwent radical cystectomy with an 
+orthotopic neobladder for bladder cancer and received a coated or conventional 
+non-coated catheter. Additionally, differences in bacterial colonization between 
+the groups were analyzed using a catheter-tip bacterial culture test.
+RESULTS: Eighty-five patients were randomized into the "coated Foley catheter" 
+group (abbreviated as "case" group; 41 patients) and a control group (44 
+patients). The two groups were identical except for their surgical history. The 
+incidence of CAUTIs 2 weeks after radical cystectomy was 21.95% (case) and 
+27.27% (control), with no significant difference between the two groups. 
+However, when the catheter was removed 2 weeks after surgery, the catheter tip 
+culture test revealed significant bacterial colonies in 25 (60.98%) and 38 
+(86.36%) patients in the case and control group, respectively. No 
+catheter-related postoperative side effects were observed in either group.
+CONCLUSIONS: The incidence of CAUTIs in the two groups did not differ according 
+to the catheter material. However, the catheter bacterial culture test showed 
+that bacterial colonization was significantly suppressed on the Bi-Fi Free 
+technology catheter, which comparatively inhibited biofilm formation.
+
+© The Korean Urological Association.
+
+DOI: 10.4111/icu.20210436
+PMCID: PMC9091833
+PMID: 35437959 [Indexed for MEDLINE]
+
+Conflict of interest statement: The authors have nothing to disclose.
+
+
+21. J Bone Joint Surg Am. 2023 Feb 15;105(4):312-319. doi: 10.2106/JBJS.22.00759. 
+Epub 2022 Dec 19.
+
+Short-Term Indwelling Foley Catheters Do Not Reduce the Risk of Postoperative 
+Urinary Retention in Uncomplicated Primary THA and TKA: A Randomized Controlled 
+Trial.
+
+Weintraub MT(1), Yang J(1), Nam D(1), Greenspoon JA(1), DeBenedetti A(1), Karas 
+V(1), Mehta N(2), Della Valle CJ(1).
+
+Author information:
+(1)Department of Orthopaedic Surgery, Rush University Medical Center, Chicago, 
+Illinois.
+(2)Department of Anesthesia, Rush University Medical Center, Chicago, Illinois.
+
+BACKGROUND: The purpose of this randomized controlled trial was to determine 
+whether a short-term Foley catheter (inserted in the operating room and removed 
+upon arrival to the orthopaedic floor) would reduce the risk of postoperative 
+urinary retention (POUR) in patients undergoing primary total hip (THA) and 
+total knee arthroplasty (TKA).
+METHODS: Three hundred and eighty-eight patients undergoing inpatient primary 
+TKA (n = 228) or THA (n = 160) with spinal anesthesia were randomized to receive 
+a short-term Foley catheter (n = 194) or no Foley (n = 194). There were 143 male 
+and 245 female patients. The primary outcome was POUR, defined as requiring ≥2 
+straight catheterizations or the placement of an indwelling urinary catheter 
+when indicated by retention of ≥450 mL on bladder scans. Secondary outcomes 
+included urinary tract infections (UTIs) within 3 weeks and the need for ≥1 
+straight catheterization. A power analysis determined that 194 patients per 
+group were required to detect a 7% minimal clinically important difference in 
+POUR rates at 80% power and alpha of 0.05. Intention-to-treat and as-treated 
+analyses were performed (2 patients received the non-allocated treatment). 
+Outcomes were compared between the groups using univariate and multivariate 
+analyses, with alpha < 0.05.
+RESULTS: Nine patients developed POUR: 4 in the short-term Foley group and 5 in 
+the control group (2.1% versus 2.6%; p = 1.00). Of those who developed POUR, 8 
+were male and 1 was female (88.9% versus 11.1%; p = 0.002). Twenty-four patients 
+required ≥1 straight catheterization: 10 in the Foley group and 14 in the 
+control group (5.2% versus 7.2%; p = 0.40). Four patients developed UTIs: 3 in 
+the Foley group and 1 in the control group (1.5% versus 0.5%; p = 0.62) on 
+intention-to-treat analysis, and 4 in the Foley group and none in the control 
+group (2.1% versus 0.0%; p = 0.12) on as-treated analysis.
+CONCLUSIONS: The use of a short-term Foley catheter inserted in the operating 
+room and removed on arrival to the orthopaedic floor does not decrease the rate 
+of POUR.
+LEVEL OF EVIDENCE: Therapeutic Level I . See Instructions for Authors for a 
+complete description of levels of evidence.
+
+Copyright © 2022 by The Journal of Bone and Joint Surgery, Incorporated.
+
+DOI: 10.2106/JBJS.22.00759
+PMID: 36729534 [Indexed for MEDLINE]
+
+Conflict of interest statement: Disclosure: The Disclosure of Potential 
+Conflicts of Interest forms are provided with the online version of the article 
+( http://links.lww.com/JBJS/H369 ).
+
+
+22. Gynecol Obstet Fertil Senol. 2020 Jan;48(1):35-47. doi: 
+10.1016/j.gofs.2019.10.015. Epub 2019 Oct 25.
+
+[Term Prelabor Rupture of Membranes: CNGOF Guidelines for Clinical 
+Practice - Timing of Labor Induction].
+
+[Article in French]
+
+Sibiude J(1).
+
+Author information:
+(1)Service de gynécologie-obstétrique, université de Paris, hôpital 
+Louis-Mourier, DHU risque et grossesse, 92700 Colombes, France; IAME, Inserm, 
+75018 Paris, France. Electronic address: Jeanne.sibiude@aphp.fr.
+
+OBJECTIVE: To assess the effect of immediate induction versus expectant 
+management on maternal and neonatal outcomes in case of term prelabor rupture of 
+membranes.
+METHODS: We searched Medline Database, Cochrane Library and consulted 
+international guidelines.
+RESULTS: In case of term prelabor rupture of membranes, induction of labor is 
+associated with shorter rupture of membranes to delivery intervals when compared 
+to expectant management, if induction is conducted with oxytocin (LE2), 
+prostaglandin E2 (LE2) or misoprostol (LE2), but not when induction is conducted 
+with Foley® catheter (LE2), osmotic dilatator (LE2) or acupuncture (LE2). The 
+strongest evidence to date comes from a large international randomized study, 
+the TERMPROM study, which included over 5000 women between 1992 and 1995. This 
+study compared immediate induction with oxytocin or prostaglandin E2 to 
+expectant management up to 96hours, followed by induction by oxytocin or 
+prostaglandin E2. Immediate induction was not associated with a decreased 
+neonatal infection rate (LE1), even among women with a positive streptococcus B 
+vaginal swab (LE2). Thus, expectant management can be offered without increasing 
+the neonatal infection risk (Grade B). Induction with oxytocin was associated 
+with a decreased risk of intra-uterine infection and postpartum fever in the 
+TERMPROM study (LE2), however, this study had significant limitations concerning 
+this outcome (unknown streptococcus B status and low rate of prophylactic 
+antibiotics), and this association was not found in other smaller studies. This 
+decrease was not observed with induction by prostaglandin E2. In the TERMPROM 
+study, induction was not associated with an increase or decrease in the rate of 
+cesarean section (LE2), whatever the parity (LE2) or Bishop score at admission 
+(LE3). Induction can thus be proposed without increasing the cesarean section 
+risk (Grade B). There is no study evaluating expectant management over 4 days.
+CONCLUSION: In case of term prelabor rupture of membranes, induction can be 
+offered without increasing the cesarean section risk (Grade B). Expectant 
+management can be offered without increasing the neonatal infection risk (Grade 
+B), even among women with a positive streptococcus B vaginal swab (Professional 
+consensus). The optimal moment of induction will therefore be guided by the 
+maternity wards organization and women's preference after having informed them 
+of the risks and benefits associated with induction and expectant management 
+(Professional consensus). In case of meconial fluid or term prelabor rupture of 
+membranes>4 days, induction must be offered (Professional consensus).
+
+Copyright © 2019. Published by Elsevier Masson SAS.
+
+DOI: 10.1016/j.gofs.2019.10.015
+PMID: 31669525 [Indexed for MEDLINE]
+
+
+23. Female Pelvic Med Reconstr Surg. 2020 Dec 1;26(12):e73-e77. doi: 
+10.1097/SPV.0000000000000781.
+
+Urinary Catheter Management Approaches Among Women Undergoing Benign Gynecologic 
+Surgery: A Randomized Trial.
+
+Lang P(1), Quezada Y(2), Whiteside J(3).
+
+Author information:
+(1)From the Department of Obstetrics and Gynecology, The Christ Hospital, 
+Cincinnati, OH.
+(2)Department of Obstetrics and Gynecology, Wellhealth Quality Care, Las Vegas, 
+NV.
+(3)Division of Female Pelvic Medicine and Reconstructive Surgery, Department of 
+Obstetrics and Gynecology, The University of Cincinnati, Cincinnati, OH.
+
+OBJECTIVE: The objective of this study was to identify differences in voiding 
+trial success rates between delayed (postoperative day 1) and day of surgery 
+catheter removal ("fast track") among women undergoing benign gynecologic 
+surgery. Rates of urinary tract infection, patient satisfaction, and lower 
+urinary tract symptoms were compared between catheter management schemes.
+METHODS: Women undergoing benign gynecologic surgery were randomized to either 
+"conventional" delayed urinary catheter care removal on postoperative day 1 or 
+day of surgery catheter removal (fast track) 4 hours after surgery. Subjects 
+were asked to complete a brief survey recording bladder function before and 
+during their hospitalization and satisfaction with their catheter management. 
+Subjects were contacted by phone 2 to 3 weeks after the index surgery to survey 
+their bladder function including symptoms (eg, dysuria) or treatment indicative 
+of a bladder infection.
+RESULTS: The median dwell time for Foley catheters in the "fast-track" group was 
+8.15 hours (SD = 375 minutes), whereas the median dwell time in the conventional 
+group was 20.6 hours (SD = 265 minutes), which was significantly different (P < 
+0.001). Overall, 153 (93%) patients passed their voiding trial with 
+significantly more patients passing their voiding trial in the conventional 
+management group (P = 0.01). There was no difference in the Urogenital Distress 
+Inventory scores at 2 weeks between catheter management cohorts (P = 0.81).
+CONCLUSIONS: Foley dwell time is significantly reduced in the fast-track cohort. 
+Voiding trial failure is higher with same-day catheter removal but that rate of 
+failure rate is low. Patient satisfaction, the Urogenital Distress Inventory 
+score, and postoperative urinary tract infection rates are not significantly 
+different between cohorts.
+
+Copyright © 2020 Wolters Kluwer Health, Inc. All rights reserved.
+
+DOI: 10.1097/SPV.0000000000000781
+PMID: 31688528 [Indexed for MEDLINE]
+
+Conflict of interest statement: The authors have declared they have no conflicts 
+of interest.
+
+
+24. Exp Clin Transplant. 2016 Aug;14(4):385-8.
+
+Stent Removal in 200 Kidney Transplant Recipients: Nonoperative Versus 
+Endoscopic Removal.
+
+Simforoosh N(1), Obeid K, Javanmard B, Rezaeetalab GH, Razmjoo S, Soltani MH.
+
+Author information:
+(1)From the Shahid Labbafinejad Medical Center, Urology and Nephrology Research 
+Center, Shahid Beheshti University of Medical Sciences, Tehran, Iran.
+
+OBJECTIVES: Inserting a double J stent during kidney transplant has reduced the 
+rate of urologic complications. Traditionally, a double J stent is removed via 
+endoscopic intervention. Here, we assessed the safety and efficacy of a 
+nonoperative method for double J stent removal.
+MATERIALS AND METHODS: Our study group included 200 consecutive patients who 
+underwent kidney transplant from January 2013 to April 2014. Group A consisted 
+of 100 recipients who had a double J stent that was tied to a Foley catheter 
+with 2-0 silk suture. The stent was simply removed by taking out the Foley 
+catheter after 3 weeks. Patients in group A were compared with a second group of 
+100 kidney transplant patients whose stents were removed endoscopically 3 weeks 
+later (group B).
+RESULTS: Patients were matched between the 2 groups regarding age distribution, 
+male-to-female patient ratio, deceased versus living donor graft, prevalence of 
+type 2 diabetes mellitus, and body mass index. The incidence of urinary fistula 
+(3% in group A and 4% in group B; P = .7), ureteral stenosis (1% in group A and 
+2% in group B; P = .56), wound infection (1% in group A and 2% in group B; P = 
+.56), and positive urine culture (20% in group A and 29% in group B; P = .14) 
+after stent removal were not significantly different between the 2 groups.
+CONCLUSIONS: This study shows that nonoperative removal of a double J stent is a 
+safe and effective method. This approach is simple, and there is no need for a 
+surgical procedure or any outpatient surgical intervention.
+
+PMID: 27506257 [Indexed for MEDLINE]
+
+
+25. Int J Infect Dis. 2021 Apr;105:702-708. doi: 10.1016/j.ijid.2021.02.086. Epub 
+2021 Feb 23.
+
+A comparison of the efficacy of normal saline and Savlon solutions in 
+periurethral cleaning to reduce catheter-associated bacteriuria: A randomized 
+control trial.
+
+Khahakaew S(1), Suwanpimolkul G(2), Wongkeskij T(3), Punakabutra N(3), 
+Suankratay C(2).
+
+Author information:
+(1)Division of Infectious Diseases, Department of Medicine, Faculty of Medicine, 
+Chulalongkorn University, Bangkok 10330, Thailand. Electronic address: 
+s.khahakaew@gmail.com.
+(2)Division of Infectious Diseases, Department of Medicine, Faculty of Medicine, 
+Chulalongkorn University, Bangkok 10330, Thailand.
+(3)Department of Microbiology, King Chulalongkorn Memorial Hospital, Bangkok 
+10330, Thailand.
+
+OBJECTIVE: Catheter-associated urinary tract infection (CAUTI) is a common 
+nosocomial infection. However, there has been no randomized control trial (RCT) 
+comparing the efficacy of periurethral cleaning solutions for reducing CAUTI. 
+This study aimed to compare the efficacy of normal saline solution (NSS) and 
+Savlon solution.
+METHODS: A non-inferiority cross-over RCT was conducted to compare the 2 
+solutions by the incidence of significant bacteriuria (SB) on day 5 after Foley 
+catheterization. Patients admitted to a tertiary referral hospital from June 
+2018 to August 2019 participated in the study. The acceptable prespecified 
+non-inferiority margin was 10%.
+RESULTS: There were 265 and 275 patients in the NSS and Savlon groups, 
+respectively. The incidence of CAUTI was 2.65/1000 catheter-days, and the median 
+duration of catheterization was 5 days (IQR 4, 7). There was no significant 
+difference between the incidence of SB in the NSS and Savlon groups, as 
+indicated by the adjusted difference of 0.6 (95% CI: -3.1-4.2).
+CONCLUSION: This study was the first RCT in patients from multiple hospital 
+units to compare the efficacy of the 2 solutions in the periurethral cleaning 
+process. The study demonstrated non-inferiority of NSS to Savlon solution.
+THAI CLINICAL TRIALS REGISTRY STUDY ID: TCTR20180518001.
+
+Copyright © 2021 The Authors. Published by Elsevier Ltd.. All rights reserved.
+
+DOI: 10.1016/j.ijid.2021.02.086
+PMID: 33636356 [Indexed for MEDLINE]
+
+
+26. Am J Infect Control. 2016 Jun 1;44(6):636-41. doi: 10.1016/j.ajic.2015.11.017.
+
+A comparative evaluation of antimicrobial coated versus nonantimicrobial coated 
+peripherally inserted central catheters on associated outcomes: A randomized 
+controlled trial.
+
+Storey S(1), Brown J(2), Foley A(2), Newkirk E(3), Powers J(4), Barger J(2), 
+Paige K(2).
+
+Author information:
+(1)Indiana University School of Nursing, Indianapolis, IN. Electronic address: 
+sustorey@iu.edu.
+(2)Vincent Hospital, Indianapolis, IN.
+(3)Indiana University Hospital, Indianapolis, IN.
+(4)Parkview Health System, Fort Wayne, IN.
+
+BACKGROUND: Central line-associated bloodstream infections (CLABSIs) are a 
+common life-threatening risk factor associated with central venous catheters 
+(CVCs). Research has demonstrated benefit in reducing CLABSIs when CVCs coated 
+with antimicrobials are inserted. The impact of chlorhexidine (CHG)-impregnated 
+versus non-CHG peripherally inserted central catheters (PICCs) on risk of CLABSI 
+is unknown. Venous thromboembolism (VTE) is also a complication associated with 
+CVCs. This study compares the impact of both PICC lines on these outcomes.
+METHODS: Patients in 3 high-risk units were randomly assigned to receive either 
+a CHG-impregnated or non-CHG PICC line. Laboratory data were collected and 
+reviewed daily on all study patients. The PICC dressing site was assessed daily. 
+Medical record documentation was reviewed to determine presence of CLABSI or 
+VTE.
+RESULTS: There were 167 patients who completed the study. Three patients 
+developed CLABSI (2 in the CHG group, and 1 in the non-CHG group), and 3 
+patients developed VTE (2 in the non-CHG group, and 1 in the CHG group). No 
+significant relationship was noted between the type of PICC line on development 
+of a CLABSI (P = .61) or VTE (P > .99). A significant difference was noted in 
+moderate bleeding (P ≤ .001) requiring thrombogenic dressing in the patients who 
+had the CHG PICC line.
+CONCLUSIONS: No differences were noted in the development of CLABSI and VTE 
+between the CHG and non-CHG groups.
+
+Copyright © 2016 Association for Professionals in Infection Control and 
+Epidemiology, Inc. Published by Elsevier Inc. All rights reserved.
+
+DOI: 10.1016/j.ajic.2015.11.017
+PMID: 27240799 [Indexed for MEDLINE]
+
+
+27. Am J Surg. 2020 Nov;220(5):1264-1269. doi: 10.1016/j.amjsurg.2020.06.057. Epub 
+2020 Jul 1.
+
+Impact of Enhanced Recovery Pathways and early urinary catheter removal on 
+post-operative urinary retention.
+
+Tam V(1), Lutfi W(2), Morgan K(1), Vasan R(3), Scaife R(4), Mahler B(5), Medich 
+DS(6), Celebrezze JP(6), Watson AR(6), Holder-Murray J(7).
+
+Author information:
+(1)Department of Surgery, University of Pittsburgh School of Medicine, 
+Pittsburgh, PA, USA.
+(2)University of Pittsburgh School of Medicine, Pittsburgh, PA, USA.
+(3)Department of Urology, University of Pittsburgh School of Medicine, 
+Pittsburgh, PA, USA.
+(4)Sanger Heart and Vascular Institute, Charlotte, NC, USA.
+(5)Division of Colon and Rectal Surgery, University of Pittsburgh School of 
+Medicine, Pittsburgh, PA, USA.
+(6)Department of Surgery, University of Pittsburgh School of Medicine, 
+Pittsburgh, PA, USA; Division of Colon and Rectal Surgery, University of 
+Pittsburgh School of Medicine, Pittsburgh, PA, USA.
+(7)Department of Surgery, University of Pittsburgh School of Medicine, 
+Pittsburgh, PA, USA; Division of Colon and Rectal Surgery, University of 
+Pittsburgh School of Medicine, Pittsburgh, PA, USA. Electronic address: 
+holdermurrayjm@upmc.edu.
+
+BACKGROUND: Post-operative urinary retention (POUR) is a common complication 
+after colorectal surgery. Enhanced recovery pathways (ERP) typically include 
+early catheter removal but may place patients at risk for POUR.
+METHODS: This is a retrospective cohort analysis of patients undergoing 
+colorectal surgery at a single institution between April 2014 and November 2017. 
+Patients were stratified into non-ERP and ERP cohorts and post-operative 
+outcomes were compared.
+RESULTS: Of 284 patients studied, ERP was applied to 161 (57%) while the 
+remaining 123 (43%) recovered under standard care. Median duration of indwelling 
+Foleys was 1 day for ERP and 2 days for non-ERP patients (p < 0.001). ERP 
+patients experienced higher rates of straight catheterization (22% vs 
+12%,p = 0.036), Foley reinsertion (14% vs 7%,p = 0.07), and initiation of alpha 
+antagonists (12% vs 5%,p = 0.04). Significant independent predictors of POUR 
+were age (OR 1.03, p = 0.002), male gender (OR 2.79, p = 0.001), surgery 
+duration (OR 1.27, p = 0.027), and ERP (OR 1.96, p = 0.025).
+CONCLUSION: ERP following colorectal surgery that include routine early Foley 
+catheter removal on post-operative day one is associated with increased rates of 
+POUR; however, this did not lead to increased rates of catheter-associated 
+urinary tract infections during the index admission in the population studied.
+
+Copyright © 2020 Elsevier Inc. All rights reserved.
+
+DOI: 10.1016/j.amjsurg.2020.06.057
+PMID: 32680619 [Indexed for MEDLINE]
+
+
+28. J Pregnancy. 2024 Dec 19;2024:8835464. doi: 10.1155/jp/8835464. eCollection 
+2024.
+
+The Effect of Preinduction Cervical Ripening With Synthetic Hygroscopic Dilators 
+on Maternal Outcomes of Women With Previous Caesarean Pregnancy: A Single-Group 
+Clinical Trial.
+
+Dorairajan G(1), Ravi S(1), Chinnakili P(2).
+
+Author information:
+(1)Department of Obstetrics and Gynaecology, Jawaharlal Institute of 
+Postgraduate Medical Education and Research (JIPMER), Puducherry, India.
+(2)Department of Preventive and Social Medicine, Jawaharlal Institute of 
+Postgraduate Medical Education and Research (JIPMER), Puducherry, India.
+
+Background: Preinduction cervical ripening in previous caesarean pregnancy is 
+limited to intracervical Foley catheter. This study is aimed at finding the 
+vaginal birth rates, improvement of Bishop score, and safety of osmotic dilator 
+(Dilapan-S) among women with previous caesarean pregnancy. Methods: We conducted 
+this single-group clinical study after the approval of the institute ethics 
+committee, clinical trial registration, and obtaining informed consent. We 
+recruited women above 18 years with a prior caesarean section at term and a 
+Bishop score of less than 6 by systematic random sampling prospectively. The 
+first or second author inserted two to a maximum of five osmotic dilators 
+(Dilapan-S) in the cervical canal. After 24 h, we removed Dilapan and induced 
+labour with a low-dose oxytocin regimen up to a maximum dose of 24 mIU/min. We 
+assessed the improvement of the Bishop score and vaginal birth rates for 
+efficacy and safety concerns like bleeding, fragmentation, displacement, 
+infections, and scar dehiscence. Results: Eighty-two women completed the study. 
+The Bishop score significantly improved from a mean of 2.6 before to 5.3 after 
+Dilapan. Three opted for a caesarean section after Dilapan removal and refused 
+oxytocin infusion. Seventy-nine women completed the trial of labour. Forty-one 
+(52%) achieved active labour (52%). Twenty-seven delivered vaginally, and 52 
+required emergency caesarean section (34% vaginal birth rate; 18 spontaneous, 
+nine instrumental, four with forceps, and five with vacuum). None had 
+entrapment, fragmentation, or upward displacement of Dilapan. Two women had scar 
+dehiscence, and one had a traumatic postpartum haemorrhage. There was no 
+maternal or perinatal mortality. Conclusions: We conclude that the hygroscopic 
+dilator Dilapan effectively ripens the cervix before labour induction in women 
+with a previous caesarean scar. They are safe, but more extensive studies are 
+needed to evaluate scar-related complications during labour. Trial Registration: 
+Clinical Trial Registry of India: CTRI/2019/03/017927.
+
+Copyright © 2024 Gowri Dorairajan et al.
+
+DOI: 10.1155/jp/8835464
+PMCID: PMC11671653
+PMID: 39734326 [Indexed for MEDLINE]
+
+Conflict of interest statement: The authors declare no conflicts of interest.
+
+
+29. Medicine (Baltimore). 2025 Sep 19;104(38):e44638. doi: 
+10.1097/MD.0000000000044638.
+
+Purple urine bag syndrome: An unusual presentation of urinary tract infection: A 
+case series and literature review.
+
+Basehi MF(1), Dallak FH(1), Darraj AI(2), Almalki SJ(3).
+
+Author information:
+(1)Emergency Department, King Fahd Central Hospital, Jazan Health Cluster, 
+Jazan, Saudi Arabia.
+(2)Internal Medicine Department, King Fahd Central Hospital, Jazan Health 
+Cluster, Jazan, Saudi Arabia.
+(3)Internal Medicine Department, Prince Mohammed Bin Nasser Hospital, Jazan 
+Health Cluster, Jazan, Saudi Arabia.
+
+RATIONALE: Purple urine bag syndrome (PUBS) is a rare but visually alarming 
+condition associated with urinary tract infections (UTIs), typically occurring 
+in debilitated elderly patients with long-term indwelling catheters. Awareness 
+of PUBS is essential, as it can serve as an indicator of underlying infection.
+PATIENT CONCERNS: Two elderly male patients presented with striking purple 
+discoloration of their urinary catheter bags. Caregivers expressed concern, 
+although both patients denied fever, dysuria, or suprapubic pain.
+DIAGNOSES: PUBS secondary to UTI was diagnosed. Case 1 involved mixed bacterial 
+growth, with risk factors including diabetes mellitus, benign prostatic 
+hyperplasia, immobility, and prolonged catheterization. Case 2 had Candida 
+tropicalis infection, with predisposing factors of stroke-related immobility, 
+constipation, and chronic catheterization.
+INTERVENTIONS: Both patients underwent a Foley catheter and urine bag 
+replacement. Case 1 received empirical oral ciprofloxacin, while case 2 required 
+admission, intravenous antifungal therapy, and supportive hydration.
+OUTCOMES: Purple discoloration resolved after catheter replacement. Both 
+patients achieved favorable outcomes without recurrence.
+LESSONS: While PUBS is typically benign, it reflects underlying UTIs and 
+requires prompt intervention. Early recognition, catheter management, and 
+appropriate antimicrobial therapy are key to preventing complications. Clinician 
+awareness is vital to avoid misdiagnosis and unnecessary anxiety.
+
+Copyright © 2025 the Author(s). Published by Wolters Kluwer Health, Inc.
+
+DOI: 10.1097/MD.0000000000044638
+PMCID: PMC12459526
+PMID: 40988186 [Indexed for MEDLINE]
+
+Conflict of interest statement: The authors have no funding and conflicts of 
+interest to disclose.
+
+
+30. J Pediatr Surg. 2025 Mar;60(3):162050. doi: 10.1016/j.jpedsurg.2024.162050. Epub 
+2024 Nov 4.
+
+Clean Intermittent Catheterisation via a Mitrofanoff Is Superior to Long Term 
+Suprapubic Catheters for Bladder Drainage.
+
+Van der Merwe E(1), Loveday R(1), Jackson L(2), McCarthy L(3).
+
+Author information:
+(1)Department of Paediatric Urology, Birmingham Children's Hospital, Steelhouse 
+Lane, Birmingham B4 6NH UK.
+(2)Department of Paediatric Urology, Bristol Children's Hospital, Upper Maudlin 
+St, Bristol BS2 8BJ, UK.
+(3)Department of Paediatric Urology, Birmingham Children's Hospital, Steelhouse 
+Lane, Birmingham B4 6NH UK. Electronic address: liammccarthy@nhs.net.
+
+AIM: Some children require long-term drainage of the bladder but do not tolerate 
+clean intermittent catheterisation (CIC) urethrally. We aimed to compare long 
+term suprapubic catheter (SPC) drainage vs Mitrofanoff conduit (allowing CIC) by 
+comparing the survival of the drainage methods and rates of urinary tract 
+infection (UTI).
+METHOD: Retrospective review of a single surgeon's experience (2007-2023). Data 
+collection included diagnosis, age at procedures, date of surgery, date of most 
+recent follow-up and date and reason for unplanned surgery. For SPCs, initial 
+insertion of SPC and then conversion to a Foley catheter under GA was taken as 
+normal (event free survival) and only further operations were counted as 
+complication events. For Mitrofanoffs, any subsequent operation was counted as a 
+complication. Data were given as a number (%) or median (interquartile range) as 
+appropriate. Data analysed by Fisher exact and Mann-Whitney U-test. Kaplan Meier 
+(KM) survival of drainage routes was compared, P < 0.05 taken as significant.
+RESULTS: There were 45 patients (n = 86 SPC episodes) compared to 108 patients 
+(n = 110 Mitrofanoff procedures). Data were available in 73 SPC episodes and 109 
+Mitrofanoff episodes, including 3 redo procedures (one from another centre). 
+There was no difference in gender (SPC group, 67 % male vs. Mitrofanoff group, 
+77 %; N.S.). There was no difference in age at procedure [7.5 (2.9-11.5) years 
+vs 8.3 (5.9-11.4) years respectively; N.S.) KM comparison showed that 
+Mitrofanoff have a better event-free survival than SPC (91 % vs 52 % at 1 year; 
+80 % vs. 13 % at 5 years; P < 0.0001). Paired data showed a significant (86 %) 
+reduction in rate of UTI with conversion from SPC to Mitrofanoff drainage in 15 
+patients; SPC: 0.13 (0-0.46) UTIs/month vs subsequent Mitrofanoff: 0.02 (0-0.08) 
+UTI/month, P = 0.04).
+CONCLUSION: SPCs had a much higher rate of unplanned surgery than Mitrofanoffs, 
+creating a considerable unplanned burden of care for families and clinical 
+staff. For long-term bladder drainage CIC via a Mitrofanoff conduit should be 
+considered in preference to SPC where urethral CIC is not possible.
+
+Copyright © 2024. Published by Elsevier Inc.
+
+DOI: 10.1016/j.jpedsurg.2024.162050
+PMID: 39572280 [Indexed for MEDLINE]
+
+
+31. Urogynecology (Phila). 2025 Mar 1;31(3):276-284. doi: 
+10.1097/SPV.0000000000001634. Epub 2025 Jan 2.
+
+Silver-Coated Foley Catheters to Reduce UTIs: A Randomized Clinical Trial.
+
+Lewis K(1), Crisp C(1), Ray M(1), Bonglack M(1), Carrel-Lammert M(1), Aldrich 
+E(1), Pauls R(1), Hoehn J(2), Yeung J(1).
+
+Author information:
+(1)From the Division of Urogynecology and Reconstructive Pelvic Surgery, 
+TriHealth, Cincinnati, OH.
+(2)Hatton Research Institute, TriHealth, Cincinnati, OH.
+
+IMPORTANCE: This study is important as it challenges the effectiveness of 
+silver-coated catheters in reducing urinary tract infections (UTIs) after pelvic 
+floor surgery (PFS).
+OBJECTIVE: The aim of this study was to investigate the incidence of UTIs in 
+patients using silver-coated silicone transurethral indwelling catheters (TICs) 
+compared with standard silicone TICs among women with postoperative urinary 
+retention following PFS.
+STUDY DESIGN: This was a double-blind, randomized controlled trial of women 
+undergoing PFS between June 2022 and February 2024 with postoperative urinary 
+retention. Participants were randomized to a silver-coated silicone TIC or a 
+standard silicone TIC. The primary outcome was the incidence of symptomatic, 
+culture-proven UTI within 30 days of surgery. Secondary outcomes included the 
+categorization of uropathogens as well as adverse symptoms potentially related 
+to the catheter. A sample size of 155 participants per arm was calculated to 
+find a relative decrease of 47%, from 30% to 16%.
+RESULTS: Of 310 participants randomized, 303 were included in the analysis: 154 
+controls and 149 silver catheter. Demographics were similar for both groups. For 
+our primary outcome, 56 patients in the control group and 52 patients in the 
+silver catheter group were diagnosed with a UTI (36.4% vs 34.9%; P = 0.81). No 
+adverse reactions to the silver catheter were noted. Analysis of the urinary 
+microbiomes demonstrated Escherichia coli was the most represented uropathogen, 
+found in 43% of the urine cultures overall.
+CONCLUSION: There was no difference in incidence of symptomatic, 
+culture-confirmed UTIs in patients who received silver-coated silicone TICs 
+compared with standard silicone TICs in women undergoing PFS.
+
+Copyright © 2024 American Urogynecologic Society. All rights reserved.
+
+DOI: 10.1097/SPV.0000000000001634
+PMID: 39744866 [Indexed for MEDLINE]
+
+Conflict of interest statement: The authors have declared they have no conflicts 
+of interest.
+
+
+32. Clin Microbiol Rev. 2016 Jan;29(1):105-47. doi: 10.1128/CMR.00030-15.
+
+Effectiveness of Preanalytic Practices on Contamination and Diagnostic Accuracy 
+of Urine Cultures: a Laboratory Medicine Best Practices Systematic Review and 
+Meta-analysis.
+
+LaRocco MT(1), Franek J(2), Leibach EK(3), Weissfeld AS(4), Kraft CS(5), Sautter 
+RL(6), Baselski V(7), Rodahl D(8), Peterson EJ(9), Cornish NE(3).
+
+Author information:
+(1)M.T.L. Consulting, Erie, Pennsylvania, USA m.larocco@hotmail.com.
+(2)Kaiser Permanente, Los Angeles, California, USA.
+(3)Centers for Disease Control and Prevention, Atlanta, Georgia, USA.
+(4)Microbiology Specialists Incorporated, Houston, Texas, USA.
+(5)Emory University, Atlanta, Georgia, USA.
+(6)Carolinas Pathology Group, Carolinas Medical Center, Charlotte, North 
+Carolina, USA.
+(7)University of Tennessee Health Science Center, Memphis, Tennessee, USA.
+(8)HealthEast Care System, St. Paul, Minnesota, USA.
+(9)Barnes Jewish Hospital, St. Louis, Missouri, USA.
+
+BACKGROUND: Urinary tract infection (UTI) in the United States is the most 
+common bacterial infection, and urine cultures often make up the largest portion 
+of workload for a hospital-based microbiology laboratory. Appropriately managing 
+the factors affecting the preanalytic phase of urine culture contributes 
+significantly to the generation of meaningful culture results that ultimately 
+affect patient diagnosis and management. Urine culture contamination can be 
+reduced with proper techniques for urine collection, preservation, storage, and 
+transport, the major factors affecting the preanalytic phase of urine culture.
+OBJECTIVES: The purposes of this review were to identify and evaluate 
+preanalytic practices associated with urine specimens and to assess their impact 
+on the accuracy of urine culture microbiology. Specific practices included 
+collection methods for men, women, and children; preservation of urine samples 
+in boric acid solutions; and the effect of refrigeration on stored urine. 
+Practice efficacy and effectiveness were measured by two parameters: reduction 
+of urine culture contamination and increased accuracy of patient diagnosis. The 
+CDC Laboratory Medicine Best Practices (LMBP) initiative's systematic review 
+method for assessment of quality improvement (QI) practices was employed. 
+Results were then translated into evidence-based practice guidelines.
+SEARCH STRATEGY: A search of three electronic bibliographic databases (PubMed, 
+SCOPUS, and CINAHL), as well as hand searching of bibliographies from relevant 
+information sources, for English-language articles published between 1965 and 
+2014 was conducted.
+SELECTION CRITERIA: The search contained the following medical subject headings 
+and key text words: urinary tract infections, UTI, urine/analysis, 
+urine/microbiology, urinalysis, specimen handling, preservation, biological, 
+preservation, boric acid, boric acid/borate, refrigeration, storage, time 
+factors, transportation, transport time, time delay, time factor, timing, urine 
+specimen collection, catheters, indwelling, urinary reservoirs, continent, 
+urinary catheterization, intermittent urethral catheterization, clean voided, 
+midstream, Foley, suprapubic, bacteriological techniques, and microbiological 
+techniques.
+MAIN RESULTS: Both boric acid and refrigeration adequately preserved urine 
+specimens prior to their processing for up to 24 h. Urine held at room 
+temperature for more than 4 h showed overgrowth of both clinically significant 
+and contaminating microorganisms. The overall strength of this body of evidence, 
+however, was rated as low. For urine specimens collected from women, there was 
+no difference in rates of contamination for midstream urine specimens collected 
+with or without cleansing. The overall strength of this evidence was rated as 
+high. The levels of diagnostic accuracy of midstream urine collection with or 
+without cleansing were similar, although the overall strength of this evidence 
+was rated as low. For urine specimens collected from men, there was a reduction 
+in contamination in favor of midstream clean-catch over first-void specimen 
+collection. The strength of this evidence was rated as high. Only one study 
+compared midstream collection with cleansing to midstream collection without 
+cleansing. Results showed no difference in contamination between the two methods 
+of collection. However, imprecision was due largely to the small event size. The 
+diagnostic accuracy of midstream urine collection from men compared to straight 
+catheterization or suprapubic aspiration was high. However, the overall strength 
+of this body of evidence was rated as low. For urine specimens collected from 
+children and infants, the evidence comparing contamination rates for midstream 
+urine collection with cleansing, midstream collection without cleansing, sterile 
+urine bag collection, and diaper collection pointed to larger reductions in the 
+odds of contamination in favor of midstream collection with cleansing over the 
+other methods of collection. This body of evidence was rated as high. The 
+accuracy of diagnosis of urinary tract infection from midstream clean-catch 
+urine specimens, sterile urine bag specimens, or diaper specimens compared to 
+straight catheterization or suprapubic aspiration was varied.
+AUTHORS' CONCLUSIONS: No recommendation for or against is made for delayed 
+processing of urine stored at room temperature, refrigerated, or preserved in 
+boric acid. This does not preclude the use of refrigeration or chemical 
+preservatives in clinical practice. It does indicate, however, that more 
+systematic studies evaluating the utility of these measures are needed. If 
+noninvasive collection is being considered for women, midstream collection with 
+cleansing is recommended, but no recommendation for or against is made for 
+midstream collection without cleansing. If noninvasive collection is being 
+considered for men, midstream collection with cleansing is recommended and 
+collection of first-void urine is not recommended. No recommendation for or 
+against is made for collection of midstream urine without cleansing. If 
+noninvasive collection is being considered for children, midstream collection 
+with cleansing is recommended and collection in sterile urine bags, from 
+diapers, or midstream without cleansing is not recommended. Whether midstream 
+collection with cleansing can be routinely used in place of catheterization or 
+suprapubic aspiration is unclear. The data suggest that midstream collection 
+with cleansing is accurate for the diagnosis of urinary tract infections in 
+infants and children and has higher average accuracy than sterile urine bag 
+collection (data for diaper collection were lacking); however, the overall 
+strength of evidence was low, as multivariate modeling could not be performed, 
+and thus no recommendation for or against can be made.
+
+Copyright © 2015 LaRocco et al.
+
+DOI: 10.1128/CMR.00030-15
+PMCID: PMC4771218
+PMID: 26598386 [Indexed for MEDLINE]
+
+
+33. J Infect Chemother. 2019 Oct;25(10):797-800. doi: 10.1016/j.jiac.2019.04.004. 
+Epub 2019 Apr 25.
+
+An investigation of the effectiveness against bacteriuria of silver-coated 
+catheters in short-term urinary catheter applications: A randomized controlled 
+study.
+
+Akcam FZ(1), Kaya O(2), Temel EN(3), Buyuktuna SA(4), Unal O(5), Yurekli VA(6).
+
+Author information:
+(1)Suleyman Demirel University, Department of Infectious Diseases and Clinical 
+Microbiology, Isparta, Turkey. Electronic address: fusunakcam@sdu.edu.tr.
+(2)Suleyman Demirel University, Department of Infectious Diseases and Clinical 
+Microbiology, Isparta, Turkey. Electronic address: onurkaya@sdu.edu.tr.
+(3)Suleyman Demirel University, Department of Infectious Diseases and Clinical 
+Microbiology, Isparta, Turkey. Electronic address: dresratemel@gmail.com.
+(4)Cumhuriyet University, Department of Infectious Diseases and Clinical 
+Microbiology, Sivas, Turkey. Electronic address: seyitbuyuktuna@gmail.com.
+(5)Suleyman Demirel University, Department of Infectious Diseases and Clinical 
+Microbiology, Isparta, Turkey. Electronic address: onurunal_84@hotmail.com.
+(6)Suleyman Demirel University, Department of Neurology, Isparta, Turkey. 
+Electronic address: vedatyurekli@yahoo.com.
+
+AIM: The aim of this study was to investigate the effectiveness of 
+antimicrobial-coated catheters against bacteriuria and urinary tract infection 
+in patients who have urinary catheterization.
+METHODS: Twenty eight and twenty six people similar in terms of demographic 
+characteristics and primary and underlying diseases were randomly selected from 
+patients undergoing short-time urinary catheterization in the intensive care 
+unit. Silver-coated slicone foley catheters and normal slicone foley catheters 
+were used for uninary catheterization in the first and second group of the 
+patients respectively. Urine specimens were collected from patients at 2-day 
+intervals and assessed in terms of bacteriuria.
+RESULTS: Bacteriuria was found in 12 (46.2%) of the patients using normal 
+catheters and 13 (46.4%) of those using silver-coated catheters throughout the 
+monitoring period. No significant relationship was determined between use of 
+different catheter types and bacteriuria (p = 0.98). The most common 
+microorganism was identified as E. coli in the normal catheter group while 
+microorganism other than E. coli was identified in the silver-coated catheter 
+group. The prevalence of bacteriuria was statistically significantly higher in 
+patients with a history of hospitalization in the previous 3 months (p = 0.028).
+CONCLUSION: The use of silver-coated silicone catheters was not shown to have a 
+protective effect against bacteriuria in this study. Further well-designed 
+studies with larger case numbers are now needed to confirm whether history of 
+hospitalization, which emerged as a statistically significant factor in this 
+study, increases the prevalence of catheter-related bacteriuria.
+
+Copyright © 2019 Japanese Society of Chemotherapy and The Japanese Association 
+for Infectious Diseases. Published by Elsevier Ltd. All rights reserved.
+
+DOI: 10.1016/j.jiac.2019.04.004
+PMID: 31030965 [Indexed for MEDLINE]
+
+
+34. J Endourol. 2016 Jan;30(1):63-8. doi: 10.1089/end.2015.0511. Epub 2015 Oct 20.
+
+A Single Dose of Intraoperative Antibiotics Is Sufficient to Prevent Urinary 
+Tract Infection During Ureteroscopy.
+
+Chew BH(1), Flannigan R(1), Kurtz M(2), Gershman B(2), Arsovska O(1), Paterson 
+RF(1), Eisner BH(2), Lange D(1).
+
+Author information:
+(1)1 University of British Columbia , Vancouver, British Columbia, Canada .
+(2)2 Department of Urology, Massachusetts General Hospital, Harvard Medical 
+School.
+
+Comment in
+    J Urol. 2017 May;197(5):1276. doi: 10.1016/j.juro.2017.02.057.
+
+BACKGROUND: American Urology Association (AUA) Best Practice Guidelines for 
+ureteroscopic stone treatment recommend antibiotic coverage for <24 hours 
+following the procedure. The purpose of this study was to evaluate if the 
+addition of postoperative antibiotics reduces urinary tract infections (UTIs) 
+following ureteroscopic stone treatment beyond the recommended preoperative 
+dose.
+METHODS: A retrospective review was performed of consecutive patients at two 
+institutions, University of British Columbia and Massachusetts General Hospital, 
+Harvard. All patients received a single dose of antibiotics before ureteroscopic 
+stone treatment. A subset of patients was also given postoperative antibiotics. 
+The rate of UTI was compared in patients receiving only preoperative antibiotics 
+(group 1) vs those who received pre- and postoperative antibiotics (group 2).
+RESULTS: Eighty-one patients underwent ureteroscopy for renal calculi. Mean time 
+to follow up was 42 ± 88 days. Eight (9.9%) patients in total (two from group 1 
+and six from group 2, p = 0.1457) developed UTIs postoperatively. In group 1, 
+both patients presented with pyelonephritis (n = 2); those patients with 
+infections in group 2 presented with urosepsis (n = 2) and cystitis (n = 2) and 
+two patients had asymptomatic bacteriuria. Risk factors such as preoperative 
+stenting, nephrostomy tubes, and foley catheters neither differed between groups 
+nor did they predispose patients to postoperative infections.
+CONCLUSIONS: The postoperative UTI rate in this study (9.9%) is consistent with 
+previous reports. Our data suggest that a single preoperative dose of 
+antibiotics is sufficient, and additional postoperative antibiotics do not 
+decrease infection rates after ureteroscopic stone treatment. Risk for selection 
+bias is a potential limitation.
+
+DOI: 10.1089/end.2015.0511
+PMID: 26413885 [Indexed for MEDLINE]
+
+
+35. Zhonghua Wei Chang Wai Ke Za Zhi. 2020 Aug 25;23(8):766-773. doi: 
+10.3760/cma.j.cn.441530-20190924-00357.
+
+[Verification of clinical applicability of the non-special perioperative 
+administration for enhanced recovery after surgery of gastric cancer patients: a 
+Chinese single-center observational report].
+
+[Article in Chinese; Abstract available in Chinese from the publisher]
+
+He WT(1), Deng JY(1), Liang H(1), Zhang RP(1), Guo JT(1), Zhang NN(1), Guo 
+SW(1).
+
+Author information:
+(1)Department of Gastroenterology, National Clinical Research Center for Cancer, 
+Tianjin Key Laboratory ofCancer Prevention and Therapy, Tianjin Clinical 
+Research Center for Cancer, Tianjin Medical University Cancer Institute and 
+Hospital, Tianjin 300060, China.
+
+Objective: To verify clinical applicability of the non-special perioperative 
+administration for enhanced recovery after surgery (ERAS) proposed by Japanese 
+scholars in Chinese gastric cancer patients. Methods: The main measures of the 
+non-special perioperative administration for ERAS are as follows: (1) discussion 
+of multiple disciplinary team before surgery; (2) rehabilitation education for 
+patients; (3) no routine bowel preparation before surgery; (4) placement of 
+nasogastric tube for decompression routinely before operation and removal as 
+early as 24 hours after surgery; (5) appropriate rehydration; (6) antibiotic 
+prophylaxis before surgery; (7) place abdominal drainage tubes when necessary; 
+(8) epidural patient-controlled analgesia and oral medication for postoperative 
+pain management; (9) start low-molecular-weight heparin injection 48h after 
+surgery and ambulation every day to prevent deep vein thrombosis; (10) 
+postoperative dietary management and supplement with parenteral nutrition 
+intermittently; (11) remove Foley catheter about 24 hours after surgery. A 
+retrospective cohort study was performed, including 203 patients undergoing 
+radical gastrectomy at Department of Gastroenterology, Tianjin Medical 
+University Cancer Institute and Hospital from January 2017 to December 2018. 
+Inclusion criteria were patients who were ≤75 years old without distant 
+metastasis by preoperative examination, were diagnosed as gastric adenocarcinoma 
+by postoperative histopathology and had complete clinicopathological and 
+follow-up data. Patients with history of other malignancies and gastrectomy, 
+extensive implantation of the abdominal cavity or malignant ascites by 
+intraoperative exploration, death within 1 month after surgery, and residual 
+gastric cancer were excluded. The perioperative management methods were chosen 
+by patients. There were 123 patients who followed non-special perioperative 
+administration for ERAS (non-special preparation group) and 80 patients who 
+underwent traditional perioperative management (traditional method group). The 
+primary outcomes (postoperative hospital stay, time to the first flatus, time to 
+the first fluid diet, time to the first ambulatory activity, morbidity of 
+postoperative complication, mortality, and readmission rate) and secondary 
+outcomes (operative time, intraoperative blood loss and postoperative pain 
+score) were compared between the two groups. Results: Compared to the 
+traditional method group, the non-special preparation group had shorter time to 
+the first flatus [(3.6±1.1) days vs. (4.8±1.4) days, t=3.134, P=0.003], shorter 
+time to the first liquid diet [(2.6±0.9) days vs. (5.5±1.6) days, t=15.105, 
+P<0.001], shorter time to the first ambulatory activity [(1.9±0.5) days vs. 
+(4.1±1.1) days, t=8.543, P<0.001] and shorter postoperative hospital stay 
+[(9.6±2.3) days vs. (12.9±2.3) days, t=5.020, P<0.001]. Besides, incidences of 
+pancreatic leakage [6.5% (8/123) vs. 16.3% (13/80), χ(2)=4.964, P=0.026], 
+lymphatic leakage [1.6% (2/123) vs. 13.8% (11/80), χ(2)=11.887, P=0.001], 
+peritoneal effusion [2.4% (3/123) vs. 10.0% (8/80), χ(2)=4.032, P=0.045], and 
+gastroparesis [0.8% (1/123) vs. 7.5% (6/80), χ(2)=4.657, P=0.031] in the 
+non-special preparation group were significantly lower. The overall morbidity of 
+postoperative complications and incidences of pulmonary infection and intestinal 
+adhesion were not significantly different between the two groups (all P>0.05). 
+As for the secondary outcomes, compared to the traditional method group, the 
+non-special preparation group had less intraoperative blood loss [(80.4±24.4) ml 
+vs. (100.5±19.4) ml, t=3.134, P=0.003] and lower postoperative pain score 
+[postoperative day 1: (4.4±0.3) vs. (5.3±0.8), t=2.504, P=0.037],while the 
+difference in operative time was not significant (P>0.05). Conclusion: The 
+non-special perioperative administration for ERAS proposed by Japanese scholars 
+is effective and safe, which has certain clinical applicability and value for 
+Chinese patients with gastric cancer.
+
+Publisher: 目的： 
+加速康复外科（ERAS）管理途径已被大家广为熟悉并备受关注，但因其须遵循的条目繁多、且需患者高度依从，故并未普及。日本学者提出的非特殊准备胃癌根治术后ERAS管理被认为是一种新的可选择方法，本研究对这种方法是否适用于中国临床进行验证。 
+方法： 
+非特殊准备胃癌根治术后ERAS管理主要措施为：（1）术前经多学科诊疗模式讨论；（2）对患者行康复教育；（3）不常规行术前肠道准备；（4）术前常规放置鼻胃管减压，术后最快24 
+h内拔除；（5）适量补液；（6）手术前预防性使用抗生素；（7）按需放置腹腔引流；（8）术后疼痛管理采用硬膜外患者自控镇痛及口服药物；（9）术后48 
+h开始注射低分子肝素及每日离床活动预防深静脉血栓；（10）术后饮食管理，期间辅以肠外营养；（11）术后24 
+h左右开始拔除导尿管。采用回顾性队列研究方法，纳入2017年1月至2018年12月期间，在天津医科大学肿瘤医院胃肠肿瘤科行胃癌根治术治疗的203例患者的临床资料。病例入选标准：年龄≤75岁、术前经检查未发现有远处转移、术后组织病理诊断确定胃腺癌以及具备完善的临床病理数据及随访材料；排除有其他恶性肿瘤病史及胃切除史、术中探查发现有腹腔广泛种植转移或恶性腹水、术后1个月内死亡以及残胃癌患者。依据患者意愿，选取围手术期管理方式。有123例患者遵从日本东京大学附属医院提出的非特殊准备ERAS方式（非特殊准备组）进行围手术期管理，80例接受传统围手术期管理（传统方法组），比较两组主要结局指标（术后住院时间和首次排粪时间、流质饮食时间、下床活动时间以及术后并发症发生率、病死率、再入院率）和次要结局指标（手术时长、术中失血量及术后疼痛评分）。 
+结果： 
+非特殊准备组与传统方法组主要结局指标相比，首次排粪时间[（3.6±1.1）d比（4.8±1.4）d，t=3.134，P=0.003]、首次流质饮食时间[（2.6±0.9）d比（5.5±1.6）d，t=15.105，P<0.001]、首次下床活动时间[（1.9±0.5）d比（4.1±1.1）d，t=8.543，P<0.001]均较早，术后住院时间[（9.6±2.3）d比（12.9±2.3）d，t=5.020，P<0.001]较短，差异均有统计学意义。此外，非特殊准备组胰漏[6.5%（8/123）比16.3%（13/80），χ(2)=4.964，P=0.026]、淋巴漏[1.6%（2/123）比13.8%（11/80），χ(2)=11.887，P=0.001]、腹腔积液[2.4%（3/123）比10.0%（8/80），χ(2)=4.032，P=0.045]和胃瘫[0.8%（1/123）比7.5%（6/80），χ(2)=4.657，P=0.031]的发生率均较低。但两组术后总体并发症发生率、肺感染以及肠粘连的发生率差异无统计学意义（均P>0.05）。次要结局指标中，非特殊准备组的术中失血量[（80.4±24.4）ml比（100.5±19.4）ml，t=3.134，P=0.003]以及术后疼痛评分[术后第1天：（4.4±0.3）分比（5.3±0.8）分，t=2.504，P=0.037]均低于传统组；但两组手术时间差异无统计学意义（P>0.05）。 
+结论： 非特殊准备的胃癌根治术后ERAS方案有效、安全，对于中国胃癌手术患者具有一定的临床适用性和应用价值。.
+
+DOI: 10.3760/cma.j.cn.441530-20190924-00357
+PMID: 32810948 [Indexed for MEDLINE]
+
+
+36. Urologiia. 2016 Apr;(2):33-36.
+
+[Comparative evaluation of the efficacy of uncoated and coated with silver 
+silicone urethral catheters for prevention of urinary tract infections among 
+patients of the intensive care unit].
+
+[Article in Russian]
+
+Sergevnin VI(1), Klyuchareva NM(2), Antipin DP(2), Laricheva EN(2).
+
+Author information:
+(1)Perm State Medical University named after Academician E.A. Wagner Ministry of 
+Health of the Russian Federation.
+(2)State Hospital named after Academician E.A. Wagner, Perm Region, Berezniki.
+
+The goal of the research is to compare and evaluate the efficiency of using 
+silver - coated silicone urinary catheters and catheters without coating for 
+prevention urinary tract infections.
+MATERIALS AND METHODS: The study included 57 adult patients of intensive care 
+unit, which have silicone bladder catheters "Foley" without coating, and 57 
+patients were catheterized using catheters coated with silver. We revealed 
+symptomatic and asymptomatic urinary tract infections in our research.
+RESULTS: During the 14-day bladder catheterization period the preventive effect 
+of urethral silicone catheters coated with silver for prevention of manifest and 
+subclinical urinary tract infections was determined.
+
+PMID: 28247658 [Indexed for MEDLINE]

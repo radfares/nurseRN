@@ -177,6 +177,17 @@ class ResilientOrchestrator:
                 self._registry = None
         return self._registry
 
+    def _resolve_agent(self, agent_name: str) -> Optional[Any]:
+        """Resolve agent instance from name using registry."""
+        if self.registry is None:
+            logger.error("AgentRegistry not available, cannot resolve agent")
+            return None
+        try:
+            return self.registry.get_agent(agent_name)
+        except Exception as e:
+            logger.error(f"Failed to resolve agent '{agent_name}': {e}")
+            return None
+
     def execute_with_resilience(
         self,
         agent_name: str,
@@ -330,6 +341,11 @@ class ResilientOrchestrator:
         """
         last_error = None
 
+        # Resolve agent instance from registry
+        agent = self._resolve_agent(agent_name)
+        if agent is None:
+            return False, None, f"Agent '{agent_name}' not found in registry"
+
         for attempt in range(self.retry_config.max_retries + 1):
             if attempt > 0:
                 delay = self.retry_config.get_delay(attempt - 1)
@@ -339,6 +355,7 @@ class ResilientOrchestrator:
 
             try:
                 success, content, error = self._attempt_execution(
+                    agent=agent,
                     agent_name=agent_name,
                     query=query,
                     metadata=metadata,
@@ -358,12 +375,19 @@ class ResilientOrchestrator:
 
     def _attempt_execution(
         self,
+        agent: Any,
         agent_name: str,
         query: str,
         metadata: Optional[Dict[str, Any]],
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         Single execution attempt via MCP dispatch.
+
+        Args:
+            agent: The agent instance to execute
+            agent_name: Name of the agent (for MCP message recipient)
+            query: Query string to send
+            metadata: Optional metadata dict
 
         Returns:
             Tuple of (success, content, error_message)
@@ -387,8 +411,8 @@ class ResilientOrchestrator:
                 if validation.sanitized_message:
                     mcp_message = validation.sanitized_message
 
-            # Dispatch to agent
-            response = dispatch_mcp(mcp_message)
+            # Dispatch to agent (passing both agent instance and message)
+            response = dispatch_mcp(agent, mcp_message)
 
             # Check response
             if response.message_type == "error":

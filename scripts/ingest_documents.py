@@ -4,7 +4,8 @@ Document Ingestion CLI for Personal Knowledge Library
 Command-line tool for managing personal document library.
 
 Created: 2025-12-13
-Phase: B5
+Updated: 2025-12-16 (Refactored to use KnowledgeIngestionService)
+Phase: B5 -> Production-Safe Refactor
 
 Usage:
     python scripts/ingest_documents.py add /path/to/file.pdf
@@ -25,12 +26,19 @@ from typing import List, Optional
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.knowledge.document_ingester import DocumentIngester, ChunkRecord
+# Use the unified ingestion service (R1 requirement)
+from src.knowledge.ingestion_service import (
+    get_ingestion_service,
+    KnowledgeIngestionService,
+    IngestionResult,
+)
 from src.knowledge.vector_store import (
     PersonalLibraryVectorStore,
+    VectorStoreFactory,
     get_personal_library_store,
     COLLECTION_PERSONAL,
 )
+from src.knowledge.config import get_config
 
 # Default paths
 DEFAULT_DB_PATH = str(PROJECT_ROOT / "data" / "chroma_db")
@@ -66,14 +74,16 @@ def print_info(message: str) -> None:
 
 def get_store(db_path: str = DEFAULT_DB_PATH) -> PersonalLibraryVectorStore:
     """Get or create the vector store."""
-    return get_personal_library_store(
-        collection_name=COLLECTION_PERSONAL,
-        db_path=db_path
-    )
+    return VectorStoreFactory.get_store("personal", db_path=db_path)
+
+
+def get_service() -> KnowledgeIngestionService:
+    """Get the ingestion service singleton."""
+    return get_ingestion_service()
 
 
 def cmd_add(args: argparse.Namespace) -> int:
-    """Add a single file to the library."""
+    """Add a single file to the library using KnowledgeIngestionService."""
     file_path = Path(args.file)
 
     print_header("Add Document to Personal Library")
@@ -89,33 +99,35 @@ def cmd_add(args: argparse.Namespace) -> int:
     print_info(f"Processing: {file_path.name}")
 
     try:
-        # Initialize ingester
-        ingester = DocumentIngester(
-            chunk_size=args.chunk_size,
-            overlap=args.overlap
-        )
+        # Use the unified ingestion service (R1 requirement)
+        service = get_service()
+        config = get_config()
 
         # Check if format is supported
-        if file_path.suffix.lower() not in ingester.SUPPORTED_FORMATS:
+        if file_path.suffix.lower() not in config.supported_extensions:
             print_error(f"Unsupported format: {file_path.suffix}")
-            print_info(f"Supported: {', '.join(ingester.SUPPORTED_FORMATS.keys())}")
+            print_info(f"Supported: {', '.join(config.supported_extensions)}")
             return 1
 
-        # Ingest file
-        chunks = ingester.ingest_file(str(file_path))
+        # Ingest file using the service
+        result: IngestionResult = service.ingest_file(
+            file_path=str(file_path),
+            doc_type=args.doc_type if hasattr(args, 'doc_type') and args.doc_type else None,
+            store_type="personal",
+            auto_commit=True,
+        )
 
-        if not chunks:
-            print_error("No content extracted from file")
+        if not result.success:
+            print_error(f"Ingestion failed: {result.error_message}")
             return 1
 
-        print_info(f"Extracted {len(chunks)} chunks")
+        print_info(f"Extracted {result.chunk_count} chunks")
+        if result.cache_hits > 0:
+            print_info(f"Cache hits: {result.cache_hits} chunks, {result.embedding_cache_hits} embeddings")
 
-        # Store in vector database
-        store = get_store(args.db_path)
-        count = store.add_chunks(chunks)
-
-        print_success(f"Added {count} chunks to library")
-        print_info(f"Document ID: {chunks[0].doc_id}")
+        print_success(f"Added {result.chunk_count} chunks to library")
+        print_info(f"Document key: {result.doc_key}")
+        print_info(f"Ingestion run: {result.ingestion_run_id}")
 
         return 0
 
@@ -125,7 +137,7 @@ def cmd_add(args: argparse.Namespace) -> int:
 
 
 def cmd_add_folder(args: argparse.Namespace) -> int:
-    """Add all documents from a folder."""
+    """Add all documents from a folder using KnowledgeIngestionService."""
     folder_path = Path(args.folder)
 
     print_header("Add Folder to Personal Library")
@@ -142,11 +154,9 @@ def cmd_add_folder(args: argparse.Namespace) -> int:
     print_info(f"Recursive: {args.recursive}")
 
     try:
-        # Initialize ingester
-        ingester = DocumentIngester(
-            chunk_size=args.chunk_size,
-            overlap=args.overlap
-        )
+        # Use the unified ingestion service (R1 requirement)
+        service = get_service()
+        config = get_config()
 
         # Get supported files
         if args.recursive:
@@ -154,24 +164,25 @@ def cmd_add_folder(args: argparse.Namespace) -> int:
         else:
             files = list(folder_path.glob("*"))
 
+        supported_extensions = set(config.supported_extensions)
         supported_files = [
             f for f in files
-            if f.is_file() and f.suffix.lower() in ingester.SUPPORTED_FORMATS
+            if f.is_file() and f.suffix.lower() in supported_extensions
         ]
 
         if not supported_files:
             print_warning("No supported files found")
-            print_info(f"Supported formats: {', '.join(ingester.SUPPORTED_FORMATS.keys())}")
+            print_info(f"Supported formats: {', '.join(config.supported_extensions)}")
             return 0
 
         print_info(f"Found {len(supported_files)} supported files")
         print()
 
         # Process files with progress
-        store = get_store(args.db_path)
         success_count = 0
         fail_count = 0
         total_chunks = 0
+        total_cache_hits = 0
 
         for i, file_path in enumerate(supported_files, 1):
             # Progress indicator
@@ -179,18 +190,23 @@ def cmd_add_folder(args: argparse.Namespace) -> int:
             print(f"  {progress} Processing: {file_path.name}...", end=" ", flush=True)
 
             try:
-                chunks = ingester.ingest_file(str(file_path))
-                if chunks:
-                    store.add_chunks(chunks)
-                    total_chunks += len(chunks)
+                result = service.ingest_file(
+                    file_path=str(file_path),
+                    store_type="personal",
+                    auto_commit=True,
+                )
+                if result.success:
+                    total_chunks += result.chunk_count
+                    total_cache_hits += result.cache_hits + result.embedding_cache_hits
                     success_count += 1
-                    print(f"✓ ({len(chunks)} chunks)")
+                    cache_info = f", {result.cache_hits} cached" if result.cache_hits > 0 else ""
+                    print(f"OK ({result.chunk_count} chunks{cache_info})")
                 else:
                     fail_count += 1
-                    print("✗ (no content)")
+                    print(f"FAIL ({result.error_message[:30]}...)")
             except Exception as e:
                 fail_count += 1
-                print(f"✗ ({str(e)[:30]}...)")
+                print(f"FAIL ({str(e)[:30]}...)")
 
         print()
         print_header("Summary")
@@ -198,6 +214,8 @@ def cmd_add_folder(args: argparse.Namespace) -> int:
         if fail_count > 0:
             print_warning(f"Failed: {fail_count} files")
         print_info(f"Total chunks added: {total_chunks}")
+        if total_cache_hits > 0:
+            print_info(f"Total cache hits: {total_cache_hits}")
 
         return 0 if fail_count == 0 else 1
 
@@ -393,12 +411,17 @@ Examples:
     add_parser = subparsers.add_parser("add", help="Add a single document")
     add_parser.add_argument("file", help="Path to the document file")
     add_parser.add_argument(
+        "--doc-type", type=str, default=None,
+        choices=["clinical", "procedural", "research", "default"],
+        help="Document type for chunking strategy (auto-detected if not specified)"
+    )
+    add_parser.add_argument(
         "--chunk-size", type=int, default=2000,
-        help="Target chunk size in characters (default: 2000)"
+        help="Target chunk size in characters (default: 2000, overridden by config)"
     )
     add_parser.add_argument(
         "--overlap", type=int, default=200,
-        help="Overlap between chunks (default: 200)"
+        help="Overlap between chunks (default: 200, overridden by config)"
     )
 
     # Add-folder command

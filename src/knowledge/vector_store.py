@@ -29,6 +29,11 @@ COLLECTION_PUBMED_CACHE = "pubmed_cache"      # Phase C
 COLLECTION_ARXIV_CACHE = "arxiv_cache"        # Phase C
 COLLECTION_COMBINED = "combined_index"        # Phase C
 
+# RAG-specific collections (Phase 1 - Foundation Enhancement)
+COLLECTION_CLINICAL = "clinical_knowledge"     # Clinical facts, guidelines
+COLLECTION_PROCEDURAL = "procedural_knowledge" # Protocols, workflows
+COLLECTION_RESEARCH = "research_cache"         # Research findings cache
+
 
 class VectorStoreError(Exception):
     """Base exception for vector store errors."""
@@ -239,7 +244,8 @@ class PersonalLibraryVectorStore:
         self,
         query: str,
         limit: int = 5,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
+        include_inactive: bool = False
     ) -> List[SearchResult]:
         """
         Search the vector store for relevant chunks.
@@ -248,6 +254,7 @@ class PersonalLibraryVectorStore:
             query: Search query text
             limit: Maximum number of results to return
             filters: Optional metadata filters (e.g., {"source_type": "personal"})
+            include_inactive: If False (default), only return is_active=true chunks
 
         Returns:
             List of SearchResult objects, sorted by relevance (highest first)
@@ -256,9 +263,16 @@ class PersonalLibraryVectorStore:
 
         self._trace("TRACE-B2-003", query=query[:50], limit=limit)
 
+        # Apply is_active filter by default (R6 requirement)
+        effective_filters = dict(filters) if filters else {}
+        if not include_inactive:
+            # Only return active chunks by default
+            if "is_active" not in effective_filters:
+                effective_filters["is_active"] = True
+
         try:
             # Perform search
-            docs = self.db.search(query=query, limit=limit, filters=filters)
+            docs = self.db.search(query=query, limit=limit, filters=effective_filters if effective_filters else None)
 
             # Convert to SearchResults
             results: List[SearchResult] = []
@@ -501,3 +515,220 @@ def get_personal_library_store(
         collection_name=collection_name,
         db_path=db_path
     )
+
+
+# =============================================================================
+# RAG-Enhanced Vector Stores (Phase 1 - Foundation Enhancement)
+# =============================================================================
+
+class ClinicalKnowledgeStore(PersonalLibraryVectorStore):
+    """
+    Vector store for clinical knowledge (facts, guidelines, evidence).
+
+    Optimized for storing and retrieving clinical facts that require
+    high accuracy and source attribution.
+
+    Example:
+        store = ClinicalKnowledgeStore()
+        store.add_chunks(clinical_chunks)
+        results = store.search("diabetes treatment guidelines", limit=5)
+    """
+
+    def __init__(self, db_path: str = "data/chroma_db", embedder: Optional[OpenAIEmbedder] = None):
+        """
+        Initialize clinical knowledge store.
+
+        Args:
+            db_path: Path to ChromaDB storage
+            embedder: Optional custom embedder
+        """
+        super().__init__(
+            collection_name=COLLECTION_CLINICAL,
+            db_path=db_path,
+            embedder=embedder
+        )
+        logger.info("ClinicalKnowledgeStore initialized")
+
+
+class ProceduralKnowledgeStore(PersonalLibraryVectorStore):
+    """
+    Vector store for procedural knowledge (protocols, workflows, procedures).
+
+    Optimized for storing step-by-step procedures and clinical protocols
+    that clinicians need to follow.
+
+    Example:
+        store = ProceduralKnowledgeStore()
+        store.add_chunks(protocol_chunks)
+        results = store.search("IV insertion procedure", limit=5)
+    """
+
+    def __init__(self, db_path: str = "data/chroma_db", embedder: Optional[OpenAIEmbedder] = None):
+        """
+        Initialize procedural knowledge store.
+
+        Args:
+            db_path: Path to ChromaDB storage
+            embedder: Optional custom embedder
+        """
+        super().__init__(
+            collection_name=COLLECTION_PROCEDURAL,
+            db_path=db_path,
+            embedder=embedder
+        )
+        logger.info("ProceduralKnowledgeStore initialized")
+
+
+class ResearchCacheStore(PersonalLibraryVectorStore):
+    """
+    Vector store for caching research findings and literature.
+
+    Used for caching search results from external sources (PubMed, etc.)
+    to reduce API calls and improve response times.
+
+    Example:
+        store = ResearchCacheStore()
+        store.add_chunks(pubmed_chunks)
+        results = store.search("fall prevention nursing", limit=10)
+    """
+
+    def __init__(self, db_path: str = "data/chroma_db", embedder: Optional[OpenAIEmbedder] = None):
+        """
+        Initialize research cache store.
+
+        Args:
+            db_path: Path to ChromaDB storage
+            embedder: Optional custom embedder
+        """
+        super().__init__(
+            collection_name=COLLECTION_RESEARCH,
+            db_path=db_path,
+            embedder=embedder
+        )
+        logger.info("ResearchCacheStore initialized")
+
+
+class VectorStoreFactory:
+    """
+    Factory for creating and managing multiple vector store instances.
+
+    Now config-driven: reads store configurations from KnowledgeConfig.
+
+    Provides singleton-like access to vector stores, ensuring only one
+    instance per store type exists at a time.
+
+    Example:
+        # Get stores by type (uses config for db_path and collection names)
+        clinical_store = VectorStoreFactory.get_store("clinical")
+        procedural_store = VectorStoreFactory.get_store("procedural")
+
+        # Get with custom path (overrides config)
+        test_store = VectorStoreFactory.get_store("clinical", db_path="data/test_db")
+
+        # Clear cached instances
+        VectorStoreFactory.clear_instances()
+    """
+
+    _instances: Dict[str, PersonalLibraryVectorStore] = {}
+
+    # Mapping of store types to their classes
+    _store_classes = {
+        "personal": PersonalLibraryVectorStore,
+        "clinical": ClinicalKnowledgeStore,
+        "procedural": ProceduralKnowledgeStore,
+        "research": ResearchCacheStore,
+    }
+
+    @classmethod
+    def _get_config(cls):
+        """Get knowledge config, with lazy import to avoid circular dependencies."""
+        try:
+            from src.knowledge.config import get_config
+            return get_config()
+        except ImportError:
+            return None
+
+    @classmethod
+    def get_store(
+        cls,
+        store_type: str,
+        db_path: Optional[str] = None,
+        force_new: bool = False
+    ) -> PersonalLibraryVectorStore:
+        """
+        Get or create a vector store instance.
+
+        Args:
+            store_type: Type of store ("personal", "clinical", "procedural", "research")
+            db_path: Path to ChromaDB storage (uses config if None)
+            force_new: If True, create new instance even if one exists
+
+        Returns:
+            Vector store instance of the appropriate type
+
+        Raises:
+            ValueError: If store_type is not recognized
+        """
+        # Get db_path from config if not provided
+        if db_path is None:
+            config = cls._get_config()
+            if config:
+                db_path = config.db_path
+            else:
+                db_path = "data/chroma_db"
+
+        # Create unique key for this store configuration
+        cache_key = f"{store_type}:{db_path}"
+
+        # Return cached instance if available and not forcing new
+        if not force_new and cache_key in cls._instances:
+            logger.debug(f"Returning cached store: {cache_key}")
+            return cls._instances[cache_key]
+
+        # Get the store class - first check config, then fallback to hardcoded
+        store_class = cls._store_classes.get(store_type)
+        if store_class is None:
+            valid_types = list(cls._store_classes.keys())
+            raise ValueError(f"Unknown store type: {store_type}. Valid types: {valid_types}")
+
+        # Get collection name from config if available
+        config = cls._get_config()
+        collection_name = None
+        if config:
+            store_config = config.get_store_config(store_type)
+            collection_name = store_config.collection_name
+
+        # Create new instance
+        logger.info(f"Creating new {store_type} store at {db_path}")
+        if collection_name and store_class == PersonalLibraryVectorStore:
+            instance = store_class(collection_name=collection_name, db_path=db_path)
+        else:
+            instance = store_class(db_path=db_path)
+
+        # Cache the instance
+        cls._instances[cache_key] = instance
+
+        return instance
+
+    @classmethod
+    def clear_instances(cls) -> None:
+        """Clear all cached store instances."""
+        cls._instances.clear()
+        logger.info("VectorStoreFactory: All cached instances cleared")
+
+    @classmethod
+    def get_available_types(cls) -> List[str]:
+        """Get list of available store types."""
+        return list(cls._store_classes.keys())
+
+    @classmethod
+    def register_store_type(cls, type_name: str, store_class: type) -> None:
+        """
+        Register a custom store type.
+
+        Args:
+            type_name: Name for the store type
+            store_class: Class that extends PersonalLibraryVectorStore
+        """
+        cls._store_classes[type_name] = store_class
+        logger.info(f"Registered store type: {type_name} -> {store_class.__name__}")

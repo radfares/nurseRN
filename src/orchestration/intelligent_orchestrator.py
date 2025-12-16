@@ -526,7 +526,8 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
                     agent=agent,
                     action=task.action,
                     params=resolved_params,
-                    context=context
+                    context=context,
+                    registry_key=task.agent_name,  # Pass registry key for resilient execution
                 )
 
                 # Store result
@@ -616,7 +617,8 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         agent: Any,
         action: str,
         params: Dict[str, Any],
-        context: ConversationContext
+        context: ConversationContext,
+        registry_key: Optional[str] = None,
     ) -> Any:
         """
         Execute a specific action on an agent.
@@ -628,14 +630,16 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         """
         # Build query for agent based on action and params
         query = self._build_agent_query(action, params)
-        agent_name = getattr(agent, "agent_name", getattr(agent, "name", "Agent"))
+        # Use registry key for resilient execution, fall back to display name for logging
+        agent_display_name = getattr(agent, "agent_name", getattr(agent, "name", "Agent"))
+        agent_registry_name = registry_key or agent_display_name
 
         # Use resilient execution if enabled
         if self.use_resilient_execution and self.resilient_orchestrator:
-            logger.info(f"Using resilient execution for {agent_name}.{action}")
+            logger.info(f"Using resilient execution for {agent_display_name}.{action}")
 
             result: ExecutionResult = self.resilient_orchestrator.execute_with_resilience(
-                agent_name=agent_name,
+                agent_name=agent_registry_name,  # Use registry key, not display name
                 query=query,
                 metadata={"action": action, "params": params},
             )
