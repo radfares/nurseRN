@@ -722,9 +722,6 @@ def main_conversational():
                 project_management_loop()
                 break
 
-            # Add to context
-            context.add_message("user", user_message)
-
             # Process message (orchestrator handles everything)
             print("\n🤖 Assistant: ", end="", flush=True)
 
@@ -735,9 +732,6 @@ def main_conversational():
 
             # Print response
             print(response)
-
-            # Add to context
-            context.add_message("assistant", response)
 
             # Show suggestions
             if suggestions:

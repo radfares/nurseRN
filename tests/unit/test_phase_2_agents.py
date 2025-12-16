@@ -28,15 +28,20 @@ from src.services.agent_audit_logger import AuditLogger
 
 # Fixture to clean up audit logs after tests
 @pytest.fixture
-def clean_audit_logs():
+def clean_audit_logs(tmp_path):
     log_dir = Path(".claude/agent_audit_logs")
+    backup_dir = tmp_path / "agent_audit_logs_backup"
     if log_dir.exists():
-        shutil.rmtree(log_dir)
+        # Preserve any existing user logs; don't destroy local audit history.
+        shutil.move(str(log_dir), str(backup_dir))
     log_dir.mkdir(parents=True, exist_ok=True)
     yield
     # Cleanup after test
     if log_dir.exists():
         shutil.rmtree(log_dir)
+    if backup_dir.exists():
+        log_dir.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(backup_dir), str(log_dir))
 
 class TestPhase2AgentTemperature:
     """Verify all agents have temperature=0 (factual mode)."""

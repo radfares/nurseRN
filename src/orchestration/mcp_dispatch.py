@@ -22,12 +22,13 @@ This ensures:
 
 import time
 import logging
-from typing import Any, Union, Tuple
+from typing import Any, Union, Tuple, Optional
 
 from .mcp import MCPMessage
 from .mcp_validator import MCPMessageValidator, MCPValidationResult
 # Adjusted import to use relative path within src/orchestration
 from .safe_accessors import safe_get_content, safe_get_metadata
+from .request_context import RequestContext
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +59,29 @@ def dispatch_mcp(
     agent: Any,
     task_msg: MCPMessage,
     *,
+    request_ctx: Optional[RequestContext] = None,
     return_raw: bool = False,
     **agent_kwargs: Any
 ) -> Union[MCPMessage, Tuple[MCPMessage, Any]]:
+    """
+    Central dispatch for agent execution via MCP protocol.
+
+    Args:
+        agent: Agent instance to execute
+        task_msg: MCP task message
+        request_ctx: Optional immutable request context for tracing
+        return_raw: If True, return (MCPMessage, raw_response) tuple
+        **agent_kwargs: Additional kwargs for agent execution
+
+    Returns:
+        MCPMessage (result or error), or tuple if return_raw=True
+    """
+    # Phase 1: Log request_id if available
+    request_id = None
+    if request_ctx:
+        request_id = request_ctx.request_id
+        logger.info(f"[{request_id}] Dispatching to agent via MCP")
+
     # Validate incoming message using MCPMessageValidator
     validation_result = _validator.validate(task_msg)
 
@@ -90,11 +111,30 @@ def dispatch_mcp(
         )
         return (error_msg, None) if return_raw else error_msg
 
+    # Phase 1: CRITICAL GUARD - Abort if query is empty
+    query = task_msg.content
+    if not query or not query.strip():
+        error_msg = MCPMessage(
+            protocol_version="1.0",
+            message_type="error",
+            sender="MCPDispatch",
+            recipient=task_msg.sender,
+            task_id=task_msg.task_id,
+            content="Empty query detected - aborting dispatch to prevent invalid execution",
+            metadata={
+                "error_type": "empty_query",
+                "request_id": request_id,
+            },
+            timestamp_ms=int(time.time() * 1000),
+        )
+        logger.error(
+            f"[{request_id}] ABORT: Empty query detected in task {task_msg.task_id}. "
+            "This indicates a state propagation bug in the orchestrator."
+        )
+        return (error_msg, None) if return_raw else error_msg
+
     # ✅ Adapter: keep your existing "string prompt" contract
     start_time = time.time()
-    
-    # ✅ Adapter: keep your existing “string prompt” contract
-    query = task_msg.content
     raw = None
 
     try:
@@ -112,6 +152,14 @@ def dispatch_mcp(
 
     except Exception as e:
         latency_ms = int((time.time() - start_time) * 1000)
+        error_metadata = {
+            "error_type": type(e).__name__,
+            "latency_ms": latency_ms,
+            "request_metadata": task_msg.metadata
+        }
+        if request_id:
+            error_metadata["request_id"] = request_id
+
         error_msg = MCPMessage(
             protocol_version="1.0",
             message_type="error",
@@ -119,11 +167,7 @@ def dispatch_mcp(
             recipient=task_msg.sender,
             task_id=task_msg.task_id,
             content=str(e),
-            metadata={
-                "error_type": type(e).__name__,
-                "latency_ms": latency_ms,
-                "request_metadata": task_msg.metadata
-            },
+            metadata=error_metadata,
             timestamp_ms=int(time.time() * 1000),
         )
         return (error_msg, None) if return_raw else error_msg
@@ -131,6 +175,14 @@ def dispatch_mcp(
     latency_ms = int((time.time() - start_time) * 1000)
 
     # You already have safe accessors—use them here
+    result_metadata = {
+        "agent_metadata": safe_get_metadata(raw),
+        "request_metadata": task_msg.metadata,
+        "latency_ms": latency_ms,
+    }
+    if request_id:
+        result_metadata["request_id"] = request_id
+
     result_msg = MCPMessage(
         protocol_version="1.0",
         message_type="result",
@@ -138,12 +190,11 @@ def dispatch_mcp(
         recipient=task_msg.sender,
         task_id=task_msg.task_id,
         content=safe_get_content(raw),
-        metadata={
-            "agent_metadata": safe_get_metadata(raw),
-            "request_metadata": task_msg.metadata,
-            "latency_ms": latency_ms,
-        },
+        metadata=result_metadata,
         timestamp_ms=int(time.time() * 1000),
     )
+
+    if request_id:
+        logger.info(f"[{request_id}] Agent execution completed in {latency_ms}ms")
 
     return (result_msg, raw) if return_raw else result_msg

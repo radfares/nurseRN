@@ -12,6 +12,8 @@ from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+from src.orchestration.agent_specs import AgentSpec, build_default_agent_specs
+
 
 # Lazy import functions to avoid circular imports and defer initialization
 def _get_nursing_research():
@@ -80,6 +82,33 @@ class AgentRegistry:
         """Initialize registry with empty cache."""
         self._cache: Dict[str, Any] = {}
         self._factories = _AGENT_FACTORIES
+        self._specs: Dict[str, AgentSpec] = build_default_agent_specs()
+        self._alias_to_full: Dict[str, str] = self._build_alias_map()
+
+    def _build_alias_map(self) -> Dict[str, str]:
+        """
+        Build alias -> full-name mapping based on factory identity.
+
+        The registry allows both full keys (with underscores) and aliases
+        that point at the same factory. For planning/validation we normalize
+        to the canonical full key.
+        """
+        # Map factory function object -> canonical full key
+        factory_to_full: Dict[Callable[[], Any], str] = {}
+        for name, factory in self._factories.items():
+            if "_" in name:
+                factory_to_full[factory] = name
+
+        alias_map: Dict[str, str] = {}
+        for name, factory in self._factories.items():
+            canonical = factory_to_full.get(factory, name)
+            alias_map[name] = canonical
+        return alias_map
+
+    def normalize_agent_name(self, agent_name: str) -> str:
+        """Normalize an agent name or alias to its canonical full key."""
+        normalized = agent_name.lower().strip()
+        return self._alias_to_full.get(normalized, normalized)
 
     def get_agent(self, agent_name: str, cached: bool = True) -> Any:
         """
@@ -97,7 +126,7 @@ class AgentRegistry:
             RuntimeError: If agent fails to initialize
         """
         # Normalize name
-        normalized = agent_name.lower().strip()
+        normalized = self.normalize_agent_name(agent_name)
 
         if normalized not in self._factories:
             available = ', '.join(sorted(set(
@@ -127,13 +156,27 @@ class AgentRegistry:
         """Return list of available agent names (full names only)."""
         return sorted(k for k in self._factories.keys() if '_' in k)
 
+    def list_agent_specs(self) -> List[AgentSpec]:
+        """Return capability specs for available agents (full names only)."""
+        return [self._specs[name] for name in self.list_agents() if name in self._specs]
+
+    def get_agent_spec(self, agent_name: str) -> Optional[AgentSpec]:
+        """Get the capability spec for an agent or alias, if defined."""
+        normalized = self.normalize_agent_name(agent_name)
+        return self._specs.get(normalized)
+
+    def supports(self, agent_name: str, action: str) -> bool:
+        """Return True if (agent, action) is allowed by the capability catalog."""
+        spec = self.get_agent_spec(agent_name)
+        return bool(spec and spec.supports(action))
+
     def clear_cache(self) -> None:
         """Clear the agent cache."""
         self._cache.clear()
 
     def is_available(self, agent_name: str) -> bool:
         """Check if an agent name is valid."""
-        return agent_name.lower().strip() in self._factories
+        return self.normalize_agent_name(agent_name) in self._factories
 
 
 # Module-level functions for backward compatibility

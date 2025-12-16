@@ -243,7 +243,7 @@ All critical points now log with 🔍 PHASE2 TRACE markers:
 ## Test Coverage
 
 ### Test 1: Standard Orchestration Flow
-**File**: `test_pubmed_query_trace.py`
+**Note**: The original script-style runner `test_pubmed_query_trace.py` was removed to keep pytest reliable.
 **Scenario**: User asks for research articles on a medical topic
 **Result**: ✅ Query flows correctly, PubMed returns results
 **Trace**: Complete logging from user input to API response
@@ -352,7 +352,7 @@ The original issue ("PubMed isn't loading, it's being called with query=None") i
    - Added param resolution logging (lines 437-438)
    - Added query builder logging (lines 583-617)
 
-3. **`test_pubmed_query_trace.py`** (new file)
+3. Script-style runner was removed (kept pytest-only tests)
    - End-to-end trace test
    - Validates entire query flow
 

@@ -16,12 +16,14 @@ from dataclasses import dataclass, field
 from openai import OpenAI
 
 from src.orchestration.conversation_context import ConversationContext
+from src.orchestration.request_context import RequestContext
 from src.orchestration.agent_registry import AgentRegistry
 from src.orchestration.response_synthesizer import ResponseSynthesizer
 from src.orchestration.suggestion_engine import SuggestionEngine
 from src.orchestration.mcp import new_task, to_json_line
 from src.orchestration.mcp_dispatch import dispatch_mcp
 from src.orchestration.resilient_orchestrator import ResilientOrchestrator, ExecutionResult
+from src.orchestration.agent_specs import build_default_agent_specs
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +64,9 @@ class IntelligentOrchestrator:
         self.synthesizer = ResponseSynthesizer(client=self.client)
         self.suggestion_engine = SuggestionEngine()
 
+        # Agent specs for contract validation (Phase 4)
+        self.agent_specs = build_default_agent_specs()
+
         # Model for planning (cheaper, faster)
         self.planner_model = planner_model or "gpt-4o-mini"
 
@@ -98,9 +103,22 @@ class IntelligentOrchestrator:
             if not plan:
                 return self._handle_unclear_intent(message, context)
 
+            # Step 1.5: Create immutable RequestContext after validation
+            # Intent is derived from primary task action or generic label
+            intent = plan[0].action if plan else "execute_plan"
+            request_ctx = RequestContext.create(
+                query=message,
+                intent=intent,
+                metadata={
+                    "plan_size": len(plan),
+                    "conversation_phase": context.current_phase
+                }
+            )
+            logger.info(f"Created RequestContext {request_ctx.request_id} for intent: {intent}")
+
             # Step 2: Execute plan
             logger.info(f"Executing plan with {len(plan)} tasks")
-            results = self._execute_plan(plan, context, user_message=message)
+            results = self._execute_plan(plan, context, request_ctx=request_ctx, user_message=message)
 
             # Step 3: Synthesize results into coherent response
             logger.info("Synthesizing results")
@@ -108,7 +126,8 @@ class IntelligentOrchestrator:
                 user_message=message,
                 plan=plan,
                 results=results,
-                context=context
+                context=context,
+                request_id=request_ctx.request_id
             )
 
             # Add response to context
@@ -149,12 +168,14 @@ class IntelligentOrchestrator:
             )
 
             plan_json = json.loads(response.choices[0].message.content)
-            return self._parse_plan(plan_json)
+            plan = self._parse_plan(plan_json)
+            return self._validate_and_repair_plan(plan, user_message=message, context=context)
 
         except Exception as e:
             logger.error(f"Error creating execution plan: {e}", exc_info=True)
             logger.info("Falling back to rule-based planner")
-            return self._fallback_plan(message, context)
+            plan = self._fallback_plan(message, context)
+            return self._validate_and_repair_plan(plan, user_message=message, context=context)
 
     def _parse_plan(self, plan_json: Dict[str, Any]) -> List[AgentTask]:
         """Convert JSON plan into AgentTask objects."""
@@ -178,6 +199,86 @@ class IntelligentOrchestrator:
 
         logger.info(f"Created plan with {len(tasks)} tasks")
         return tasks
+
+    def _validate_and_repair_plan(
+        self,
+        plan: List[AgentTask],
+        *,
+        user_message: str,
+        context: ConversationContext,
+    ) -> List[AgentTask]:
+        """
+        Validate/repair an execution plan against the registry capability catalog.
+
+        This reduces drift between what the planner emits and what the system can
+        execute by:
+        - Normalizing agent aliases to canonical names
+        - Remapping unsupported (agent, action) pairs to a compatible agent
+        - Filling required params with contextual fallbacks
+        - Dropping invalid dependencies
+        """
+        if not plan:
+            return plan
+
+        # Build action -> candidate agents map from specs.
+        action_to_agents: Dict[str, List[str]] = {}
+        for spec in self.agent_registry.list_agent_specs():
+            for action_name in spec.actions.keys():
+                action_to_agents.setdefault(action_name, []).append(spec.name)
+
+        repaired: List[AgentTask] = []
+        seen_ids = set()
+
+        for idx, task in enumerate(plan, start=1):
+            task_id = (task.task_id or "").strip() or f"task_{idx}"
+            if task_id in seen_ids:
+                task_id = f"{task_id}_{idx}"
+            seen_ids.add(task_id)
+
+            action = (task.action or "").strip() or "search"
+            params = dict(task.params or {})
+
+            # Normalize and validate agent selection.
+            agent_name = self.agent_registry.normalize_agent_name(task.agent_name or "")
+            if not self.agent_registry.is_available(agent_name):
+                candidates = action_to_agents.get(action, [])
+                agent_name = candidates[0] if candidates else "nursing_research"
+
+            if not self.agent_registry.supports(agent_name, action):
+                candidates = action_to_agents.get(action, [])
+                if candidates:
+                    agent_name = candidates[0]
+
+            # Fill required params.
+            spec = self.agent_registry.get_agent_spec(agent_name)
+            action_spec = spec.action_spec(action) if spec else None
+            required = list(action_spec.required_params) if action_spec else []
+
+            topic_fallback = user_message
+            if not topic_fallback and hasattr(context, "get_last_user_message"):
+                topic_fallback = context.get_last_user_message()  # type: ignore[assignment]
+
+            for key in required:
+                if key not in params or params[key] in (None, "", {}, []):
+                    if key in ("topic", "query"):
+                        params[key] = topic_fallback
+                    else:
+                        params[key] = topic_fallback
+
+            # Remove dependencies that reference unknown tasks (or self).
+            depends_on = [d for d in (task.depends_on or []) if d in seen_ids and d != task_id]
+
+            repaired.append(
+                AgentTask(
+                    task_id=task_id,
+                    agent_name=agent_name,
+                    action=action,
+                    params=params,
+                    depends_on=depends_on,
+                )
+            )
+
+        return repaired
 
     def _fallback_plan(
         self,
@@ -230,7 +331,7 @@ class IntelligentOrchestrator:
             ))
             tasks.append(AgentTask(
                 task_id="task_2",
-                agent_name="medical_research",
+                agent_name="nursing_research",
                 action="search_pubmed",
                 params={"query": topic},
                 depends_on=["task_1"]
@@ -240,7 +341,11 @@ class IntelligentOrchestrator:
 
     def _build_planner_prompt(self) -> str:
         """Build system prompt for the planner LLM."""
-        return """You are an execution planner for a nursing research assistant system.
+        agents_section = self._build_agents_capabilities_section()
+
+        # NOTE: Do not use an f-string for this prompt because it contains many literal
+        # JSON examples with braces, which can trigger f-string parsing errors.
+        prompt = """You are an execution planner for a nursing research assistant system.
 
 Your job is to decompose user goals into a sequence of agent tasks.
 
@@ -254,14 +359,8 @@ Examples:
 - If they asked about "fall prevention", then "search for articles"
   means search about fall prevention
 
-Available agents and their capabilities:
-- nursing_research: PICOT development, PubMed search, ClinicalTrials.gov, medRxiv preprints, Semantic Scholar, CORE open-access, DOAJ journals, SafetyTools (FDA recalls), Google search (standards/guidelines), healthcare literature
-- medical_research: PubMed search (peer-reviewed articles), ClinicalTrials.gov (trial data), systematic reviews, clinical studies, evidence-based research
-- academic_research: ArXiv search (preprints), Semantic Scholar (citation analysis, paper discovery), statistical methods, research methodologies, theoretical research
-- research_writing: Literature synthesis, PICOT refinement, drafting sections, citation formatting
-- project_timeline: Milestone tracking, deadline reminders, project phase management
-- data_analysis: Sample size calculation, statistical test selection, power analysis
-- citation_validation: Evidence grading (Johns Hopkins), retraction detection, quality scoring
+Available agents and their capabilities (generated from the registry):
+__AGENTS_SECTION__
 
 IMPORTANT RULES FOR PLANNING:
 
@@ -281,7 +380,7 @@ IMPORTANT RULES FOR PLANNING:
 
 5. **Default Research Workflow** (when user asks about a topic):
    - Step 1: Generate PICOT question (research_writing)
-   - Step 2: Search PubMed (medical_research)
+   - Step 2: Search PubMed (nursing_research)
    - Step 3: Validate articles (citation_validation) [OPTIONAL - only if articles found]
    - Step 4: Synthesize findings (research_writing)
 
@@ -304,7 +403,7 @@ AGENT SELECTION GUIDE:
 ======================
 When to use each agent:
 - nursing_research: Broad healthcare topics, PICOT questions, nursing practice, quality improvement, FDA device safety, Joint Commission standards
-- medical_research: Clinical trials (use ClinicalTrials.gov), peer-reviewed medical literature (PubMed), systematic reviews
+- medical_research: Synthesize local documents/library notes; cross-document comparisons (legacy name)
 - academic_research: Statistical methods, AI/ML research, theoretical frameworks, citation analysis (Semantic Scholar), paper discovery
 - research_writing: Synthesizing findings, drafting sections, formatting citations
 - project_timeline: Project management, deadlines, milestones
@@ -313,21 +412,22 @@ When to use each agent:
 
 TOOL-SPECIFIC QUERIES:
 ======================
-- "Find clinical trials for X" → medical_research (ClinicalTrials.gov tool)
+- "Find clinical trials for X" → nursing_research (ClinicalTrials.gov tool)
 - "Latest preprints on X" → nursing_research (medRxiv tool) or academic_research (ArXiv)
 - "Papers citing PMID:X" → academic_research (Semantic Scholar citation analysis)
 - "FDA recalls for device X" → nursing_research (SafetyTools)
 - "Open access articles on X" → nursing_research (CORE/DOAJ tools)
 - "Joint Commission standards for X" → nursing_research (Google search tool)
+- "Synthesize my local PDFs/notes about X" → medical_research (document/library synthesis)
 
 Common workflows:
-1. Research topic → [research_writing: generate_picot] → [medical_research: search_pubmed] → [citation_validation: validate] → [research_writing: synthesize]
-2. Clinical trial search → [medical_research: search_clinicaltrials]
+1. Research topic → [research_writing: generate_picot] → [nursing_research: search_pubmed] → [citation_validation: validate] → [research_writing: synthesize]
+2. Clinical trial search → [nursing_research: search_clinicaltrials]
 3. Citation analysis → [academic_research: search_semantic_scholar]
 4. Timeline query → [project_timeline: get_milestones]
 5. Statistical question → [data_analysis: calculate_sample_size]
 6. Validate articles → [citation_validation: grade_evidence]
-7. Device safety check → [nursing_research: check_fda_recalls]
+7. Device safety check → [nursing_research: search]
 
 Return a JSON object with a "tasks" array. Each task has:
 - task_id: Unique identifier (e.g., "task_1")
@@ -350,7 +450,7 @@ Example output for "research fall prevention":
     },
     {
       "task_id": "task_2",
-      "agent_name": "medical_research",
+      "agent_name": "nursing_research",
       "action": "search_pubmed",
       "params": {"query": "<task_1.picot>"},
       "depends_on": ["task_1"]
@@ -383,7 +483,7 @@ Example output for "how does X help Y":
     },
     {
       "task_id": "task_2",
-      "agent_name": "medical_research",
+      "agent_name": "nursing_research",
       "action": "search_pubmed",
       "params": {"query": "<task_1.picot>"},
       "depends_on": ["task_1"]
@@ -409,7 +509,7 @@ Example output for "Find clinical trials for fall prevention":
   "tasks": [
     {
       "task_id": "task_1",
-      "agent_name": "medical_research",
+      "agent_name": "nursing_research",
       "action": "search_clinicaltrials",
       "params": {"query": "fall prevention elderly"},
       "depends_on": []
@@ -445,6 +545,31 @@ Example output for "Check FDA recalls for urinary catheters":
 
 BE GENEROUS WITH TASK CREATION. When in doubt, create a research workflow. Users want help, not rejection.
 """
+        return prompt.replace("__AGENTS_SECTION__", agents_section)
+
+    def _build_agents_capabilities_section(self) -> str:
+        """
+        Render a compact (agent -> actions) section for the planner prompt.
+
+        Uses AgentRegistry specs so the prompt doesn't drift from reality.
+        """
+        lines: List[str] = []
+        for spec in self.agent_registry.list_agent_specs():
+            action_chunks: List[str] = []
+            for action_name, action_spec in spec.actions.items():
+                req = ", ".join(action_spec.required_params) if action_spec.required_params else ""
+                opt = ", ".join(action_spec.optional_params) if action_spec.optional_params else ""
+                parts = []
+                if req:
+                    parts.append(f"required: {req}")
+                if opt:
+                    parts.append(f"optional: {opt}")
+                suffix = f" ({'; '.join(parts)})" if parts else ""
+                action_chunks.append(f"{action_name}{suffix}")
+            actions_str = "; ".join(action_chunks) if action_chunks else "none"
+            lines.append(f"- {spec.name}: {spec.description} Actions: {actions_str}")
+
+        return "\n".join(lines) if lines else "- (no agents registered)"
 
     def _build_planning_request(
         self,
@@ -489,10 +614,17 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         self,
         plan: List[AgentTask],
         context: ConversationContext,
+        request_ctx: RequestContext,
         user_message: str = ""
     ) -> Dict[str, Any]:
         """
         Execute plan with dependency resolution.
+
+        Args:
+            plan: List of agent tasks to execute
+            context: Conversation-level context
+            request_ctx: Immutable request context (preserved across retries)
+            user_message: Original user message for fallback queries
         """
         results = {}
 
@@ -503,8 +635,15 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
                 # Resolve dependencies
                 resolved_params = self._resolve_dependencies(task.params, results)
 
-                # FIX #1: Force valid query for search actions
-                if task.action in ("search_pubmed", "search", "search_arxiv", "search_clinicaltrials"):
+                # FIX #1: Force valid query for query-based actions
+                if task.action in (
+                    "search_pubmed",
+                    "search",
+                    "search_arxiv",
+                    "search_clinicaltrials",
+                    "search_semantic_scholar",
+                    "synthesize_documents",
+                ):
                     query = resolved_params.get("query")
                     if not query or not isinstance(query, str) or not query.strip():
                         # Use user's original message as fallback query
@@ -527,6 +666,7 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
                     action=task.action,
                     params=resolved_params,
                     context=context,
+                    request_ctx=request_ctx,
                     registry_key=task.agent_name,  # Pass registry key for resilient execution
                 )
 
@@ -618,6 +758,7 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         action: str,
         params: Dict[str, Any],
         context: ConversationContext,
+        request_ctx: RequestContext,
         registry_key: Optional[str] = None,
     ) -> Any:
         """
@@ -627,7 +768,27 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         - Exponential backoff retry on failures
         - Automatic fallback to alternative agents
         - Graceful degradation with partial results
+
+        Args:
+            agent: Agent instance to execute
+            action: Action to perform on the agent
+            params: Parameters for the action
+            context: Conversation-level context
+            request_ctx: Immutable request context (preserved across retries)
+            registry_key: Registry name for resilient execution
         """
+        # Phase 4: Validate contract before dispatch
+        agent_name_normalized = self.agent_registry.normalize_agent_name(registry_key or "unknown")
+        contract_valid, contract_error = self._validate_contract(
+            agent_name_normalized, action, params
+        )
+
+        if not contract_valid:
+            logger.error(
+                f"PHASE4 CONTRACT VIOLATION: {agent_name_normalized}.{action} - {contract_error}"
+            )
+            raise ValueError(f"Contract violation: {contract_error}")
+
         # Build query for agent based on action and params
         query = self._build_agent_query(action, params)
         # Use registry key for resilient execution, fall back to display name for logging
@@ -641,6 +802,7 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
             result: ExecutionResult = self.resilient_orchestrator.execute_with_resilience(
                 agent_name=agent_registry_name,  # Use registry key, not display name
                 query=query,
+                request_ctx=request_ctx,
                 metadata={"action": action, "params": params},
             )
 
@@ -664,6 +826,7 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
                     partial = result.partial_results[0]
                     if partial.get("content"):
                         output = self._extract_agent_output(partial["content"], action)
+                        output = self._normalize_agent_output(action, output)
                         context.add_artifact(action, output)
                         return output
 
@@ -674,6 +837,7 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
 
             # Extract structured output from content
             output = self._extract_agent_output(result.content, action)
+            output = self._normalize_agent_output(action, output)
 
             # Store in context if it's an artifact
             artifact_actions = ["generate_picot", "search_pubmed", "synthesize", "validate"]
@@ -683,7 +847,7 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
             return output
 
         # Fallback: Direct dispatch (original behavior)
-        return self._execute_agent_task_direct(agent, action, params, context, query)
+        return self._execute_agent_task_direct(agent, action, params, context, request_ctx, query)
 
     def _execute_agent_task_direct(
         self,
@@ -691,23 +855,36 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         action: str,
         params: Dict[str, Any],
         context: ConversationContext,
+        request_ctx: RequestContext,
         query: str
     ) -> Any:
         """
         Direct agent execution without resilience (original behavior).
+
+        Args:
+            agent: Agent instance to execute
+            action: Action to perform
+            params: Parameters for the action
+            context: Conversation-level context
+            request_ctx: Immutable request context
+            query: Query string built from action and params
         """
         recipient = getattr(agent, "agent_name", getattr(agent, "name", "Agent"))
         task_msg = new_task(
             sender="IntelligentOrchestrator",
             recipient=recipient,
             content=query,
-            metadata={"action": action, "params": params},
+            metadata={
+                "action": action,
+                "params": params,
+                "request_context": request_ctx.to_dict()
+            },
         )
 
         # Log outbound envelope
         logger.debug(f"MCP Outbound: {to_json_line(task_msg)}")
 
-        result_msg, response = dispatch_mcp(agent, task_msg, return_raw=True, **{})
+        result_msg, response = dispatch_mcp(agent, task_msg, request_ctx=request_ctx, return_raw=True, **{})
 
         # Log inbound envelope
         logger.debug(f"MCP Inbound: {to_json_line(result_msg)}")
@@ -720,11 +897,51 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
 
         # Extract structured output
         output = self._extract_agent_output(response, action)
+        output = self._normalize_agent_output(action, output)
 
         # Store in context if it's an artifact
         artifact_actions = ["generate_picot", "search_pubmed", "synthesize", "validate"]
         if action in artifact_actions:
             context.add_artifact(action, output)
+
+        return output
+
+    def _normalize_agent_output(self, action: str, output: Any) -> Any:
+        """
+        Normalize outputs so dependency placeholders resolve reliably.
+
+        When agents return free-form text, `parse_json_from_response()` may fall back
+        to `{"text": ...}`. For some actions (notably `generate_picot`) we ensure
+        a canonical key exists so `<task_id.field>` substitutions work.
+        """
+        if output is None:
+            return {}
+
+        if isinstance(output, str):
+            if action == "generate_picot":
+                return {"picot": output, "picot_text": output, "text": output}
+            return {"text": output}
+
+        if not isinstance(output, dict):
+            return {"text": str(output)}
+
+        if action == "generate_picot":
+            # Common structured schema (PICOTQuestion) uses "full_question".
+            if "picot" not in output:
+                full_question = output.get("full_question")
+                if isinstance(full_question, str) and full_question:
+                    output["picot"] = full_question
+                elif isinstance(output.get("text"), str) and output.get("text"):
+                    output["picot"] = output["text"]
+
+            picot_val = output.get("picot")
+            if isinstance(picot_val, dict):
+                fq = picot_val.get("full_question") or picot_val.get("question")
+                if isinstance(fq, str) and fq:
+                    output["picot"] = fq
+                    output.setdefault("picot_text", fq)
+            elif isinstance(picot_val, str) and picot_val:
+                output.setdefault("picot_text", picot_val)
 
         return output
 
@@ -739,9 +956,11 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
             "generate_picot": "Generate a PICOT question for research on {topic}",
             "search_pubmed": "Search PubMed for articles about: {query}",
             "search": "Search for: {query}",
+            "search_semantic_scholar": "Search Semantic Scholar for papers about: {query}",
             "validate": "Validate these articles and grade evidence levels",
             "grade_evidence": "Grade the evidence level of these articles",
             "synthesize": "Synthesize these research findings into a summary",
+            "synthesize_documents": "Synthesize and compare documents/library content about: {query}",
             "calculate_sample_size": "Calculate sample size for a {design} study with {effect_size} effect size",
             "get_milestones": "Show upcoming milestones and deadlines",
             "get_next_milestone": "What is my next deadline?",
@@ -768,6 +987,66 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         logger.info(f"🔍 PHASE2 TRACE: Using fallback query: {fallback_query!r}")
         return fallback_query
 
+    def _validate_contract(
+        self,
+        agent_name: str,
+        action: str,
+        params: Dict[str, Any]
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Validate agent contract before dispatch (Phase 4).
+
+        Checks:
+        - Agent spec exists
+        - Action is supported
+        - Required params are present
+
+        Args:
+            agent_name: Normalized agent name
+            action: Action to perform
+            params: Parameters provided
+
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        # Check if agent spec exists
+        agent_spec = self.agent_specs.get(agent_name)
+        if not agent_spec:
+            # No spec = no validation (graceful degradation)
+            logger.warning(
+                f"PHASE4: No spec found for agent '{agent_name}' - skipping contract validation"
+            )
+            return True, None
+
+        # Check if action is supported
+        action_spec = agent_spec.action_spec(action)
+        if not action_spec:
+            return False, f"Action '{action}' not supported by agent '{agent_name}'"
+
+        # Check required params
+        missing_params = []
+        for required_param in action_spec.required_params:
+            if required_param not in params or params[required_param] is None:
+                missing_params.append(required_param)
+
+        if missing_params:
+            return False, (
+                f"Missing required params for {agent_name}.{action}: {missing_params}. "
+                f"Provided: {list(params.keys())}"
+            )
+
+        # Log optional params for observability
+        provided_optional = [
+            p for p in action_spec.optional_params
+            if p in params and params[p] is not None
+        ]
+        if provided_optional:
+            logger.debug(
+                f"PHASE4: {agent_name}.{action} received optional params: {provided_optional}"
+            )
+
+        return True, None
+
     def _extract_agent_output(self, response: Any, action: str) -> Any:
         """
         Extract structured output from agent response using robust JSON parsing.
@@ -778,12 +1057,25 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
         - Malformed JSON
 
         Logs raw output to /tmp on failures for debugging.
+
+        Returns:
+            Parsed dict (never None - guaranteed by Phase 3)
         """
         from src.utils.json_parser import parse_json_from_response
 
         # Use robust parser with context for debugging
         context = f"{action}_extraction"
-        return parse_json_from_response(response, context=context, fallback_to_text=True)
+        output = parse_json_from_response(response, context=context, fallback_to_text=True)
+
+        # Phase 3 Guard: Ensure we NEVER return None
+        if output is None:
+            logger.error(
+                f"PHASE3 GUARD: parse_json_from_response returned None for {action}. "
+                f"This should never happen with fallback_to_text=True. Returning error dict."
+            )
+            return {"error": "extraction_failed", "action": action, "text": str(response)[:500]}
+
+        return output
 
     def _handle_unclear_intent(
         self,

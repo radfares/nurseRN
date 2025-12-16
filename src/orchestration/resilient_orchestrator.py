@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from src.orchestration.mcp import MCPMessage, new_task
 from src.orchestration.mcp_dispatch import dispatch_mcp
 from src.orchestration.mcp_validator import MCPMessageValidator
+from src.orchestration.request_context import RequestContext
 
 logger = logging.getLogger(__name__)
 
@@ -44,18 +45,20 @@ class RetryConfig:
 FALLBACK_MAP: Dict[str, List[str]] = {
     "document_synthesis": ["nursing_research", "academic_research"],
     "medical_research": ["nursing_research", "academic_research"],
-    "nursing_research": ["medical_research", "academic_research"],
+    # nursing_research is PubMed-first; fall back to other search/writing agents (not document synthesis).
+    "nursing_research": ["academic_research", "research_writing"],
     "academic_research": ["nursing_research", "research_writing"],
     "data_analysis": ["academic_research", "nursing_research"],
     "research_writing": ["academic_research", "nursing_research"],
     "project_timeline": ["nursing_research", "research_writing"],
-    "citation_validation": ["medical_research", "academic_research"],
+    "citation_validation": ["academic_research", "nursing_research"],
 }
 
 # Agent capabilities for capability-based fallback matching
 AGENT_CAPABILITIES: Dict[str, List[str]] = {
     "nursing_research": ["search", "literature", "clinical", "pubmed", "research"],
-    "medical_research": ["search", "literature", "synthesis", "pubmed", "clinical"],
+    # Legacy name retained; implementation is currently document/library synthesis.
+    "medical_research": ["synthesis", "comparison", "themes", "analysis", "documents"],
     "document_synthesis": ["synthesis", "comparison", "themes", "analysis"],
     "academic_research": ["search", "literature", "arxiv", "scholarly", "academic"],
     "data_analysis": ["statistics", "analysis", "visualization", "data"],
@@ -192,6 +195,7 @@ class ResilientOrchestrator:
         self,
         agent_name: str,
         query: str,
+        request_ctx: RequestContext,
         metadata: Optional[Dict[str, Any]] = None,
         required_capabilities: Optional[List[str]] = None,
     ) -> ExecutionResult:
@@ -207,6 +211,7 @@ class ResilientOrchestrator:
         Args:
             agent_name: Primary agent to execute
             query: Query to send to agent
+            request_ctx: Immutable request context (preserved across retries)
             metadata: Optional metadata for MCP message
             required_capabilities: Capabilities needed for fallback matching
 
@@ -237,6 +242,7 @@ class ResilientOrchestrator:
             success, content, error = self._execute_with_retries(
                 agent_name=agent,
                 query=query,
+                request_ctx=request_ctx,
                 metadata=metadata,
                 result=result,
             )
@@ -330,11 +336,19 @@ class ResilientOrchestrator:
         self,
         agent_name: str,
         query: str,
+        request_ctx: RequestContext,
         metadata: Optional[Dict[str, Any]],
         result: ExecutionResult,
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         Execute agent with exponential backoff retries.
+
+        Args:
+            agent_name: Name of agent to execute
+            query: Query string to send
+            request_ctx: Immutable request context (preserved across retries)
+            metadata: Optional metadata dict
+            result: ExecutionResult to update with retry stats
 
         Returns:
             Tuple of (success, content, error_message)
@@ -358,6 +372,7 @@ class ResilientOrchestrator:
                     agent=agent,
                     agent_name=agent_name,
                     query=query,
+                    request_ctx=request_ctx,
                     metadata=metadata,
                 )
 
@@ -378,6 +393,7 @@ class ResilientOrchestrator:
         agent: Any,
         agent_name: str,
         query: str,
+        request_ctx: RequestContext,
         metadata: Optional[Dict[str, Any]],
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
@@ -387,18 +403,22 @@ class ResilientOrchestrator:
             agent: The agent instance to execute
             agent_name: Name of the agent (for MCP message recipient)
             query: Query string to send
+            request_ctx: Immutable request context
             metadata: Optional metadata dict
 
         Returns:
             Tuple of (success, content, error_message)
         """
         try:
-            # Create MCP message
+            # Create MCP message with request context in metadata
+            enriched_metadata = metadata.copy() if metadata else {}
+            enriched_metadata["request_context"] = request_ctx.to_dict()
+
             mcp_message = new_task(
                 sender="ResilientOrchestrator",
                 recipient=agent_name,
                 content=query,
-                metadata=metadata or {},
+                metadata=enriched_metadata,
             )
 
             # Validate message if enabled
@@ -411,8 +431,8 @@ class ResilientOrchestrator:
                 if validation.sanitized_message:
                     mcp_message = validation.sanitized_message
 
-            # Dispatch to agent (passing both agent instance and message)
-            response = dispatch_mcp(agent, mcp_message)
+            # Dispatch to agent with request context
+            response = dispatch_mcp(agent, mcp_message, request_ctx=request_ctx)
 
             # Check response
             if response.message_type == "error":

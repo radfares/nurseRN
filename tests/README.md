@@ -8,14 +8,9 @@
 
 ## Quick Start
 
-Run all integration tests:
+Run integration tests with pytest:
 ```bash
-python tests/run_integration_tests.py
-```
-
-Run individual test:
-```bash
-python tests/integration/test_conversational_startup.py
+pytest -q tests/integration
 ```
 
 ---
@@ -35,147 +30,10 @@ python tests/integration/test_conversational_startup.py
 
 ---
 
-## Test Descriptions
+## Notes
 
-### 1. Conversational Startup (`test_conversational_startup.py`)
-**Purpose**: Smoke test for conversational interface components
-**Validates**:
-- IntelligentOrchestrator initialization
-- ConversationContext creation
-- AgentRegistry connectivity
-- No import errors
-
-**Expected Output**:
-```
-✅ Orchestrator created successfully
-✅ Context created for project: test_project
-✅ Agent registry accessible
-```
-
----
-
-### 2. Exa Integration (`test_exa_integration.py`)
-**Purpose**: Verify Exa neural search is enabled in production
-**Validates**:
-- Exa tool enabled in nursing research agent
-- No mock code in production path
-- Real agent instances
-- Proper tool integration
-
-**Expected Output**:
-```
-✅ PASS: Exa tool is enabled in production
-✅ PASS: Agent is a real instance (not a Mock)
-✅ PASS: Registry returns real agents
-✅ PASS: No mock code in production path
-```
-
-**Requirements**: Exa API key in .env (optional, degrades gracefully)
-
----
-
-### 3. Orchestrator Basic (`test_orchestrator_basic.py`)
-**Purpose**: Test simple timeline query orchestration
-**Validates**:
-- Query routing to correct agent
-- Response generation
-- Suggestion creation
-
-**Query**: "What's my next deadline?"
-**Expected Behavior**: Routes to timeline agent, returns deadline or helpful response
-
-**Note**: May occasionally respond without using tools (grounding validation catches this)
-
----
-
-### 4. Orchestrator Data Analysis (`test_orchestrator_data_analysis.py`)
-**Purpose**: Test data analysis workflow with tool usage
-**Validates**:
-- Sample size calculation tools
-- Numerical output generation
-- Statistical accuracy
-
-**Query**: "Calculate sample size for detecting a 30% reduction in fall rates"
-**Expected Output**: Response containing numerical results (e.g., "388 participants needed")
-
-**Pass Criteria**: Response contains digits (indicates tool usage)
-
----
-
-### 5. Research Workflow (`test_conversational_research_workflow.py`)
-**Purpose**: Test PICOT generation workflow with quality assessment
-**Validates**:
-- All PICOT components (Population, Intervention, Comparison, Outcome, Time)
-- Research question quality (7 quality checks)
-- Evidence-based terminology
-
-**Query**: "Help me develop a PICOT question for reducing patient falls in elderly hospitalized patients"
-
-**Quality Checks** (100% expected):
-1. Contains 'P' (Population) - elderly/hospitalized/patients
-2. Contains 'I' (Intervention) - reduce/prevention/safety
-3. Contains 'C' (Comparison) - usual/standard/current
-4. Contains 'O' (Outcome) - fall/injury/rate
-5. Contains 'T' (Time) - days/weeks/months
-6. Question format (question mark or clear structure)
-7. Evidence-based terminology (RCT/trial/intervention)
-
-**Session 007 Result**: 7/7 checks passed (100%)
-
----
-
-### 6. Multi-Turn Conversation (`test_conversational_multiturn.py`)
-**Purpose**: Test context persistence across conversation turns
-**Validates**:
-- Context accumulation
-- Cross-turn reference resolution
-- Database persistence
-- Message saving/loading
-
-**Conversation Flow**:
-1. Turn 1: "Create a PICOT question about reducing catheter-associated UTIs"
-2. Turn 2: "Now calculate the sample size I would need for that study"
-
-**Expected Behavior**: Turn 2 references Turn 1's PICOT without re-asking
-
-**Pass Criteria**:
-- 6+ messages in context after 3 turns
-- Successful save_to_db() and load_from_db()
-
----
-
-### 7. Document Readers (`test_document_readers_integration.py`)
-**Purpose**: Test document reader tools and circuit breakers
-**Validates**:
-- 5 circuit breakers configured (PDF, PPTX, Website, Tavily, WebSearch)
-- DocumentReaderTools instantiation
-- Error handling
-- Circuit breaker protection
-
-**Current Status**: ⚠️ BLOCKED - Missing python-pptx dependency
-
-**Expected Output** (when dependency fixed):
-```
-✅ PASS: All document reader circuit breakers configured
-✅ PASS: DocumentReaderTools created successfully
-✅ PASS: All 5 readers available
-✅ PASS: Error handling functional
-✅ PASS: Circuit breaker protection in place
-RESULT: 5/5 tests passed (100%)
-```
-
-**To Fix**: See DOCUMENT_READERS_STATUS.md for dependency installation instructions
-
----
-
-### 8. Session Summary (`test_session_007_summary.py`)
-**Purpose**: Overall integration summary and status report
-**Validates**:
-- All major components initialized
-- Integration points verified
-- Overall system health
-
-**Expected Output**: Summary of all integration points with status indicators
+This repository previously contained several script-style “test_*.py” demo runners that executed work at import time.
+They were removed to keep `pytest` reliable and side-effect free.
 
 ---
 
@@ -291,20 +149,10 @@ except Exception as e:
     sys.exit(1)
 ```
 
-### Adding to Test Runner
+### Adding New Integration Tests
 
-Edit `tests/run_integration_tests.py`:
-```python
-TESTS = [
-    # ... existing tests ...
-    {
-        "name": "Your Test Name",
-        "file": "test_your_test_name.py",
-        "description": "What it tests",
-        "critical": True  # or False
-    }
-]
-```
+- Add pytest-compatible tests under `tests/integration/`
+- Run them with `pytest -q tests/integration`
 
 ---
 
@@ -317,8 +165,7 @@ TESTS = [
 - When debugging integration issues
 
 ### Test Timeout
-- Default: 60 seconds per test
-- Configurable in `run_integration_tests.py`
+- Use `pytest --timeout=...` (if you add the timeout plugin), or keep tests fast and mock network calls
 
 ### Test Output
 - All test output captured (stdout and stderr)

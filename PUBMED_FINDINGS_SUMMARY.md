@@ -24,11 +24,11 @@ After comprehensive testing and tracing, we can definitively state:
 ## Proof: Isolated PubMed Test
 
 ### Test Script
-**Location**: `test_pubmed_isolated.py`
+**Note**: The original script-style runner `test_pubmed_isolated.py` was removed to keep pytest reliable.
 
 ### Test Results
 ```bash
-$ python test_pubmed_isolated.py
+# script removed
 
 ✅ SUCCESS: PubMed search completed
 
@@ -387,13 +387,13 @@ except KeyError as e:
 
 ### Run Isolated PubMed Test
 ```bash
-python test_pubmed_isolated.py
+N/A (script removed)
 ```
 **Expected**: ✅ SUCCESS - PubMed returns articles
 
 ### Run Full Trace Test
 ```bash
-python test_pubmed_query_trace.py
+N/A (script removed)
 ```
 **Expected**: ✅ Query flows through all layers correctly
 
@@ -432,9 +432,7 @@ python test_pubmed_query_trace.py
 - `src/orchestration/intelligent_orchestrator.py` (lines 156, 169, 438, 584, 603) - Trace logging
 
 ### Test Scripts
-- `test_tool_schema_debug.py` - Schema validation test
-- `test_pubmed_query_trace.py` - Full trace test
-- `test_pubmed_isolated.py` - Isolated PubMed test (proves tool works)
+- Script-style runners were removed to keep pytest reliable.
 
 ### Documentation
 - `PHASE1_OPENAI_SCHEMA_DIAGNOSTIC.md` - Schema validation report

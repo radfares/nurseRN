@@ -153,23 +153,10 @@ doc_reader_tools = create_document_reader_tools_safe(required=False)
 
 **Status**: ✅ Complete
 
-**Test Directory**: `tests/integration/`
+**Integration Tests**: `tests/integration/`
 
-**Test Files** (8 total):
-1. `test_conversational_startup.py` - Smoke test ✅
-2. `test_exa_integration.py` - Exa validation ✅
-3. `test_orchestrator_basic.py` - Timeline routing ⚠️ Variable
-4. `test_orchestrator_data_analysis.py` - Sample size calc ✅
-5. `test_conversational_research_workflow.py` - PICOT (100% quality) ✅
-6. `test_conversational_multiturn.py` - Context persistence ✅
-7. `test_document_readers_integration.py` - Circuit breakers ⚠️ Blocked
-8. `test_session_007_summary.py` - Integration summary ✅
-
-**Test Runner**: `tests/run_integration_tests.py`
-- Runs all 8 tests sequentially
-- Reports critical vs non-critical failures
-- Exit code 0 if all critical tests pass
-- Exit code 1 if any critical test fails
+Script-style demo runners were removed to keep `pytest` collection reliable and to avoid side effects.
+Use `pytest -q tests/integration` for integration validation.
 
 **Test Documentation**: `tests/README.md`
 - Complete test descriptions
@@ -215,16 +202,8 @@ doc_reader_tools = create_document_reader_tools_safe(required=False)
 ### Tool Service Files (1 file)
 1. `src/tools/readers_tools/document_reader_service.py` - Optional context
 
-### Test Files (9 files)
-1. `tests/integration/test_conversational_startup.py`
-2. `tests/integration/test_exa_integration.py`
-3. `tests/integration/test_orchestrator_basic.py`
-4. `tests/integration/test_orchestrator_data_analysis.py`
-5. `tests/integration/test_conversational_research_workflow.py`
-6. `tests/integration/test_conversational_multiturn.py`
-7. `tests/integration/test_document_readers_integration.py`
-8. `tests/integration/test_session_007_summary.py`
-9. `tests/run_integration_tests.py` - Test runner
+### Integration Tests
+- `tests/integration/` (pytest-compatible)
 
 ### Documentation Files (3 files)
 1. `tests/README.md` - Test suite documentation
@@ -338,7 +317,7 @@ The system will:
 
 ### 2. Run Integration Tests
 ```bash
-python tests/run_integration_tests.py
+pytest -q tests/integration
 ```
 
 Expected: 7/8 tests pass (1 blocked by python-pptx dependency)
@@ -353,7 +332,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 pip install python-pptx
-python tests/run_integration_tests.py  # Should now show 8/8 passing
+pytest -q tests/integration
 ```
 
 ---

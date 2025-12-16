@@ -16,29 +16,13 @@ These prompts test the full agent system to ensure:
 
 ```bash
 cd /Users/hdz/nurseRN
-.venv/bin/python3 test_orchestrator_full.py
+pytest -q tests/integration --collect-only
 ```
 
 **This will test:**
-- OpenAI API key configuration
-- Orchestrator initialization
-- All 7 agents availability
-- LLM-based planning
-- Context awareness
-- End-to-end query processing
+- That pytest can discover integration tests cleanly (no demo scripts running during collection)
 
-**Expected output:**
-```
-✅ PASS: api_key
-✅ PASS: orchestrator_init
-✅ PASS: agent_registry
-✅ PASS: llm_planning
-✅ PASS: context_awareness
-✅ PASS: end_to_end
-
-RESULT: 6/6 tests passed
-🎉 ALL TESTS PASSED!
-```
+**Expected output:** A list of collected tests (no hangs).
 
 ---
 
@@ -333,7 +317,7 @@ git log --oneline -5 src/orchestration/intelligent_orchestrator.py
 
 ### Run Diagnostic
 ```bash
-.venv/bin/python3 test_orchestrator_full.py 2>&1 | tee diagnostic_results.txt
+pytest -q tests/integration --collect-only 2>&1 | tee diagnostic_results.txt
 ```
 
 ---
@@ -342,7 +326,7 @@ git log --oneline -5 src/orchestration/intelligent_orchestrator.py
 
 **System is working correctly if:**
 
-1. ✅ Diagnostic script: 6/6 tests pass
+1. ✅ Integration collection completes (no hangs)
 2. ✅ Context test: PICOT about discussed topic
 3. ✅ Workflow test: 4-5 tasks executed
 4. ✅ Follow-up test: Uses conversation context

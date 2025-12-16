@@ -45,7 +45,7 @@ Args:
 
 ## Testing
 
-Created `test_search_tool_validation.py` to verify:
+Created a script-style runner (since removed) to verify:
 - ✅ Tools reject `query=None`
 - ✅ Tools reject empty string `query=""`
 - ✅ Tools raise clear, descriptive error messages

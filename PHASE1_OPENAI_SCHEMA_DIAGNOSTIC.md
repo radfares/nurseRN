@@ -272,7 +272,7 @@ def my_tool(param1: str, param2: int) -> str:
 ## Files Modified
 
 1. `libs/agno/agno/agent/agent.py` - Added schema debugging (lines 995-1008)
-2. `test_tool_schema_debug.py` - Created diagnostic test script
+2. Script-style diagnostic runner removed (kept pytest-only tests)
 3. `PHASE1_OPENAI_SCHEMA_DIAGNOSTIC.md` - This report
 
 ---
