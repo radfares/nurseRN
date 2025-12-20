@@ -289,6 +289,7 @@ class AuditLogger:
         response_type: str = "success",  # "success", "hallucination_detected", "error", "refusal"
         validation_passed: bool = True,
         duration_ms: Optional[int] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Log agent response generated.
@@ -298,6 +299,7 @@ class AuditLogger:
             response_type: Type of response
             validation_passed: Whether response passed all validation checks
             duration_ms: Total time for agent processing
+            metadata: Optional extra structured metadata to store (sanitized)
         """
         import hashlib
         response_hash = hashlib.sha256(response.encode()).hexdigest()[:16]  # Short hash for verification
@@ -310,6 +312,7 @@ class AuditLogger:
                 "response_type": response_type,
                 "validation_passed": validation_passed,
                 "duration_ms": duration_ms,
+                "metadata": metadata or {},
             }
         )
 

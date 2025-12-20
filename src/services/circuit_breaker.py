@@ -109,6 +109,8 @@ def create_circuit_breaker(name: str, failure_threshold: int = 5, timeout: int =
 OPENAI_BREAKER = create_circuit_breaker("OpenAI API", failure_threshold=5, timeout=60)
 EXA_BREAKER = create_circuit_breaker("Exa API", failure_threshold=5, timeout=60)
 SERP_BREAKER = create_circuit_breaker("SerpAPI", failure_threshold=5, timeout=60)
+DUCKDUCKGO_BREAKER = create_circuit_breaker("DuckDuckGo Search", failure_threshold=5, timeout=60)
+TAVILY_BREAKER = create_circuit_breaker("Tavily API", failure_threshold=5, timeout=60)
 PUBMED_BREAKER = create_circuit_breaker("PubMed API", failure_threshold=5, timeout=60)
 ARXIV_BREAKER = create_circuit_breaker("Arxiv API", failure_threshold=5, timeout=60)
 CLINICALTRIALS_BREAKER = create_circuit_breaker("ClinicalTrials.gov API", failure_threshold=5, timeout=60)

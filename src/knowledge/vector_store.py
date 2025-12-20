@@ -143,7 +143,18 @@ class PersonalLibraryVectorStore:
         Path(db_path).mkdir(parents=True, exist_ok=True)
 
         # Initialize embedder
-        self.embedder = embedder or OpenAIEmbedder(id="text-embedding-3-small")
+        if embedder is not None:
+            self.embedder = embedder
+        else:
+            # Default to the configured embedder so query-time embeddings match ingestion-time embeddings.
+            try:
+                from src.knowledge.config import get_config
+
+                cfg = get_config()
+                dims = cfg.embedder.dimensions if cfg.embedder.dimensions != 1536 else None
+                self.embedder = OpenAIEmbedder(id=cfg.embedder.model, dimensions=dims)
+            except Exception:
+                self.embedder = OpenAIEmbedder(id="text-embedding-3-small")
 
         # Initialize ChromaDb
         self._db: Optional[ChromaDb] = None
@@ -280,9 +291,16 @@ class PersonalLibraryVectorStore:
                 meta = doc.meta_data or {}
 
                 # Extract distance/score - ChromaDB returns distances, convert to similarity
-                distance = meta.get("distances", 1.0)
-                # Convert L2 distance to similarity score (0-1)
-                score = 1.0 / (1.0 + distance) if distance else 0.0
+                distance_raw = meta.get("distances", 1.0)
+                # Convert L2 distance to similarity score (0-1, higher is better).
+                # Chroma/agno may report 0.0 for identical vectors; that should map to score=1.0.
+                try:
+                    distance = float(distance_raw)
+                except Exception:
+                    distance = 1.0
+                if distance < 0:
+                    distance = 0.0
+                score = 1.0 / (1.0 + distance)
 
                 result = SearchResult(
                     chunk_id=doc.id or meta.get("chunk_id", ""),
@@ -653,7 +671,8 @@ class VectorStoreFactory:
         cls,
         store_type: str,
         db_path: Optional[str] = None,
-        force_new: bool = False
+        force_new: bool = False,
+        embedder: Optional[OpenAIEmbedder] = None,
     ) -> PersonalLibraryVectorStore:
         """
         Get or create a vector store instance.
@@ -677,8 +696,15 @@ class VectorStoreFactory:
             else:
                 db_path = "data/chroma_db"
 
-        # Create unique key for this store configuration
-        cache_key = f"{store_type}:{db_path}"
+        # Create unique key for this store configuration.
+        # If an embedder override is provided (common in tests), include a stable-ish signature
+        # to avoid returning a cached store with a different query-embedder.
+        embedder_sig = ""
+        if embedder is not None:
+            embedder_id = getattr(embedder, "id", None) or type(embedder).__name__
+            dims = getattr(embedder, "dimensions", None)
+            embedder_sig = f":embedder={embedder_id}:{dims}"
+        cache_key = f"{store_type}:{db_path}{embedder_sig}"
 
         # Return cached instance if available and not forcing new
         if not force_new and cache_key in cls._instances:
@@ -701,9 +727,9 @@ class VectorStoreFactory:
         # Create new instance
         logger.info(f"Creating new {store_type} store at {db_path}")
         if collection_name and store_class == PersonalLibraryVectorStore:
-            instance = store_class(collection_name=collection_name, db_path=db_path)
+            instance = store_class(collection_name=collection_name, db_path=db_path, embedder=embedder)
         else:
-            instance = store_class(db_path=db_path)
+            instance = store_class(db_path=db_path, embedder=embedder)
 
         # Cache the instance
         cls._instances[cache_key] = instance

@@ -228,6 +228,34 @@ class IntelligentOrchestrator:
 
         repaired: List[AgentTask] = []
         seen_ids = set()
+        lowered_message = (user_message or "").lower()
+        mentions_notion = any(
+            token in lowered_message
+            for token in (
+                "notion",
+                "notion page",
+                "notion database",
+                "workspace",
+            )
+        )
+        mentions_personal_library = any(
+            token in lowered_message
+            for token in (
+                "my library",
+                "personal library",
+                "uploaded",
+                "indexed",
+                "to_synthesize",
+                ".pdf",
+                ".docx",
+                ".pptx",
+                "my articles",
+                "my papers",
+                "my documents",
+                "local files",
+                "local documents",
+            )
+        )
 
         for idx, task in enumerate(plan, start=1):
             task_id = (task.task_id or "").strip() or f"task_{idx}"
@@ -240,6 +268,17 @@ class IntelligentOrchestrator:
 
             # Normalize and validate agent selection.
             agent_name = self.agent_registry.normalize_agent_name(task.agent_name or "")
+            # Heuristic: "library/my documents" generally refers to the indexed personal library,
+            # not Notion, unless the user explicitly mentions Notion.
+            if (
+                agent_name == "notion_documents"
+                and action == "search"
+                and (not mentions_notion)
+                and mentions_personal_library
+            ):
+                agent_name = "medical_research"
+                action = "synthesize_documents"
+
             if not self.agent_registry.is_available(agent_name):
                 candidates = action_to_agents.get(action, [])
                 agent_name = candidates[0] if candidates else "nursing_research"
@@ -409,9 +448,11 @@ When to use each agent:
 - project_timeline: Project management, deadlines, milestones
 - data_analysis: Statistical calculations, sample size, power analysis
 - citation_validation: Checking article quality, evidence levels, retractions
+- notion_documents: Managing your Notion workspace, searching notes, reading/updating pages
 
 TOOL-SPECIFIC QUERIES:
 ======================
+- "Search my library for X" / "use my uploaded PDFs for X" / "synthesize my documents" → medical_research (synthesize_documents)
 - "Find clinical trials for X" → nursing_research (ClinicalTrials.gov tool)
 - "Latest preprints on X" → nursing_research (medRxiv tool) or academic_research (ArXiv)
 - "Papers citing PMID:X" → academic_research (Semantic Scholar citation analysis)
@@ -419,6 +460,13 @@ TOOL-SPECIFIC QUERIES:
 - "Open access articles on X" → nursing_research (CORE/DOAJ tools)
 - "Joint Commission standards for X" → nursing_research (Google search tool)
 - "Synthesize my local PDFs/notes about X" → medical_research (document/library synthesis)
+- "Search my Notion for X" → notion_documents (search action)
+- "Read Notion page X" → notion_documents (read action)
+- "Update Notion page X" → notion_documents (update action)
+
+IMPORTANT DISTINCTION:
+- "library", "my documents", "my PDFs", "indexed files" refers to the personal document library (ChromaDB), NOT Notion.
+- Use notion_documents ONLY when the user explicitly mentions "Notion" or their Notion workspace/pages.
 
 Common workflows:
 1. Research topic → [research_writing: generate_picot] → [nursing_research: search_pubmed] → [citation_validation: validate] → [research_writing: synthesize]
@@ -964,6 +1012,8 @@ Remember: Be helpful! If the user is asking about a nursing/healthcare topic, cr
             "calculate_sample_size": "Calculate sample size for a {design} study with {effect_size} effect size",
             "get_milestones": "Show upcoming milestones and deadlines",
             "get_next_milestone": "What is my next deadline?",
+            "read": "Read Notion page: {query}",
+            "update": "Update Notion page: {query}",
         }
 
         template = query_templates.get(action)

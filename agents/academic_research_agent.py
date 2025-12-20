@@ -10,7 +10,9 @@ PHASE 2 COMPLETE (2025-11-23): Refactored to use BaseAgent inheritance
 """
 
 import os
+import re
 import sys
+import traceback
 from typing import Any
 from textwrap import dedent
 
@@ -39,6 +41,14 @@ from src.tools.literature_tools import LiteratureTools
 from src.tools.readers_tools.document_reader_service import create_document_reader_tools_safe
 
 
+ARXIV_ID_PATTERNS = [
+    r"\d{4}\.\d{4,5}",      # New format: 2103.12345
+    r"[a-z\-]+/\d{7}",      # Old format: math/0001001
+]
+ARXIV_ID_PATTERN = f"({'|'.join(ARXIV_ID_PATTERNS)})"
+REASONING_DISABLED_VALUES = {"0", "false", "off", "no", "disable", "disabled"}
+
+
 class AcademicResearchAgent(BaseAgent):
     """Academic Research Agent with Arxiv database access."""
 
@@ -50,46 +60,89 @@ class AcademicResearchAgent(BaseAgent):
             tools=tools
         )
 
+    def _build_reasoning_tools(self):
+        """Create ReasoningTools when enabled via environment flag."""
+        reasoning_flag = os.getenv("ENABLE_REASONING_TOOLS", "off").strip().lower()
+        if reasoning_flag in REASONING_DISABLED_VALUES:
+            return None
+        return ReasoningTools(add_instructions=True)
+
+    def _build_literature_tools(self):
+        """Create LiteratureTools with safe fallback."""
+        try:
+            tool = LiteratureTools()
+            print("✅ LiteratureTools available (save findings to project DB)")
+            return tool
+        except Exception as exc:
+            print(f"⚠️ LiteratureTools unavailable: {exc}")
+            return None
+
+    @staticmethod
+    def _log_tool_status(name: str, available: bool, success_msg: str, failure_msg: str) -> None:
+        """Standardized tool availability logging before logger is ready."""
+        icon = "✅" if available else "⚠️"
+        detail = success_msg if available else failure_msg
+        print(f"{icon} {name} {detail}")
+
+    def _reasoning_instructions(self) -> str:
+        """Optional reasoning block instructions."""
+        if not is_reasoning_block_enabled():
+            return ""
+        return "\n" + dedent("""\
+            REASONING APPROACH (ACADEMIC):
+            - Break down complex questions into sub-questions (theory, method, domain) before choosing queries
+            - State assumptions about domain/scope and confirm missing details instead of inferring them
+            - Map each claim to Arxiv tool output and prefer primary sources over commentary
+            - Compare methodological alternatives and frameworks, noting trade-offs in rigor, data needs, and bias
+            - Evaluate evidence quality: study design, reproducibility signals, code/data availability, peer review status
+            - Surface uncertainties and research gaps explicitly; propose follow-up searches or adjacent fields to explore
+            - Keep refusals in place when verification fails; this reasoning supports but never overrides grounding rules
+            - Present concise summaries, highlighting limitations and future work alongside key findings
+            """)
+
     def _create_tools(self) -> list:
         """Create Arxiv tools with safe fallback + DocumentReaders + LiteratureTools for saving."""
-        # Add ReasoningTools for structured academic reasoning
-        reasoning_tools = ReasoningTools(add_instructions=True)
-
-        # Arxiv is free and doesn't require authentication
+        reasoning_tools = self._build_reasoning_tools()
         arxiv_tool = create_arxiv_tools_safe(required=False)
-
-        # Semantic Scholar for AI-powered paper discovery and citation analysis
         semantic_scholar_tool = create_semantic_scholar_tools_safe(required=False)
-
-        # Document readers for PDFs, PPTX, websites, etc.
         doc_reader_tools = create_document_reader_tools_safe(required=False)
-
-        # LiteratureTools for saving findings to project database
-        try:
-            literature_tools = LiteratureTools()
-            print("✅ LiteratureTools available (save findings to project DB)")
-        except Exception as exc:
-            literature_tools = None
-            print(f"⚠️ LiteratureTools unavailable: {exc}")
+        literature_tools = self._build_literature_tools()
 
         # Build tools list, filtering out None values (ReasoningTools first)
-        tools = build_tools_list(reasoning_tools, arxiv_tool, semantic_scholar_tool, doc_reader_tools, literature_tools)
+        tools = build_tools_list(
+            reasoning_tools,
+            arxiv_tool,
+            semantic_scholar_tool,
+            doc_reader_tools,
+            literature_tools
+        )
 
         # Log tool availability (using print since self.logger not available yet)
-        if arxiv_tool:
-            print("✅ Arxiv search available")
-        else:
-            print("⚠️ Arxiv search unavailable (tool creation failed)")
-
-        if semantic_scholar_tool:
-            print("✅ Semantic Scholar search available")
-        else:
-            print("⚠️ Semantic Scholar search unavailable (tool creation failed)")
-
-        if doc_reader_tools:
-            print("✅ DocumentReaders available (PDF/PPTX/Web/ArXiv/CSV/JSON)")
-        else:
-            print("⚠️ DocumentReaders unavailable (dependency or initialization issue)")
+        self._log_tool_status(
+            "Arxiv search",
+            bool(arxiv_tool),
+            "available",
+            "unavailable (tool creation failed)"
+        )
+        self._log_tool_status(
+            "Semantic Scholar search",
+            bool(semantic_scholar_tool),
+            "available",
+            "unavailable (tool creation failed)"
+        )
+        self._log_tool_status(
+            "DocumentReaders",
+            bool(doc_reader_tools),
+            "available (PDF/PPTX/Web/ArXiv/CSV/JSON)",
+            "unavailable (dependency or initialization issue)"
+        )
+        reasoning_icon = "✅" if reasoning_tools else "ℹ️"
+        reasoning_detail = (
+            "enabled (ENABLE_REASONING_TOOLS=on)"
+            if reasoning_tools
+            else "disabled (set ENABLE_REASONING_TOOLS=on to enable)"
+        )
+        print(f"{reasoning_icon} ReasoningTools {reasoning_detail}")
 
         if not tools:
             print("❌ No search tools available! Agent will have limited functionality.")
@@ -199,22 +252,7 @@ class AcademicResearchAgent(BaseAgent):
                 - "Papers related to transformer models in healthcare"
                 - "Machine learning patient outcome prediction" (broad search)
                 - "Find highly-cited papers on deep learning medical imaging"
-                """) + (
-                "\n"
-                + dedent("""\
-                REASONING APPROACH (ACADEMIC):
-                - Break down complex questions into sub-questions (theory, method, domain) before choosing queries
-                - State assumptions about domain/scope and confirm missing details instead of inferring them
-                - Map each claim to Arxiv tool output and prefer primary sources over commentary
-                - Compare methodological alternatives and frameworks, noting trade-offs in rigor, data needs, and bias
-                - Evaluate evidence quality: study design, reproducibility signals, code/data availability, peer review status
-                - Surface uncertainties and research gaps explicitly; propose follow-up searches or adjacent fields to explore
-                - Keep refusals in place when verification fails; this reasoning supports but never overrides grounding rules
-                - Present concise summaries, highlighting limitations and future work alongside key findings
-                """)
-                if is_reasoning_block_enabled()
-                else ""
-            ),
+                """) + self._reasoning_instructions(),
             add_history_to_context=True,
             add_datetime_to_context=True,
             markdown=True,
@@ -225,8 +263,6 @@ class AcademicResearchAgent(BaseAgent):
 
     def run_with_grounding_check(self, query: str, **kwargs) -> Any:
         """Execute the agent with mandatory grounding validation."""
-        import traceback
-
         project_name = kwargs.get("project_name")
         if self.audit_logger:
             self.audit_logger.log_query_received(query, project_name)
@@ -293,9 +329,6 @@ class AcademicResearchAgent(BaseAgent):
         """
         Extract Arxiv IDs from actual tool results in RunOutput.
         """
-        import re
-        import traceback
-
         verified_ids = set()
 
         try:
@@ -310,11 +343,7 @@ class AcademicResearchAgent(BaseAgent):
 
             for message in run_output.messages:
                 message_str = str(message)
-                arxiv_patterns = [
-                    r'\d{4}\.\d{4,5}',       # New format: 2103.12345
-                    r'[a-z\-]+/\d{7}'        # Old format: math/0001001
-                ]
-                for pattern in arxiv_patterns:
+                for pattern in ARXIV_ID_PATTERNS:
                     ids = re.findall(pattern, message_str, re.IGNORECASE)
                     verified_ids.update(ids)
 
@@ -333,11 +362,8 @@ class AcademicResearchAgent(BaseAgent):
         Ensure every cited paper is grounded in actual tool output.
         BLOCKS execution if hallucinated Arxiv IDs detected.
         """
-        import re
-
         content = str(run_output.content) if hasattr(run_output, 'content') else str(run_output)
-        arxiv_pattern = r'(\d{4}\.\d{4,5}|[a-z\-]+/\d{7})'
-        cited_ids = set(re.findall(arxiv_pattern, content, re.IGNORECASE))
+        cited_ids = set(re.findall(ARXIV_ID_PATTERN, content, re.IGNORECASE))
 
         verified_ids = self._extract_verified_arxiv_ids_from_output(run_output)
 
@@ -396,22 +422,22 @@ class AcademicResearchAgent(BaseAgent):
         print("-" * 60)
 
         print("\n1. Find statistical methods (Arxiv):")
-        print('   response = academic_research_agent.run("""')
+        print('   response = academic_research_agent.run_with_grounding_check("""')
         print('   Find papers on statistical analysis methods for')
         print('   healthcare quality improvement""")')
 
         print("\n2. Search for AI/ML applications (Arxiv):")
-        print('   response = academic_research_agent.run("""')
+        print('   response = academic_research_agent.run_with_grounding_check("""')
         print('   Find research on machine learning for predicting')
         print('   patient outcomes""")')
 
         print("\n3. Citation analysis (Semantic Scholar):")
-        print('   response = academic_research_agent.run("""')
+        print('   response = academic_research_agent.run_with_grounding_check("""')
         print('   Find papers that cite the transformer architecture paper')
         print('   and show citation counts""")')
 
         print("\n4. Paper discovery (Semantic Scholar):")
-        print('   response = academic_research_agent.run("""')
+        print('   response = academic_research_agent.run_with_grounding_check("""')
         print('   Find highly-cited papers on deep learning in medical imaging""")')
 
         print("\n5. With Streaming:")
@@ -426,7 +452,10 @@ class AcademicResearchAgent(BaseAgent):
 
 # Create global instance for backward compatibility
 _academic_research_agent_instance = AcademicResearchAgent()
-academic_research_agent = _academic_research_agent_instance.agent
+# Export the wrapper (preferred) so grounding/audit hooks remain active
+academic_research_agent = _academic_research_agent_instance
+# Legacy/raw agent for direct agno access if needed
+academic_research_agent_raw = _academic_research_agent_instance.agent
 
 
 def get_academic_research_agent():

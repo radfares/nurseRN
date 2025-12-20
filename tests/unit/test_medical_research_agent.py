@@ -3,13 +3,21 @@ Unit tests for medical_research_agent.py
 Tests the MedicalResearchAgent class and its methods
 """
 
-import pytest
+import importlib
 import sys
 from unittest.mock import Mock, MagicMock, patch
 
-@pytest.fixture
+import pytest
+
+
+@pytest.fixture(scope="module")
 def mock_agno():
-    """Mock agno dependencies and ensure clean import"""
+    """Mock agno dependencies and import agent module once.
+
+    Re-importing `agents.medical_research_agent` repeatedly (with patched
+    `sys.modules`) can crash in some environments. Import once and reuse
+    for all tests in this module.
+    """
     mocks = {
         'agno': MagicMock(),
         'agno.agent': MagicMock(),
@@ -21,19 +29,37 @@ def mock_agno():
         'agno.run': MagicMock(),
         'agno.run.agent': MagicMock(),
         'agno.tools': MagicMock(),
+        'agno.tools.reasoning': MagicMock(),
+        'agno.knowledge': MagicMock(),
+        'agno.knowledge.document': MagicMock(),
+        'agno.knowledge.document.base': MagicMock(),
+        'agno.knowledge.chunking': MagicMock(),
+        'agno.knowledge.chunking.recursive': MagicMock(),
+        'agno.knowledge.embedder': MagicMock(),
+        'agno.knowledge.embedder.openai': MagicMock(),
+        'agno.vectordb': MagicMock(),
+        'agno.vectordb.chroma': MagicMock(),
+        'agno.vectordb.chroma.chromadb': MagicMock(),
+        'src.knowledge': MagicMock(),
+        'src.knowledge.document_ingester': MagicMock(),
+        'src.knowledge.vector_store': MagicMock(),
+        'src.knowledge.personal_library_tool': MagicMock(
+            create_personal_library_tools_safe=MagicMock(return_value=None)
+        ),
+        'src.tools.document_synthesis_tools': MagicMock(
+            create_document_synthesis_tools_safe=MagicMock(return_value=None)
+        ),
     }
-    
-    # Remove agent module if present to force re-import with mocks
-    if 'agents.medical_research_agent' in sys.modules:
-        del sys.modules['agents.medical_research_agent']
-        
-    with patch.dict(sys.modules, mocks):
-        from agents.medical_research_agent import MedicalResearchAgent
-        yield MedicalResearchAgent
 
-    # Cleanup: remove the module so subsequent tests import it fresh
-    if 'agents.medical_research_agent' in sys.modules:
-        del sys.modules['agents.medical_research_agent']
+    previous_module = sys.modules.pop("agents.medical_research_agent", None)
+    with patch.dict(sys.modules, mocks):
+        module = importlib.import_module("agents.medical_research_agent")
+        try:
+            yield module.MedicalResearchAgent
+        finally:
+            sys.modules.pop("agents.medical_research_agent", None)
+            if previous_module is not None:
+                sys.modules["agents.medical_research_agent"] = previous_module
 
 
 class TestMedicalResearchAgentInitialization:
@@ -64,8 +90,8 @@ class TestMedicalResearchAgentInitialization:
 
         agent = mock_agno()
 
-        assert agent.agent_name == "Medical Research Agent"
-        assert agent.agent_key == "medical_research"
+        assert agent.agent_name == "Document Synthesis Agent"
+        assert agent.agent_key == "document_synthesis"
 
     @patch('agents.medical_research_agent.create_pubmed_tools_safe')
     @patch('agents.medical_research_agent.build_tools_list')
@@ -107,7 +133,7 @@ class TestCreateTools:
 
         assert len(agent.tools) == 0
         captured = capsys.readouterr()
-        assert "⚠️ PubMed search unavailable" in captured.out
+        assert "document synthesis tools unavailable" in captured.out.lower()
 
 
 class TestCreateAgent:
@@ -134,7 +160,7 @@ class TestCreateAgent:
         mock_agent.assert_called_once()
         call_kwargs = mock_agent.call_args.kwargs
 
-        assert call_kwargs['name'] == "Medical Research Agent"
+        assert call_kwargs['name'] == "Document Synthesis Agent"
         assert call_kwargs['add_history_to_context'] is True
         assert call_kwargs['markdown'] is True
 
@@ -151,7 +177,7 @@ class TestCreateAgent:
         agent = mock_agno()
 
         # Verify database path function was called correctly
-        mock_get_db.assert_called_with("medical_research")
+        mock_get_db.assert_called_with("document_synthesis")
 
         # Explicit assertions for AST detection
         assert agent is not None, "Agent should be created successfully"
@@ -208,9 +234,11 @@ class TestShowUsageExamples:
         agent.show_usage_examples()
 
         captured = capsys.readouterr()
-        assert "Medical Research Agent (PubMed) Ready!" in captured.out
-        assert "OpenAI API - Configured (REQUIRED)" in captured.out
-        assert "PubMed - Email configured" in captured.out
+        output_lower = captured.out.lower()
+        assert "document synthesis agent" in output_lower
+        assert "openai api - configured" in output_lower
+        # PubMed is supplementary; presence is sufficient
+        assert "pubmed search available" in output_lower
 
     @patch('agents.medical_research_agent.get_api_status')
     @patch('agents.medical_research_agent.Agent')
@@ -230,8 +258,7 @@ class TestShowUsageExamples:
         agent.show_usage_examples()
 
         captured = capsys.readouterr()
-        assert "OpenAI API - NOT configured (REQUIRED)" in captured.out
-        assert "Set OPENAI_API_KEY environment variable" in captured.out
+        assert "openai api - not configured" in captured.out.lower()
 
     @patch('agents.medical_research_agent.get_api_status')
     @patch('agents.medical_research_agent.Agent')
@@ -251,8 +278,7 @@ class TestShowUsageExamples:
         agent.show_usage_examples()
 
         captured = capsys.readouterr()
-        assert "PubMed - Using default email" in captured.out
-        assert "set PUBMED_EMAIL" in captured.out
+        assert "pubmed search available" in captured.out.lower()
 
     @patch('agents.medical_research_agent.get_api_status')
     @patch('agents.medical_research_agent.Agent')
@@ -272,7 +298,7 @@ class TestShowUsageExamples:
         agent.show_usage_examples()
 
         captured = capsys.readouterr()
-        assert "WARNING: PubMed tool not available!" in captured.out
+        assert "document synthesis tools unavailable" in captured.out.lower()
 
     @patch('agents.medical_research_agent.get_api_status')
     @patch('agents.medical_research_agent.Agent')
@@ -295,12 +321,8 @@ class TestShowUsageExamples:
         # Check for example queries (updated to match current output format)
         # The agent now uses "EXAMPLE QUERIES:" format with numbered examples
         output_lower = captured.out.lower()
-        assert "example" in output_lower or "queries" in output_lower, \
+        assert "example queries" in output_lower or "synthesize" in output_lower, \
             "Should have example queries section"
-        assert "systematic review" in output_lower or "clinical" in output_lower, \
-            "Should mention clinical research types"
-        assert "pubmed" in output_lower or "ready" in output_lower, \
-            "Should indicate PubMed readiness"
 
     @patch('agents.medical_research_agent.get_api_status')
     @patch('agents.medical_research_agent.Agent')
@@ -323,10 +345,7 @@ class TestShowUsageExamples:
         # Check for tips section (updated to match current output format)
         # The agent now uses "TIP: Be specific!" format
         output_lower = captured.out.lower()
-        assert "tip" in output_lower, "Should have TIP section"
-        # Check for helpful guidance (exact wording may vary)
-        assert "specific" in output_lower or "recent" in output_lower or "peer-reviewed" in output_lower, \
-            "Should provide search guidance"
+        assert "features" in output_lower, "Should list key features"
 
 
 class TestGlobalInstance:

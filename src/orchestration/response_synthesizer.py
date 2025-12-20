@@ -10,7 +10,9 @@ Created: 2025-12-11
 import json
 import logging
 import os
-from typing import Any, Dict, List, TYPE_CHECKING, Optional
+import re
+from datetime import datetime
+from typing import Any, Dict, List, TYPE_CHECKING, Optional, Set, Tuple
 
 from openai import OpenAI
 
@@ -128,6 +130,11 @@ class ResponseSynthesizer:
             )
 
             synthesized_response = response.choices[0].message.content
+            synthesized_response = self._enforce_timeline_grounding(
+                user_message=user_message,
+                synthesized_response=synthesized_response,
+                results=results,
+            )
 
             # Phase 3: Mark synthesis as completed
             if request_id:
@@ -139,6 +146,11 @@ class ResponseSynthesizer:
         except Exception as e:
             logger.error(f"Synthesis failed: {e}", exc_info=True)
             fallback_response = self._fallback_synthesis(results)
+            fallback_response = self._enforce_timeline_grounding(
+                user_message=user_message,
+                synthesized_response=fallback_response,
+                results=results,
+            )
 
             # Phase 3: Mark synthesis as completed even for fallback
             if request_id:
@@ -167,7 +179,160 @@ Format guidelines:
 Do NOT:
 - Make up information not in the results
 - Add citations that weren't found by the agents
-- Over-promise or make clinical recommendations"""
+- Over-promise or make clinical recommendations
+
+Timeline grounding rule:
+- If you mention milestones/deadlines/timeline dates, they MUST come from database-backed milestone results.
+- If milestone data was not returned by agents, say you cannot provide timeline dates without querying the milestones table."""
+
+    def _enforce_timeline_grounding(
+        self,
+        *,
+        user_message: str,
+        synthesized_response: str,
+        results: Dict[str, Any],
+    ) -> str:
+        """
+        Guardrail: prevent timeline/milestone claims without DB verification.
+
+        Rationale: The synthesizer is allowed to be fluent, but must not introduce
+        timeline dates/months that were not verified via the milestones table.
+        """
+        response_text = synthesized_response or ""
+        if not isinstance(response_text, str):
+            response_text = str(response_text)
+
+        has_timeline_claims, found_dates, found_month_years = self._detect_timeline_claims(response_text)
+        if not has_timeline_claims:
+            return response_text
+
+        allowed_dates, allowed_month_years, has_milestones_data = self._extract_allowed_milestone_dates(results)
+
+        if not has_milestones_data:
+            logger.warning(
+                "DATABASE GROUNDING GUARD: synthesized response contained timeline claims "
+                "but no milestones table results were found in task outputs."
+            )
+            return (
+                "DATABASE GROUNDING SYSTEM ACTIVATED\n\n"
+                "I can’t provide project timeline/milestone dates without verifying them in the database.\n"
+                "Please run a timeline query so I can read the `milestones` table (e.g., “Show my milestones” "
+                "or “What’s my next deadline?”)."
+            )
+
+        unverified_dates = {
+            d for d in (self._normalize_date_to_iso(x) for x in found_dates) if d and d not in allowed_dates
+        }
+        unverified_month_years = {
+            m for m in (self._normalize_month_year(x) for x in found_month_years) if m and m not in allowed_month_years
+        }
+
+        if unverified_dates or unverified_month_years:
+            logger.warning(
+                "DATABASE GROUNDING GUARD: synthesized response contained unverified timeline dates/months "
+                f"unverified_dates={sorted(unverified_dates)} unverified_month_years={sorted(unverified_month_years)}"
+            )
+            return (
+                "DATABASE GROUNDING SYSTEM ACTIVATED\n\n"
+                "Timeline information in the draft response included dates/months that were not verified against "
+                "the `milestones` table.\n"
+                "Please re-run your timeline question so I can quote the exact milestone records."
+            )
+
+        return response_text
+
+    @staticmethod
+    def _detect_timeline_claims(text: str) -> Tuple[bool, List[str], List[str]]:
+        lowered = (text or "").lower()
+        timeline_keywords = (
+            "milestone",
+            "milestones",
+            "deadline",
+            "deadlines",
+            "due date",
+            "due",
+            "timeline",
+            "schedule",
+            "next deadline",
+            "next milestone",
+        )
+        has_keywords = any(k in lowered for k in timeline_keywords)
+
+        date_pattern = r"(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s+\\d{1,2}(?:,?\\s*\\d{4})?|202\\d-\\d{2}-\\d{2}"
+        month_year_pattern = r"(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s+202\\d"
+
+        dates_found = re.findall(date_pattern, text or "", re.IGNORECASE)
+        month_years_found = re.findall(month_year_pattern, text or "", re.IGNORECASE)
+
+        # Only enforce when there's a meaningful timeline claim (specific "what/when is due" info).
+        has_specific_timeline_language = bool(
+            re.search(r"\\b(next milestone|next deadline|due by|due date|due this|due next)\\b", lowered)
+        )
+        has_timeline_claims = bool(
+            (dates_found or month_years_found) and has_keywords
+        ) or (has_keywords and has_specific_timeline_language)
+        return has_timeline_claims, dates_found, month_years_found
+
+    @staticmethod
+    def _extract_allowed_milestone_dates(results: Dict[str, Any]) -> Tuple[Set[str], Set[str], bool]:
+        allowed_dates: Set[str] = set()
+        allowed_month_years: Set[str] = set()
+        has_milestones_data = False
+
+        for result in (results or {}).values():
+            if not isinstance(result, dict) or not result.get("success"):
+                continue
+
+            agent = str(result.get("agent", "")).lower()
+            action = str(result.get("action", "")).lower()
+            if agent == "project_timeline" or "milestone" in action:
+                has_milestones_data = True
+
+            output = result.get("output")
+            output_text = output if isinstance(output, str) else json.dumps(output, default=str)
+
+            # Evidence of milestones table data in the payload
+            if '"due_date"' in output_text or "milestone_id" in output_text or "milestone_name" in output_text:
+                has_milestones_data = True
+
+            for d in re.findall(r"\\b(\\d{4}-\\d{2}-\\d{2})\\b", output_text):
+                allowed_dates.add(d)
+
+        for d in allowed_dates:
+            try:
+                dt = datetime.strptime(d, "%Y-%m-%d")
+                allowed_month_years.add(dt.strftime("%B %Y"))
+            except Exception:
+                continue
+
+        return allowed_dates, allowed_month_years, has_milestones_data
+
+    @staticmethod
+    def _normalize_date_to_iso(value: str) -> Optional[str]:
+        val = (value or "").strip()
+        if not val:
+            return None
+
+        if re.match(r"^202\\d-\\d{2}-\\d{2}$", val):
+            return val
+
+        try:
+            cleaned = val.replace(",", "")
+            dt = datetime.strptime(cleaned, "%B %d %Y")
+            return dt.strftime("%Y-%m-%d")
+        except Exception:
+            return None
+
+    @staticmethod
+    def _normalize_month_year(value: str) -> Optional[str]:
+        val = (value or "").strip()
+        if not val:
+            return None
+        parts = val.split()
+        if len(parts) != 2:
+            return None
+        month, year = parts
+        return f"{month.capitalize()} {year}"
 
     def _build_user_prompt(
         self,

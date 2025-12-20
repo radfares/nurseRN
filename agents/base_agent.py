@@ -297,20 +297,32 @@ class BaseAgent(ABC):
             # Try to call a custom method if the agent has one
             if hasattr(self, 'run_with_grounding_check'):
                 result = self.run_with_grounding_check(query, project_name=project_name)
-                content = result.get("content") if isinstance(result, dict) else str(result)
+                if isinstance(result, dict):
+                    content = result.get("content", "")
+                elif hasattr(result, "content"):
+                    content = getattr(result, "content")
+                else:
+                    content = result
             elif hasattr(self, 'run'):
                 # For agents that have a direct run method
                 result = self.run(query)
-                content = str(result)
+                content = getattr(result, "content", result)
             else:
                 # Fallback to agent.run if available
                 if hasattr(self.agent, 'run'):
                     result = self.agent.run(query)
-                    content = str(result)
+                    content = getattr(result, "content", result)
                 else:
                     content = "❌ Agent does not have a run method available"
 
-            print(content)
+            if content is None:
+                print("(no content returned)")
+            elif isinstance(content, str):
+                print(content)
+            elif isinstance(content, list):
+                print("\n".join(str(item) for item in content if item is not None))
+            else:
+                print(str(content))
 
         except Exception as e:
             # Fail safely for the UI

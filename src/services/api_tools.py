@@ -13,16 +13,19 @@ This module provides safe wrappers for creating API tools that:
 5. Cache API responses (24hr TTL)
 """
 
+import functools
+import inspect
 import logging
 import os
 import threading
-import functools
-from typing import Optional, Any, Callable, Dict, List
-from functools import wraps
+from typing import Any, Callable, Dict, List, Optional
 
 import pybreaker
 
+CircuitBreakerError = getattr(pybreaker, "CircuitBreakerError", Exception)
+
 logger = logging.getLogger(__name__)
+
 
 class CircuitProtectedToolWrapper:
     """
@@ -43,7 +46,9 @@ class CircuitProtectedToolWrapper:
 
 try:
     from agno.tools.exa import ExaTools
+    from agno.tools.duckduckgo import DuckDuckGoTools
     from agno.tools.serpapi import SerpApiTools
+    from agno.tools.tavily import TavilyTools
     from agno.tools.pubmed import PubmedTools
     from agno.tools.arxiv import ArxivTools
     from agno.tools.clinicaltrials import ClinicalTrialsTools
@@ -55,12 +60,14 @@ try:
     from src.services.safety_tools import SafetyTools
 except ImportError as e:
     logger.warning(f"Could not import one or more tool classes, type hints may be imprecise: {e}")
-    ExaTools = SerpApiTools = PubmedTools = ArxivTools = ClinicalTrialsTools = MedRxivTools = SemanticScholarTools = CoreTools = DoajTools = MilestoneTools = SafetyTools = Any
+    ExaTools = DuckDuckGoTools = SerpApiTools = TavilyTools = PubmedTools = ArxivTools = ClinicalTrialsTools = MedRxivTools = SemanticScholarTools = CoreTools = DoajTools = MilestoneTools = SafetyTools = Any
 
 # Import circuit breakers
 try:
     from .circuit_breaker import (
         EXA_BREAKER,
+        DUCKDUCKGO_BREAKER,
+        TAVILY_BREAKER,
         SERP_BREAKER,
         PUBMED_BREAKER,
         ARXIV_BREAKER,
@@ -69,11 +76,12 @@ try:
         SEMANTIC_SCHOLAR_BREAKER,
         CORE_BREAKER,
         DOAJ_BREAKER,
-        call_with_breaker
     )
 except ImportError:
     logger.warning("Circuit breaker module not available")
     EXA_BREAKER = None
+    DUCKDUCKGO_BREAKER = None
+    TAVILY_BREAKER = None
     SERP_BREAKER = None
     PUBMED_BREAKER = None
     ARXIV_BREAKER = None
@@ -82,27 +90,67 @@ except ImportError:
     SEMANTIC_SCHOLAR_BREAKER = None
     CORE_BREAKER = None
     DOAJ_BREAKER = None
-    def call_with_breaker(
-        breaker: Optional[Any], 
-        func: Callable[..., Any], 
-        fallback_message: str, 
-        *args: Any, 
-        **kwargs: Any
-    ) -> Any:
-        """
-        Execute a function with circuit breaker protection (mock implementation).
-        
-        Args:
-            breaker: The circuit breaker instance (ignored in mock)
-            func: The function to execute
-            fallback_message: Message to log on failure
-            *args: Positional arguments for func
-            **kwargs: Keyword arguments for func
-            
-        Returns:
-            Result of func
-        """
+
+
+# Feature gates and configuration defaults
+def _env_flag(name: str, default: str = "false") -> bool:
+    """Normalize boolean-like environment flags."""
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+ENABLE_EXA_FOR_CLINICAL = _env_flag("ENABLE_EXA_FOR_CLINICAL", "false")
+
+try:
+    PUBMED_RETMAX = int(os.getenv("PUBMED_RETMAX", "20"))
+except ValueError:
+    logger.warning("Invalid PUBMED_RETMAX value; falling back to 20")
+    PUBMED_RETMAX = 20
+
+
+def call_with_breaker(
+    func: Callable[..., Any],
+    *args: Any,
+    breaker: Optional[Any] = None,
+    fallback: Optional[Callable[[BaseException], Any]] = None,
+    fallback_message: str = "Service temporarily unavailable",
+    **kwargs: Any,
+) -> Any:
+    """
+    Execute a function with circuit-breaker protection.
+
+    - Uses breaker.call(...) when a breaker is provided so failures trip/open the circuit
+    - When the breaker is open or the call raises, an optional fallback is invoked
+    - Without a fallback, exceptions are re-raised for the caller to handle
+    """
+
+    def _execute() -> Any:
         return func(*args, **kwargs)
+
+    if breaker is not None:
+        try:
+            return breaker.call(_execute)
+        except Exception as exc:  # pybreaker raises CircuitBreakerError when open
+            logger.warning(f"Circuit-protected call failed for {getattr(breaker, 'name', 'unknown')}: {exc}")
+            if fallback is not None:
+                try:
+                    return fallback(exc)
+                except Exception as fallback_exc:
+                    logger.error(f"Fallback for circuit-protected call raised: {fallback_exc}", exc_info=True)
+            if isinstance(exc, CircuitBreakerError) or fallback is not None:
+                return {"error": "service_unavailable", "message": fallback_message}
+            raise
+
+    try:
+        return _execute()
+    except Exception as exc:
+        logger.error(f"Call failed without circuit breaker: {exc}")
+        if fallback is not None:
+            try:
+                return fallback(exc)
+            except Exception as fallback_exc:
+                logger.error(f"Fallback for non-protected call raised: {fallback_exc}", exc_info=True)
+        return {"error": "api_error", "message": fallback_message}
+
 
 # Setup HTTP caching for API responses (24hr TTL)
 try:
@@ -131,41 +179,47 @@ except Exception as e:
 # Tool Wrapper Classes with Circuit Breaker Protection
 # ============================================================================
 
-import inspect
-
-def _get_exa_breaker() -> Optional[Any]: 
+def _get_exa_breaker() -> Optional[Any]:
     """Get the Exa API circuit breaker."""
     return EXA_BREAKER
 
-def _get_serp_breaker() -> Optional[Any]: 
+def _get_serp_breaker() -> Optional[Any]:
     """Get the SerpAPI circuit breaker."""
     return SERP_BREAKER
 
-def _get_pubmed_breaker() -> Optional[Any]: 
+def _get_tavily_breaker() -> Optional[Any]:
+    """Get the Tavily API circuit breaker."""
+    return TAVILY_BREAKER
+
+def _get_duckduckgo_breaker() -> Optional[Any]:
+    """Get the DuckDuckGo circuit breaker."""
+    return DUCKDUCKGO_BREAKER
+
+def _get_pubmed_breaker() -> Optional[Any]:
     """Get the PubMed API circuit breaker."""
     return PUBMED_BREAKER
 
-def _get_arxiv_breaker() -> Optional[Any]: 
+def _get_arxiv_breaker() -> Optional[Any]:
     """Get the Arxiv API circuit breaker."""
     return ARXIV_BREAKER
 
-def _get_clinicaltrials_breaker() -> Optional[Any]: 
+def _get_clinicaltrials_breaker() -> Optional[Any]:
     """Get the ClinicalTrials.gov API circuit breaker."""
     return CLINICALTRIALS_BREAKER
 
-def _get_medrxiv_breaker() -> Optional[Any]: 
+def _get_medrxiv_breaker() -> Optional[Any]:
     """Get the MedRxiv/BioRxiv API circuit breaker."""
     return MEDRXIV_BREAKER
 
-def _get_semantic_scholar_breaker() -> Optional[Any]: 
+def _get_semantic_scholar_breaker() -> Optional[Any]:
     """Get the Semantic Scholar API circuit breaker."""
     return SEMANTIC_SCHOLAR_BREAKER
 
-def _get_core_breaker() -> Optional[Any]: 
+def _get_core_breaker() -> Optional[Any]:
     """Get the CORE API circuit breaker."""
     return CORE_BREAKER
 
-def _get_doaj_breaker() -> Optional[Any]: 
+def _get_doaj_breaker() -> Optional[Any]:
     """Get the DOAJ API circuit breaker."""
     return DOAJ_BREAKER
 
@@ -225,7 +279,15 @@ def _make_bound_wrapper(method_name: str, orig_func: Callable[..., Any]) -> Call
             else:
                 bound_orig = orig_method
                 
-            return breaker.call(bound_orig, *args, **kwargs)
+            # Use unified breaker helper so caller gets a structured fallback instead of an exception
+            return call_with_breaker(
+                bound_orig,
+                *args,
+                breaker=breaker,
+                fallback=lambda exc: {"error": "service_unavailable", "message": f"{method_name} unavailable"},
+                fallback_message=f"{method_name} unavailable",
+                **kwargs,
+            )
             
     # Explicitly copy signature from unbound function
     try:
@@ -333,6 +395,12 @@ def create_exa_tools_safe(required: bool = False) -> Optional[ExaTools]:
     Returns:
         Circuit-protected ExaTools instance or None if key missing and not required
     """
+    if not ENABLE_EXA_FOR_CLINICAL:
+        logger.info("Exa creation skipped (ENABLE_EXA_FOR_CLINICAL=false)")
+        if required:
+            raise ValueError("Exa is disabled by ENABLE_EXA_FOR_CLINICAL flag")
+        return None
+
     try:
         from agno.tools.exa import ExaTools
     except ImportError:
@@ -369,6 +437,114 @@ def create_exa_tools_safe(required: bool = False) -> Optional[ExaTools]:
         return exa_tool
     except Exception as e:
         logger.error(f"Failed to create ExaTools: {e}", exc_info=True)
+        if required:
+            raise
+        return None
+
+
+def create_duckduckgo_tools_safe(required: bool = False) -> Optional[DuckDuckGoTools]:
+    """
+    Safely create DuckDuckGoTools with circuit breaker protection and error handling.
+
+    Args:
+        required: If True, raises error on failure
+
+    Returns:
+        Circuit-protected DuckDuckGoTools instance or None on failure
+    """
+    try:
+        from agno.tools.duckduckgo import DuckDuckGoTools
+    except ImportError:
+        logger.error("agno.tools.duckduckgo not available")
+        if required:
+            raise
+        return None
+
+    # Policy: news search disabled to keep usage focused on research/web articles
+    enable_news = False
+    backend = os.getenv("DUCKDUCKGO_BACKEND", "duckduckgo")
+    modifier = os.getenv("DUCKDUCKGO_MODIFIER")
+
+    fixed_max_results = os.getenv("DUCKDUCKGO_MAX_RESULTS")
+    try:
+        fixed_max_results_int = int(fixed_max_results) if fixed_max_results else None
+    except ValueError:
+        logger.warning("Invalid DUCKDUCKGO_MAX_RESULTS value; expected integer.")
+        fixed_max_results_int = None
+
+    try:
+        ddg_tool = DuckDuckGoTools(
+            enable_search=True,
+            enable_news=enable_news,
+            backend=backend,
+            modifier=modifier or None,
+            fixed_max_results=fixed_max_results_int,
+        )
+        apply_in_place_wrapper(
+            ddg_tool,
+            [m for m in dir(ddg_tool) if not m.startswith("_") and callable(getattr(ddg_tool, m))],
+            _get_duckduckgo_breaker,
+        )
+        logger.info("✅ Created DuckDuckGo tool with circuit breaker protection")
+        return ddg_tool
+    except Exception as e:
+        logger.error(f"Failed to create DuckDuckGoTools: {e}", exc_info=True)
+        if required:
+            raise
+        return None
+
+
+def create_tavily_tools_safe(required: bool = False) -> Optional[TavilyTools]:
+    """
+    Safely create TavilyTools with circuit breaker protection and error handling.
+
+    Args:
+        required: If True, raises error when API key missing
+
+    Returns:
+        Circuit-protected TavilyTools instance or None if key missing and not required
+    """
+    try:
+        from agno.tools.tavily import TavilyTools
+    except ImportError:
+        logger.error("agno.tools.tavily not available")
+        if required:
+            raise
+        return None
+
+    api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key:
+        msg = "TAVILY_API_KEY environment variable not set"
+        logger.warning(msg)
+        if required:
+            raise ValueError(msg)
+        return None
+
+    search_depth = os.getenv("TAVILY_SEARCH_DEPTH", "basic")
+    extract_depth = os.getenv("TAVILY_EXTRACT_DEPTH", "basic")
+    include_answer_flag = os.getenv("TAVILY_INCLUDE_ANSWER", "true").strip().lower()
+    include_answer = include_answer_flag not in {"0", "false", "off", "no", "disable", "disabled"}
+
+    try:
+        tavily_tool = TavilyTools(
+            api_key=api_key,
+            enable_search=True,
+            enable_extract=True,
+            search_depth=search_depth if search_depth in {"basic", "advanced"} else "basic",
+            extract_depth=extract_depth if extract_depth in {"basic", "advanced"} else "basic",
+            include_answer=include_answer,
+            format="markdown",
+            extract_format="markdown",
+        )
+        apply_in_place_wrapper(
+            tavily_tool,
+            [m for m in dir(tavily_tool) if not m.startswith("_") and callable(getattr(tavily_tool, m))],
+            _get_tavily_breaker,
+        )
+        logger.info("✅ Created Tavily tool with circuit breaker protection")
+        return tavily_tool
+    except Exception as e:
+        logger.error(f"Failed to create TavilyTools: {e}", exc_info=True)
         if required:
             raise
         return None
@@ -441,7 +617,7 @@ def create_pubmed_tools_safe(required: bool = False) -> Optional[PubmedTools]:
         # Create the base tool
         pubmed_tool = PubmedTools(
             email=os.getenv("PUBMED_EMAIL", "nursing.research@example.com"),
-            max_results=10,
+            max_results=PUBMED_RETMAX,
             results_expanded=True,
             enable_search_pubmed=True,
         )
@@ -832,6 +1008,15 @@ def get_api_status() -> dict:
             "key_set": bool(os.getenv("EXA_API_KEY")),
             "required": False,
         },
+        "duckduckgo": {
+            "key_set": True,  # DuckDuckGo via ddgs is keyless
+            "required": False,
+            "note": f"DuckDuckGo backend: {os.getenv('DUCKDUCKGO_BACKEND', 'duckduckgo')}",
+        },
+        "tavily": {
+            "key_set": bool(os.getenv("TAVILY_API_KEY")),
+            "required": False,
+        },
         "serp": {
             "key_set": bool(os.getenv("SERP_API_KEY")),
             "required": False,
@@ -916,6 +1101,12 @@ if __name__ == "__main__":
     exa = create_exa_tools_safe()
     print(f"ExaTools: {'✅ created' if exa else '❌ failed (key missing?)'}")
 
+    tavily = create_tavily_tools_safe()
+    print(f"TavilyTools: {'✅ created' if tavily else '❌ failed (key missing?)'}")
+
+    duckduckgo = create_duckduckgo_tools_safe()
+    print(f"DuckDuckGoTools: {'✅ created' if duckduckgo else '❌ failed (dependency missing?)'}")
+
     serp = create_serp_tools_safe()
     print(f"SerpApiTools: {'✅ created' if serp else '❌ failed (key missing?)'}")
 
@@ -940,5 +1131,5 @@ if __name__ == "__main__":
     doaj = create_doaj_tools_safe()
     print(f"DoajTools: {'✅ created' if doaj else '❌ failed'}")
 
-    tools_list = build_tools_list(exa, serp, pubmed, arxiv, clinicaltrials, medrxiv, semantic_scholar, core, doaj)
+    tools_list = build_tools_list(exa, tavily, duckduckgo, serp, pubmed, arxiv, clinicaltrials, medrxiv, semantic_scholar, core, doaj)
     print(f"\n✅ Built tools list with {len(tools_list)} available tools")

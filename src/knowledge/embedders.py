@@ -146,8 +146,33 @@ class OpenAIEmbedder(BaseEmbedder):
             batch = texts[i:i + self.batch_size]
 
             try:
-                # agno embedder returns embeddings directly
-                embeddings = embedder.get_embeddings(batch)
+                if hasattr(embedder, "get_embeddings"):
+                    embeddings = embedder.get_embeddings(batch)
+                elif hasattr(embedder, "client"):
+                    req: Dict[str, Any] = {
+                        "input": batch,
+                        "model": getattr(embedder, "id", self.spec.model),
+                        "encoding_format": getattr(embedder, "encoding_format", "float"),
+                    }
+                    user = getattr(embedder, "user", None)
+                    if user is not None:
+                        req["user"] = user
+
+                    model_id = req["model"]
+                    if isinstance(model_id, str) and model_id.startswith("text-embedding-3"):
+                        dims = getattr(embedder, "dimensions", None)
+                        if dims is not None:
+                            req["dimensions"] = dims
+
+                    request_params = getattr(embedder, "request_params", None)
+                    if isinstance(request_params, dict) and request_params:
+                        req.update(request_params)
+
+                    response = embedder.client.embeddings.create(**req)
+                    embeddings = [item.embedding for item in response.data]
+                else:
+                    embeddings = [embedder.get_embedding(text) for text in batch]
+
                 all_embeddings.extend(embeddings)
                 self._call_count += 1
             except Exception as e:

@@ -14,6 +14,7 @@ import logging
 import re
 from typing import List, Dict, Any, Optional, Set
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from src.knowledge.vector_store import VectorStoreFactory, SearchResult
 from src.services.cache_utils import RAGCache
@@ -71,7 +72,7 @@ class RAGEnhancer:
         files = refs['filenames']
     """
     
-    def __init__(self, cache_ttl: int = 300, db_path: str = "data/chroma_db"):
+    def __init__(self, cache_ttl: int = 300, db_path: str = "data/chroma_db", embedder: Optional[Any] = None):
         """
         Initialize RAG enhancer.
         
@@ -81,6 +82,7 @@ class RAGEnhancer:
         """
         self.cache = RAGCache(maxsize=100, ttl_seconds=cache_ttl)
         self.db_path = db_path
+        self._embedder = embedder
         logger.info(f"RAGEnhancer initialized (cache_ttl={cache_ttl}s, db_path={db_path})")
     
     def retrieve(
@@ -143,6 +145,61 @@ class RAGEnhancer:
         
         logger.info(f"Retrieved {len(final_results)} results (from {len(all_results)} total)")
         return final_results
+
+    def get_grounded_context(
+        self,
+        query: str,
+        *,
+        agent_hint: str = "general",
+        n_results: int = 3,
+        use_cache: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Retrieve context with the source bound into the text.
+
+        This is designed for safe prompt injection into an agent:
+        each excerpt begins with `[[SOURCE: ...]]` so the model cannot
+        separate the text from its origin when citing.
+
+        Returns:
+            Dict with:
+              - context: str (formatted blocks)
+              - sources: List[str] (exact source labels used)
+              - results: List[RetrievalResult] (raw retrieval objects)
+        """
+        limit = max(1, min(int(n_results), 10))
+        results = self.retrieve(query=query, agent_hint=agent_hint, k=limit, use_cache=use_cache)
+
+        blocks: List[str] = []
+        sources: List[str] = []
+        for r in results[:limit]:
+            # Prefer real DB metadata; fall back to structured fields.
+            raw_source_path = None
+            if isinstance(r.metadata, dict):
+                raw_source_path = r.metadata.get("source_path")
+
+            source_path = raw_source_path or r.source_path or r.citation_id or "Unknown Source"
+            page = r.page_num
+
+            # Keep the label stable but not overly long.
+            label = str(source_path)
+            try:
+                if "/" in label or "\\" in label:
+                    label = str(Path(label).name) or label
+            except Exception:
+                pass
+
+            if page is not None:
+                label = f"{label}, p.{page}"
+
+            sources.append(label)
+            blocks.append(f"[[SOURCE: {label}]] {r.content}")
+
+        return {
+            "context": "\n\n".join(blocks).strip(),
+            "sources": sources,
+            "results": results,
+        }
     
     def _search_collection(
         self,
@@ -162,7 +219,7 @@ class RAGEnhancer:
         store_type = store_type_map.get(collection_name, "personal")
         
         try:
-            store = VectorStoreFactory.get_store(store_type, db_path=self.db_path)
+            store = VectorStoreFactory.get_store(store_type, db_path=self.db_path, embedder=self._embedder)
             search_results = store.search(query, limit=limit)
             
             # Convert to RetrievalResult objects

@@ -51,6 +51,11 @@ def _get_citation_validation():
     return get_citation_validation_agent()
 
 
+def _get_notion_documents():
+    from agents.notion_document_agent import notion_document_agent
+    return notion_document_agent
+
+
 # Registry mapping agent names to their factory functions
 _AGENT_FACTORIES: Dict[str, Callable[[], Any]] = {
     'nursing_research': _get_nursing_research,
@@ -60,6 +65,7 @@ _AGENT_FACTORIES: Dict[str, Callable[[], Any]] = {
     'project_timeline': _get_project_timeline,
     'data_analysis': _get_data_analysis,
     'citation_validation': _get_citation_validation,
+    'notion_documents': _get_notion_documents,
     # Aliases for flexibility
     'nursing': _get_nursing_research,
     'medical': _get_medical_research,
@@ -68,6 +74,7 @@ _AGENT_FACTORIES: Dict[str, Callable[[], Any]] = {
     'timeline': _get_project_timeline,
     'data': _get_data_analysis,
     'citation': _get_citation_validation,
+    'notion': _get_notion_documents,
 }
 
 

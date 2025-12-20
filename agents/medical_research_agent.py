@@ -29,12 +29,9 @@ from agno.models.openai import OpenAIChat
 from agno.tools.reasoning import ReasoningTools
 
 # Import centralized configuration
-from agent_config import get_db_path, is_reasoning_block_enabled
+from agent_config import get_db_path
 
-# Import structured output schemas
-from src.schemas.research_schemas import ResearchArticle
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from pydantic import BaseModel, ConfigDict, Field
 
 # Import BaseAgent for inheritance pattern
 from agents.base_agent import BaseAgent
@@ -47,15 +44,10 @@ from src.services.agent_audit_logger import get_audit_logger
 from src.services.api_tools import (
     build_tools_list,
     create_pubmed_tools_safe,
-    create_clinicaltrials_tools_safe,
     get_api_status,
 )
 from src.tools.literature_tools import LiteratureTools
-from src.knowledge.personal_library_tool import create_personal_library_tools_safe
 from src.tools.document_synthesis_tools import create_document_synthesis_tools_safe
-
-# Phase 3: RAG Enhancement Integration
-from src.services.rag_enhancement import get_rag_enhancer
 
 
 # =============================================================================
@@ -75,8 +67,7 @@ class DocumentSource(BaseModel):
     page_count: int = Field(..., description="Number of pages or sections")
     word_count: int = Field(..., description="Approximate word count")
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class ArticleComparison(BaseModel):
@@ -90,8 +81,7 @@ class ArticleComparison(BaseModel):
     quality_score: str = Field(..., description="High, Medium, or Low based on methodology")
     quality_rationale: str = Field(..., description="Brief explanation of quality rating")
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class Contradiction(BaseModel):
@@ -101,8 +91,7 @@ class Contradiction(BaseModel):
     document_b: str = Field(..., description="Second document's position with source name")
     significance: str = Field(..., description="High, Medium, or Low impact on conclusions")
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class ExtractedCitation(BaseModel):
@@ -111,8 +100,7 @@ class ExtractedCitation(BaseModel):
     source_document: str = Field(..., description="Document filename containing this citation")
     citation_type: str = Field(..., description="Journal, Book, Website, Report, or Unknown")
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class SynthesisResult(BaseModel):
@@ -147,8 +135,7 @@ class SynthesisResult(BaseModel):
     synthesis_statement: str = Field(..., description="2-3 sentence overall summary")
     recommendations: List[str] = Field(..., description="Actionable next steps based on synthesis")
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class LiteratureSynthesisAgent(BaseAgent):
@@ -182,9 +169,6 @@ class LiteratureSynthesisAgent(BaseAgent):
         self.audit_logger = get_audit_logger(
             "document_synthesis", "Document Synthesis Agent"
         )
-        # Phase 3: Initialize RAG enhancer for knowledge retrieval
-        self.rag_enhancer = get_rag_enhancer(cache_ttl=300)
-        self.loaded_documents = []  # Track documents for source validation
 
     def _create_tools(self) -> list:
         """Create tools for file-based document synthesis."""
@@ -364,6 +348,24 @@ class LiteratureSynthesisAgent(BaseAgent):
             db=SqliteDb(db_file=get_db_path("document_synthesis")),
         )
 
+    @staticmethod
+    def _build_full_query(query: str, file_paths: Optional[List[str]]) -> str:
+        if file_paths:
+            paths_str = ", ".join(file_paths)
+            return f"{query}\n\nFiles to synthesize: {paths_str}"
+        return query
+
+    @staticmethod
+    def _extract_response_text(run_output: Any) -> str:
+        return str(run_output.content if hasattr(run_output, "content") else run_output)
+
+    @staticmethod
+    def _duration_ms(start_time: float) -> int:
+        return int((time.time() - start_time) * 1000)
+
+    def _new_session_id(self) -> str:
+        return f"doc_synthesis_{int(time.time() * 1000)}"
+
     def synthesize(
         self,
         query: str,
@@ -387,7 +389,7 @@ class LiteratureSynthesisAgent(BaseAgent):
             Synthesis results with content and metadata
         """
         start_time = time.time()
-        session_id = f"doc_synthesis_{int(time.time() * 1000)}"
+        session_id = self._new_session_id()
 
         try:
             # Input validation
@@ -402,61 +404,34 @@ class LiteratureSynthesisAgent(BaseAgent):
             self.audit_logger.set_session(session_id, project_name)
             self.audit_logger.log_query_received(query, project_name)
 
-            # Phase 3: Optionally enhance with RAG retrieval for background knowledge
-            # Only if no explicit file paths provided (agent uses personal library search anyway)
-            supplementary_context = []
-            if not file_paths:
-                try:
-                    rag_results = self.rag_enhancer.retrieve(
-                        query=query, agent_hint="document_synthesis", k=3
-                    )
-                    supplementary_context = [r.content for r in rag_results[:2]]
-                except Exception as e:
-                    self.logger.warning(f"RAG supplementary retrieval failed: {e}")
-
-            # Build the full query with file paths if provided
-            full_query = query
-            if file_paths:
-                paths_str = ", ".join(file_paths)
-                full_query = f"{query}\n\nFiles to synthesize: {paths_str}"
+            full_query = self._build_full_query(query, file_paths)
 
             # Run agent
             run_output = self.agent.run(full_query)
-            response_text = str(
-                run_output.content if hasattr(run_output, "content") else run_output
-            )
-
-            # Phase 3: Extract grounding metadata from RAG results if used
-            grounding_refs = []
-            if supplementary_context:
-                try:
-                    rag_results_used = self.rag_enhancer.retrieve(
-                        query=query, agent_hint="document_synthesis", k=3, use_cache=True
-                    )
-                    grounding = self.rag_enhancer.extract_grounding_metadata(rag_results_used)
-                    grounding_refs = grounding.get('all_citations', [])
-                except:
-                    pass
+            response_text = self._extract_response_text(run_output)
 
             # Extract document sources from tool results
             documents_used = self._extract_documents_from_output(run_output)
+
+            duration_ms = self._duration_ms(start_time)
 
             # Log response
             self.audit_logger.log_response_generated(
                 response=response_text,
                 response_type="synthesis",
                 validation_passed=True,
-                duration_ms=int((time.time() - start_time) * 1000),
+                duration_ms=duration_ms,
             )
 
             return {
                 "content": response_text,
                 "success": True,
                 "documents_used": documents_used,
-                "duration_ms": int((time.time() - start_time) * 1000),
+                "duration_ms": duration_ms,
             }
 
         except Exception as e:
+            duration_ms = self._duration_ms(start_time)
             self.audit_logger.log_error(
                 error_type=type(e).__name__,
                 error_message=str(e),
@@ -466,6 +441,7 @@ class LiteratureSynthesisAgent(BaseAgent):
                 "content": f"Error during synthesis: {str(e)}",
                 "success": False,
                 "error": str(e),
+                "duration_ms": duration_ms,
             }
 
     def run_with_grounding_check(
@@ -578,17 +554,19 @@ class LiteratureSynthesisAgent(BaseAgent):
 # GLOBAL INSTANCE AND GETTERS
 # =============================================================================
 
-_document_synthesis_agent_instance = None
+_document_synthesis_agent_instance: Optional["LiteratureSynthesisAgent"] = None
+_medical_research_agent_instance: Optional["LiteratureSynthesisAgent"] = None
 
 
-def get_document_synthesis_agent():
+def get_document_synthesis_agent() -> Optional["LiteratureSynthesisAgent"]:
     """
     Return the Document Synthesis Agent instance with lazy initialization.
     """
-    global _document_synthesis_agent_instance
+    global _document_synthesis_agent_instance, _medical_research_agent_instance
     if _document_synthesis_agent_instance is None:
         try:
             _document_synthesis_agent_instance = LiteratureSynthesisAgent()
+            _medical_research_agent_instance = _document_synthesis_agent_instance
         except Exception as _init_error:
             import logging
             logger = logging.getLogger(__name__)
@@ -598,12 +576,12 @@ def get_document_synthesis_agent():
 
 
 # Backward compatibility aliases
-def get_literature_synthesis_agent():
+def get_literature_synthesis_agent() -> Optional["LiteratureSynthesisAgent"]:
     """Alias for get_document_synthesis_agent()."""
     return get_document_synthesis_agent()
 
 
-def get_medical_research_agent():
+def get_medical_research_agent() -> Optional["LiteratureSynthesisAgent"]:
     """DEPRECATED: Use get_document_synthesis_agent() instead."""
     return get_document_synthesis_agent()
 
@@ -614,16 +592,16 @@ MedicalResearchAgent = LiteratureSynthesisAgent
 
 # Exports
 __all__ = [
-    'LiteratureSynthesisAgent',
-    'MedicalResearchAgent',  # Backward compatibility alias
-    'get_document_synthesis_agent',
-    'get_literature_synthesis_agent',
-    'get_medical_research_agent',
-    'SynthesisResult',
-    'ArticleComparison',
-    'DocumentSource',
-    'Contradiction',
-    'ExtractedCitation',
+    "LiteratureSynthesisAgent",
+    "MedicalResearchAgent",  # Backward compatibility alias
+    "get_document_synthesis_agent",
+    "get_literature_synthesis_agent",
+    "get_medical_research_agent",
+    "SynthesisResult",
+    "ArticleComparison",
+    "DocumentSource",
+    "Contradiction",
+    "ExtractedCitation",
 ]
 
 

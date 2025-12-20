@@ -8,7 +8,7 @@ Part of Phase 1: Foundation
 """
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 
 
@@ -19,6 +19,8 @@ class Intent(str, Enum):
     TIMELINE = "timeline"  # Project timeline/milestones
     DATA_ANALYSIS = "data_analysis"  # Data analysis planning
     WRITING = "writing"  # Research writing
+    VALIDATION = "validation"  # Citation/PMID validation
+    NOTION = "notion"  # Notion document management
     UNKNOWN = "unknown"  # Cannot classify
 
 
@@ -95,6 +97,17 @@ class QueryRouter:
                 r'\bsummary\b',
                 r'\bparagraph\b',
                 r'\bessay\b',
+            ],
+            Intent.VALIDATION: [
+                r'\b(validate|verify|check)\b.*\b(citation|pmid|reference)\b',
+                r'\bgrounding\b',
+                r'\bhallucination\b',
+                r'\bis\b.*\b(pmid|citation)\b.*\b(correct|valid|real)\b',
+            ],
+            Intent.NOTION: [
+                r'\bnotion\b',
+                r'\b(save|export|sync)\b.*\b(notion|page|document)\b',
+                r'\bcreate\b.*\b(notion|page)\b',
             ],
         }
         
@@ -211,6 +224,57 @@ class QueryRouter:
         else:
             return 0.95
     
+    def route_query_llm(self, query: str, agent: Any) -> Tuple[Intent, float, Dict[str, Any]]:
+        """
+        Route query using an LLM agent for higher accuracy.
+        
+        Args:
+            query: User query
+            agent: An Agno agent to perform classification
+            
+        Returns:
+            Tuple of (Intent, confidence, entities)
+        """
+        prompt = f"""
+        Classify the following user query into one of these intents:
+        - picot: Developing research questions (Population, Intervention, Comparison, Outcome, Time)
+        - search: Searching for medical literature, PubMed, articles
+        - timeline: Project planning, milestones, deadlines, schedules
+        - data_analysis: Statistics, sample size, data analysis plans
+        - writing: Drafting papers, synthesis, literature reviews, APA format
+        - validation: Verifying citations, checking PMIDs, grounding
+        - notion: Saving to Notion, exporting documents
+        - unknown: Anything else
+        
+        Query: "{query}"
+        
+        Return ONLY the intent name and a confidence score (0.0 to 1.0) in JSON format:
+        {{"intent": "intent_name", "confidence": 0.9, "entities": {{}}}}
+        """
+        
+        try:
+            response = agent.run(prompt)
+            # Simple parsing of JSON from response
+            import json
+            content = response.content if hasattr(response, 'content') else str(response)
+            # Find JSON block
+            match = re.search(r'\{.*\}', content, re.DOTALL)
+            if match:
+                data = json.loads(match.group(0))
+                intent_str = data.get("intent", "unknown").lower()
+                confidence = data.get("confidence", 0.5)
+                entities = data.get("entities", {})
+                
+                try:
+                    return Intent(intent_str), confidence, entities
+                except ValueError:
+                    return Intent.UNKNOWN, 0.0, {}
+        except Exception as e:
+            print(f"LLM Routing failed: {e}")
+            
+        # Fallback to keyword routing
+        return self.route_query(query)
+
     def route_query(self, query: str) -> Tuple[Intent, float, Dict[str, List[str]]]:
         """
         Complete routing: classify intent, extract entities, estimate confidence.

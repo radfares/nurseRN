@@ -12,7 +12,7 @@ import shutil
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -599,6 +599,64 @@ class ProjectManager:
         conn.execute("PRAGMA foreign_keys = ON")
         conn.row_factory = sqlite3.Row  # Return rows as dictionaries
         return conn
+
+    def save_workflow_result(self, workflow_name: str, success: bool, outputs: Dict[str, Any], error: Optional[str] = None) -> bool:
+        """
+        Save workflow execution results to the project database.
+        
+        Args:
+            workflow_name: Name of the workflow
+            success: Whether it succeeded
+            outputs: Dictionary of outputs
+            error: Error message if failed
+            
+        Returns:
+            True if saved successfully
+        """
+        try:
+            conn = self.get_project_connection()
+            cursor = conn.cursor()
+            
+            # Log to conversations table as a 'critical' entry
+            user_query = f"WORKFLOW EXECUTION: {workflow_name}"
+            agent_response = f"Status: {'Success' if success else 'Failed'}\n"
+            if error:
+                agent_response += f"Error: {error}\n"
+            
+            # Add summary of outputs
+            if outputs:
+                agent_response += "\nOutputs generated:\n"
+                for key in outputs.keys():
+                    agent_response += f"- {key}\n"
+            
+            cursor.execute(
+                "INSERT INTO conversations (agent_name, user_query, agent_response, importance_level) VALUES (?, ?, ?, ?)",
+                (f"Workflow:{workflow_name}", user_query, agent_response, "critical")
+            )
+            
+            # If it's a research workflow and we have findings, save them to literature_findings
+            if "findings" in outputs and isinstance(outputs["findings"], list):
+                for finding in outputs["findings"]:
+                    # Basic mapping - this would need to be more robust in production
+                    cursor.execute(
+                        "INSERT INTO literature_findings (agent_source, finding_type, title, authors, pmid, key_findings) VALUES (?, ?, ?, ?, ?, ?)",
+                        (f"Workflow:{workflow_name}", "article", finding.get("title", "Unknown"), 
+                         finding.get("authors", ""), finding.get("pmid", ""), json.dumps(finding.get("summary", [])))
+                    )
+            
+            # If we have a synthesis/draft, save to writing_drafts
+            if "synthesis" in outputs:
+                cursor.execute(
+                    "INSERT INTO writing_drafts (draft_type, title, content) VALUES (?, ?, ?)",
+                    ("synthesis", f"Synthesis from {workflow_name}", str(outputs["synthesis"]))
+                )
+            
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save workflow result: {e}")
+            return False
 
     def _sanitize_project_name(self, name: str) -> str:
         """

@@ -25,11 +25,14 @@ gitpython>=3.1.0
 sqlalchemy>=2.0.0
 
 # Search tools
+mcp>=1.0.0
 exa_py>=2.0.0
 arxiv>=2.3.0
 pypdf>=5.0.0
 google-search-results>=2.4.0
 biopython>=1.80
+ddgs>=1.0.7
+tavily-python>=0.5.0
 
 # Optional
 pandas>=2.2.0

@@ -68,8 +68,8 @@ class PICOTQuestion(BaseModel):
     )
     intervention_components: List[str] = Field(
         description="List of 3-5 specific intervention protocol components",
-        min_items=3,
-        max_items=8
+        min_length=3,
+        max_length=8
     )
     delivered_by: str = Field(
         description="Who delivers the intervention (e.g., 'RNs and CNAs, all shifts')"
@@ -89,7 +89,7 @@ class PICOTQuestion(BaseModel):
     secondary_outcomes: Optional[List[str]] = Field(
         default=None,
         description="2-3 secondary outcomes to measure",
-        max_items=5
+        max_length=5
     )
     data_source: str = Field(
         description="Where/how data will be collected (e.g., 'Incident reporting system + EHR audit')"
@@ -109,8 +109,8 @@ class PICOTQuestion(BaseModel):
     )
     milestones: List[str] = Field(
         description="4-6 key milestones with dates (IRB approval, training, go-live, audits, analysis)",
-        min_items=4,
-        max_items=8
+        min_length=4,
+        max_length=8
     )
 
     # Relevance fields (Rubric: 20 pts)
@@ -128,8 +128,8 @@ class PICOTQuestion(BaseModel):
     )
     search_terms: List[str] = Field(
         description="Recommended search terms for literature review",
-        min_items=3,
-        max_items=10
+        min_length=3,
+        max_length=10
     )
 
     # NO HARDCODED EXAMPLES - This is production research software
@@ -156,7 +156,7 @@ class ResearchArticle(BaseModel):
     )
     authors: List[str] = Field(
         description="Author names",
-        min_items=1
+        min_length=1
     )
     year: int = Field(
         description="Publication year",
@@ -181,8 +181,8 @@ class ResearchArticle(BaseModel):
     )
     key_findings: List[str] = Field(
         description="Main findings from the article",
-        min_items=1,
-        max_items=5
+        min_length=1,
+        max_length=5
     )
     abstract: Optional[str] = Field(
         default=None,
@@ -216,13 +216,13 @@ class LiteratureSynthesis(BaseModel):
     )
     key_findings: List[str] = Field(
         description="Main findings across all studies",
-        min_items=3,
-        max_items=10
+        min_length=3,
+        max_length=10
     )
     recommendations: List[str] = Field(
         description="Clinical practice recommendations based on evidence",
-        min_items=2,
-        max_items=8
+        min_length=2,
+        max_length=8
     )
     evidence_quality: str = Field(
         description="Overall quality assessment of the evidence base",
@@ -230,8 +230,8 @@ class LiteratureSynthesis(BaseModel):
     )
     gaps_identified: List[str] = Field(
         description="Research gaps and areas needing further study",
-        min_items=1,
-        max_items=5
+        min_length=1,
+        max_length=5
     )
     confidence_level: float = Field(
         description="Overall confidence in findings (0.0-1.0)",
@@ -240,7 +240,7 @@ class LiteratureSynthesis(BaseModel):
     )
     citations: List[str] = Field(
         description="PMIDs or DOIs of cited articles",
-        min_items=1
+        min_length=1
     )
 
     # NO HARDCODED EXAMPLES - Real research data only
@@ -266,8 +266,8 @@ class DataAnalysisPlan(BaseModel):
     )
     statistical_tests: List[str] = Field(
         description="Recommended statistical tests with justification",
-        min_items=1,
-        max_items=5
+        min_length=1,
+        max_length=5
     )
     power: float = Field(
         description="Statistical power (typically 0.80 or higher)",
@@ -289,8 +289,8 @@ class DataAnalysisPlan(BaseModel):
     )
     data_collection_plan: List[str] = Field(
         description="Step-by-step data collection procedures",
-        min_items=2,
-        max_items=10
+        min_length=2,
+        max_length=10
     )
     analysis_timeline: str = Field(
         description="Timeline for data collection and analysis",

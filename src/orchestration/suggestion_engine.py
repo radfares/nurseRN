@@ -22,10 +22,15 @@ PHASE_SUGGESTIONS = {
         "Define your research topic",
         "Generate a PICOT question",
         "Review project timeline",
-        "Set project milestones"
+        "Set project milestones",
+        "List key stakeholders to involve",
+        "Draft success metrics and baseline data needs"
     ],
     "literature_review": [
         "Search PubMed for articles",
+        "Broaden search terms or date range",
+        "Search secondary sources (ClinicalTrials, medRxiv, Semantic Scholar)",
+        "Search your personal library or upload PDFs",
         "Validate article quality",
         "Synthesize findings",
         "Export citations"
@@ -66,7 +71,9 @@ TASK_FOLLOWUPS = {
     "medical_research:search_pubmed": [
         "Validate article quality",
         "Synthesize findings",
-        "Search for more articles",
+        "Search for more articles (broaden terms/date range)",
+        "Search secondary sources (ClinicalTrials, medRxiv, Semantic Scholar)",
+        "Search personal library or upload PDFs",
         "Save selected articles"
     ],
     "citation_validation:validate": [
@@ -103,7 +110,7 @@ class SuggestionEngine:
     def generate_suggestions(
         self,
         context: "ConversationContext",
-        max_suggestions: int = 4
+        max_suggestions: int = 6
     ) -> List[str]:
         """
         Generate contextual suggestions.

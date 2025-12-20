@@ -51,7 +51,8 @@ class WorkflowTemplate(ABC):
         self,
         orchestrator: WorkflowOrchestrator,
         context_manager: ContextManager,
-        workflow_id: Optional[str] = None
+        workflow_id: Optional[str] = None,
+        project_manager: Optional[Any] = None
     ):
         """
         Initialize workflow template.
@@ -60,9 +61,11 @@ class WorkflowTemplate(ABC):
             orchestrator: WorkflowOrchestrator instance for agent execution
             context_manager: ContextManager for state persistence
             workflow_id: Optional workflow ID (auto-generated if not provided)
+            project_manager: Optional ProjectManager for database persistence
         """
         self.orchestrator = orchestrator
         self.context = context_manager
+        self.project_manager = project_manager
         self.workflow_id = workflow_id or f"{self.name}_{int(time.time())}"
         self._execution_start = None
         self._steps_completed = 0
@@ -117,7 +120,7 @@ class WorkflowTemplate(ABC):
         """
         execution_time = time.time() - self._execution_start if self._execution_start else 0
         
-        return WorkflowResult(
+        result = WorkflowResult(
             workflow_name=self.name,
             success=(error is None),
             outputs=outputs,
@@ -125,6 +128,21 @@ class WorkflowTemplate(ABC):
             steps_completed=self._steps_completed,
             error=error
         )
+        
+        # Persist to project database if available
+        if self.project_manager:
+            try:
+                self.project_manager.save_workflow_result(
+                    workflow_name=self.name,
+                    success=result.success,
+                    outputs=outputs,
+                    error=error
+                )
+            except Exception as e:
+                # Don't fail the workflow if persistence fails, but log it
+                print(f"Warning: Failed to persist workflow result to project DB: {e}")
+                
+        return result
     
     def _increment_step(self):
         """Increment the step counter"""

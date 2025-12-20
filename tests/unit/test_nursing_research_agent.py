@@ -55,6 +55,7 @@ class TestNursingResearchAgentModule:
         # (may be None if initialization failed, but attribute should exist)
         assert hasattr(nra_module, '_nursing_research_agent_instance')
         assert hasattr(nra_module, 'nursing_research_agent')
+        assert hasattr(nra_module, 'nursing_research_agent_raw')
 
         # If instance was created successfully, verify it's the right type
         if nra_module._nursing_research_agent_instance is not None:
@@ -62,8 +63,10 @@ class TestNursingResearchAgentModule:
                 nra_module._nursing_research_agent_instance,
                 nra_module.NursingResearchAgent
             )
-            # Global agent should point to instance's agent
+            # Global agent should point to wrapper; raw points to underlying agent
             assert nra_module.nursing_research_agent == \
+                nra_module._nursing_research_agent_instance
+            assert nra_module.nursing_research_agent_raw == \
                 nra_module._nursing_research_agent_instance.agent
 
 
@@ -95,3 +98,56 @@ class TestNursingResearchAgentToolConfiguration:
             pytest.skip(f"Tool imports not available: {e}")
 
         assert imports_ok, "Tool creation functions should be importable"
+
+
+class TestRagCitationEnforcement:
+    """Verify that SOURCE-bound RAG context is enforced when provided."""
+
+    @staticmethod
+    def _make_dummy_run_output(*, content: str, metadata: dict):
+        # Use a simple duck-typed object; the validator only relies on these fields.
+        class DummyRunOutput:
+            def __init__(self, content: str, metadata: dict):
+                self.content = content
+                self.metadata = metadata
+                self.tools = []
+
+        return DummyRunOutput(content=content, metadata=metadata)
+
+    def test_refuses_when_rag_context_provided_but_no_source_citation(self):
+        import logging
+        from agents.nursing_research_agent import NursingResearchAgent
+
+        agent = NursingResearchAgent.__new__(NursingResearchAgent)
+        agent.logger = logging.getLogger("test")
+        agent.audit_logger = None
+        agent.tools = []
+        agent._tool_status = {"pubmed": True}
+
+        run_output = self._make_dummy_run_output(
+            content="Topics: process improvement and ICU rounds.",
+            metadata={"rag_context_used": True, "rag_sources": ["MyUpload.pdf"]},
+        )
+
+        ok = agent._validate_run_output(run_output)
+        assert ok is False
+        assert "verification failed" in str(run_output.content).lower()
+        assert run_output.metadata.get("grounding_status") == "failed"
+
+    def test_allows_when_rag_context_provided_and_source_is_cited(self):
+        import logging
+        from agents.nursing_research_agent import NursingResearchAgent
+
+        agent = NursingResearchAgent.__new__(NursingResearchAgent)
+        agent.logger = logging.getLogger("test")
+        agent.audit_logger = None
+        agent.tools = []
+        agent._tool_status = {"pubmed": True}
+
+        run_output = self._make_dummy_run_output(
+            content="Topics: process improvement. [[SOURCE: MyUpload.pdf]]",
+            metadata={"rag_context_used": True, "rag_sources": ["MyUpload.pdf"]},
+        )
+
+        ok = agent._validate_run_output(run_output)
+        assert ok is True

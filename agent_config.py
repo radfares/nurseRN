@@ -32,6 +32,7 @@ DATABASE_PATHS = {
     "data_analysis": str(DB_DIR / "data_analysis_agent.db"),
     "citation_validation": str(DB_DIR / "citation_validation_agent.db"),
     "document_synthesis": str(DB_DIR / "document_synthesis_agent.db"),
+    "notion_documents": str(DB_DIR / "notion_documents_agent.db"),
 }
 
 # ============================================================================
@@ -48,6 +49,7 @@ DEFAULT_MODELS = {
     "data_analysis": "gpt-4o",
     "citation_validation": "gpt-4o",
     "document_synthesis": "gpt-4o",
+    "notion_documents": "gpt-4o",
 }
 
 # Model-specific parameters

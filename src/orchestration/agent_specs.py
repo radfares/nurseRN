@@ -178,6 +178,30 @@ def build_default_agent_specs() -> Dict[str, AgentSpec]:
                 ),
             },
         ),
+        "notion_documents": AgentSpec(
+            name="notion_documents",
+            description="Manage Notion workspace: search, read, and update pages.",
+            actions={
+                "search": ActionSpec(
+                    action="search",
+                    description="Search for pages and databases in Notion.",
+                    required_params=("query",),
+                    output_hints=("results", "text"),
+                ),
+                "read": ActionSpec(
+                    action="read",
+                    description="Read the content of a specific Notion page.",
+                    required_params=("query",),
+                    output_hints=("content", "text"),
+                ),
+                "update": ActionSpec(
+                    action="update",
+                    description="Update or create a page in Notion.",
+                    required_params=("query",),
+                    output_hints=("result", "text"),
+                ),
+            },
+        ),
     }
 
 

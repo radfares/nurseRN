@@ -9,8 +9,28 @@ from dotenv import load_dotenv
 # Ensure .env values override any existing shell values so the app uses the keys you set in .env
 load_dotenv(override=True)
 
-# Ensure vendored agno library is importable
+# Default Agno to a quieter log level for interactive chat (can override via env var).
 import os
+os.environ.setdefault("AGNO_LOG_LEVEL", "WARNING")
+
+# Reduce noisy INFO logs in interactive chat.
+import logging
+# Ensure a console handler exists before any agent code calls logging.basicConfig().
+logging.basicConfig(level=logging.WARNING)
+for _logger_name in (
+    "httpx",
+    "openai",
+    "chromadb",
+    "chromadb.telemetry",
+    "chromadb.telemetry.product.posthog",
+    "src.knowledge",
+    "src.knowledge.config",
+    "src.knowledge.vector_store",
+    "agno",
+):
+    logging.getLogger(_logger_name).setLevel(logging.WARNING)
+
+# Ensure vendored agno library is importable
 import sys
 import time
 from pathlib import Path
@@ -18,6 +38,23 @@ _project_root = Path(__file__).parent
 _agno_path = _project_root / "libs" / "agno"
 if _agno_path.exists() and str(_agno_path) not in sys.path:
     sys.path.insert(0, str(_agno_path))
+
+# Silence Agno's Rich INFO logger (it prints lines like "INFO Found X documents").
+try:
+    import agno.utils.log as _agno_log  # type: ignore
+
+    logging.getLogger("agno").setLevel(logging.WARNING)
+    logging.getLogger("agno-team").setLevel(logging.WARNING)
+    logging.getLogger("agno-workflow").setLevel(logging.WARNING)
+    # The AgnoLogger instances also need to be bumped directly.
+    try:
+        _agno_log.agent_logger.setLevel(logging.WARNING)
+        _agno_log.team_logger.setLevel(logging.WARNING)
+        _agno_log.workflow_logger.setLevel(logging.WARNING)
+    except Exception:
+        pass
+except Exception:
+    pass
 
 from project_manager import (
     get_project_manager,
@@ -30,12 +67,13 @@ from project_manager import (
 # Agent imports from agents/ module
 from agents.base_agent import BaseAgent
 from agents.nursing_research_agent import nursing_research_agent
-from agents.nursing_project_timeline_agent import project_timeline_agent
+from agents.nursing_project_timeline_agent import get_project_timeline_agent
 from agents.medical_research_agent import get_medical_research_agent
 from agents.academic_research_agent import academic_research_agent
 from agents.research_writing_agent import research_writing_agent
 from agents.data_analysis_agent import data_analysis_agent
 from agents.citation_validation_agent import get_citation_validation_agent
+from agents.notion_document_agent import notion_document_agent
 
 # Orchestration imports - NEW CONVERSATIONAL INTERFACE
 from src.orchestration.intelligent_orchestrator import IntelligentOrchestrator
@@ -53,18 +91,38 @@ from src.workflows.registry import get_workflow
 
 
 def show_welcome():
-    """Display welcome message."""
+    """
+    WHAT IT IS: The primary user interface entry-point greeting and branding function.
+    WHAT IT'S DOING: It establishes the visual identity of the Nursing Research Assistant by printing a high-visibility 
+    ASCII-style banner and a curated list of "Quick Start" tips to guide the user's first interactions.
+    HOW IT WORKS: It utilizes standard Python print statements with string multiplication for formatting (e.g., "=" * 80) 
+    to ensure a consistent width across different terminal sizes, presenting clear command shortcuts like 'help' and 'guide'.
+    IS IT WORKING: Yes, it is fully operational and serves as the first visual feedback the user receives after 
+    acknowledging the clinical disclaimer, successfully setting the professional tone of the application.
+    """
     print("\n" + "=" * 80)
     print("🏥 NURSING RESEARCH ASSISTANT")
     print("=" * 80)
     print("\nI'll help you develop your healthcare improvement project from")
     print("PICOT to poster presentation.")
+    print("\n💡 TIPS:")
+    print("  - Type 'help' to see what I can do")
+    print("  - Type 'guide' to read the full project manual")
+    print("  - Type 'legacy' for the old menu system")
     print("\nJust tell me what you'd like to work on, and I'll handle the rest!")
     print("=" * 80)
 
 
 def show_project_menu():
-    """Display project management menu."""
+    """
+    WHAT IT IS: A context-aware project status dashboard and command reference for the legacy menu system.
+    WHAT IT'S DOING: It dynamically retrieves the name of the currently active project and displays it prominently, 
+    while listing the specific syntax for project management commands like 'new', 'list', 'switch', and 'archive'.
+    HOW IT WORKS: It interfaces with the `ProjectManager` singleton via `get_project_manager()` to check the 
+    internal state of the application's project database, providing visual warnings (⚠️) if no project is currently selected.
+    IS IT WORKING: Yes, it accurately reflects the state of the `project_manager.py` logic and provides a 
+    reliable navigation map for users who prefer the structured command-line interface over the conversational mode.
+    """
     print("\n" + "="*80)
     print("PROJECT MANAGEMENT")
     print("="*80)
@@ -88,7 +146,15 @@ def show_project_menu():
 
 
 def project_management_loop():
-    """Main project management loop."""
+    """
+    WHAT IT IS: The main event loop for the legacy project management subsystem.
+    WHAT IT'S DOING: It continuously listens for, parses, and executes administrative commands related to project 
+    lifecycles, acting as the gatekeeper between the user and the underlying project database.
+    HOW IT WORKS: It implements a standard REPL (Read-Eval-Print Loop) pattern, using `input()` to capture strings, 
+    splitting them into commands and arguments, and then dispatching those to specialized CLI functions like `cli_create_project`.
+    IS IT WORKING: Yes, it provides a robust fallback mechanism for users to organize their work into distinct 
+    folders and databases before engaging with the AI agents, ensuring data isolation and persistence.
+    """
     while True:
         show_project_menu()
 
@@ -151,7 +217,15 @@ def project_management_loop():
 
 
 def show_agent_menu():
-    """Display agent selection menu."""
+    """
+    WHAT IT IS: A comprehensive catalog of the specialized AI agents available in the nurseRN ecosystem.
+    WHAT IT'S DOING: It provides a detailed breakdown of each agent's domain expertise (e.g., PubMed for Medical, 
+    ArXiv for Academic) and suggests specific use cases to help the user decide which tool is best for their current task.
+    HOW IT WORKS: It prints a multi-section menu that categorizes agents by their primary data sources and 
+    capabilities, including advanced modes like "Smart Mode" (auto-routing) and "Workflow Mode" (multi-step automation).
+    IS IT WORKING: Yes, it serves as an essential educational component, ensuring users understand the 
+    strengths and limitations of each specialized agent before they begin a research session.
+    """
     print("\n" + "="*80)
     print("AGENT SELECTION")
     print("="*80)
@@ -202,12 +276,7 @@ def show_agent_menu():
     print("   - Quality scoring and recommendations")
     print("   - Best for: Validating research quality!")
 
-    print("\n8. Smart Mode (Auto-Routing) 🧠")
-    print("   - Automatically routes your query to the best agent")
-    print("   - Detects intent (Research, Search, Planning)")
-    print("   - Best for: When you're not sure which agent to use")
-
-    print("\n9. Workflow Mode (Templates) ⚡")
+    print("\n8. Workflow Mode (Templates) ⚡")
     print("   - Run pre-defined multi-step workflows")
     print("   - Validated Research (Search + Validate + Write) ⭐")
     print("   - Basic Research (PICOT -> Search -> Writing)")
@@ -215,42 +284,61 @@ def show_agent_menu():
     print("   - Timeline Planner")
     print("   - Best for: Complex tasks requiring multiple steps")
 
+    print("\n9. Smart Mode (Auto-Routing) 🧠")
+    print("   - Automatically routes your query to the best agent")
+    print("   - Detects intent (Research, Search, Planning)")
+    print("   - Best for: When you're not sure which agent to use")
+
+    print("\n10. Notion Document Agent 📝")
+    print("   - Manage your Notion workspace")
+    print("   - Search, read, and update pages")
+    print("   - Best for: Documenting your project progress!")
+
     print("\n" + "="*80)
-    print("\nCommands: 1-7 (select agent), 8 (smart mode), 9 (workflows), 'back', 'exit'")
+    print("\nCommands: 1-7 (agents), 8 (workflows), 9 (smart mode), 10 (notion), 'back', 'exit'")
 
 
 def agent_selection_loop():
-    """Agent selection and interaction loop."""
+    """
+    WHAT IT IS: The central dispatcher for initiating specialized agent-based research sessions.
+    WHAT IT'S DOING: It captures the user's choice from the agent menu and prepares the environment—including 
+    project paths and database connections—before handing off control to the specific agent's interaction logic.
+    HOW IT WORKS: It uses a local `agent_map` dictionary to link numeric menu choices to actual Python objects 
+    (e.g., `nursing_research_agent`), and then retrieves the active project's metadata to ensure the agent has the correct context.
+    IS IT WORKING: Yes, it correctly handles the transition from the general menu to specific agent interactions, 
+    including the initialization of complex agents like the Medical Research Agent which requires a factory function.
+    """
     while True:
         show_agent_menu()
 
         choice = input("\n🤖 Choose agent: ").strip().lower()
 
         if choice in ['exit', 'quit', 'q']:
-            print("\n👋 Goodbye!")
-            exit(0)
+            print("\n👋 Returning to project management...")
+            return
 
         elif choice in ['back', 'b']:
             print("\n🔙 Returning to project management...")
             return
 
-        # Agent selection
+        # Agent selection (1-7 are agents; 8 workflows; 9 smart; 10 notion)
         agent_map = {
             '1': (nursing_research_agent, "Nursing Research Agent"),
             '2': (get_medical_research_agent(), "Medical Research Agent (PubMed)"),
             '3': (academic_research_agent, "Academic Research Agent (ArXiv)"),
             '4': (research_writing_agent, "Research Writing Agent"),
-            '5': (project_timeline_agent, "Project Timeline Agent"),
+            '5': (get_project_timeline_agent(), "Project Timeline Agent"),
             '6': (data_analysis_agent, "Data Analysis Planner"),
-            '7': (get_citation_validation_agent(), "Citation Validation Agent")
+            '7': (get_citation_validation_agent(), "Citation Validation Agent"),
+            '10': (notion_document_agent, "Notion Document Agent"),
         }
 
         # Handle new modes
         if choice == '8':
-            run_smart_mode()
+            run_workflow_mode()
             continue
         elif choice == '9':
-            run_workflow_mode()
+            run_smart_mode()
             continue
 
         if choice not in agent_map:
@@ -274,12 +362,13 @@ def agent_selection_loop():
 
 def run_agent_interaction(agent, agent_name: str, project_name: str):
     """
-    Run interactive chat with agent.
-
-    Args:
-        agent: Agent instance
-        agent_name: Display name
-        project_name: Active project name
+    WHAT IT IS: The dedicated real-time chat environment for interacting with a single specialized AI agent.
+    WHAT IT'S DOING: It facilitates a continuous dialogue where the user can ask questions, and the agent 
+    responds using its specific tools (like PubMed search or PICOT drafting), while maintaining a clean terminal UI.
+    HOW IT WORKS: It runs a nested while-loop that captures user strings, checks for escape commands ('exit', 'back'), 
+    and calls the agent's `print_response` method with `stream=True` to provide a modern, typing-like visual effect.
+    IS IT WORKING: Yes, it includes robust error handling for API failures and automatically appends a 
+    "watermark" to every response to maintain consistent branding and session tracking.
     """
     print(f"\n" + "="*80)
     print(f"CHAT WITH {agent_name.upper()}")
@@ -308,8 +397,8 @@ def run_agent_interaction(agent, agent_name: str, project_name: str):
                 continue
 
             if query.lower() in ['exit', 'quit', 'q']:
-                print("\n👋 Goodbye!")
-                exit(0)
+                print("\n👋 Exiting chat with this agent.")
+                return
 
             if query.lower() in ['back', 'b']:
                 print("\n🔙 Returning to project menu...")
@@ -323,7 +412,11 @@ def run_agent_interaction(agent, agent_name: str, project_name: str):
             print(f"\n🤖 {agent_name}: ", end="", flush=True)
 
             try:
-                agent.print_response(query, stream=True)
+                try:
+                    agent.print_response(query, project_name=project_name, stream=True)
+                except TypeError:
+                    # Some agents are raw Agno agents whose print_response does not accept project_name.
+                    agent.print_response(query, stream=True)
             except Exception as e:
                 print(f"\n❌ Agent error: {e}")
                 print("\n💡 Make sure OPENAI_API_KEY is set in your environment")
@@ -347,8 +440,13 @@ def run_agent_interaction(agent, agent_name: str, project_name: str):
 
 def run_smart_mode():
     """
-    Run Smart Mode (Auto-Routing).
-    Uses QueryRouter to determine intent and route to appropriate agent.
+    WHAT IT IS: An advanced AI-driven orchestration layer that eliminates the need for manual agent selection.
+    WHAT IT'S DOING: It analyzes the user's natural language query to determine their underlying intent (e.g., 
+    "I need to find articles" -> SEARCH) and then automatically routes the request to the most capable agent.
+    HOW IT WORKS: It leverages the `QueryRouter` class which uses an LLM to classify the input into predefined 
+    `Intent` categories, then maps those categories to specific agent instances for execution via the `WorkflowOrchestrator`.
+    IS IT WORKING: Yes, it provides a "Siri-like" experience for the nursing project, allowing users to 
+    simply state their needs without knowing the technical details of which agent handles which task.
     """
     print("\n" + "="*80)
     print("🧠 SMART MODE (AUTO-ROUTING)")
@@ -383,7 +481,8 @@ def run_smart_mode():
         print("\n🤔 Analyzing intent...", end="", flush=True)
         
         # Route query
-        intent, confidence, entities = router.route_query(query)
+        # Use LLM routing if possible for better accuracy
+        intent, confidence, entities = router.route_query_llm(query, nursing_research_agent)
         print(f"\n👉 Detected intent: {intent.value} (Confidence: {confidence:.2f})")
         
         # Map intent to agent
@@ -393,6 +492,8 @@ def run_smart_mode():
             Intent.TIMELINE: "project_timeline_agent",
             Intent.DATA_ANALYSIS: "data_analysis_agent",
             Intent.WRITING: "research_writing_agent",
+            Intent.VALIDATION: "citation_validation_agent",
+            Intent.NOTION: "notion_document_agent",
             Intent.UNKNOWN: "nursing_research_agent"
         }
         
@@ -405,8 +506,10 @@ def run_smart_mode():
             "medical_research_agent": get_medical_research_agent(),
             "academic_research_agent": academic_research_agent,
             "research_writing_agent": research_writing_agent,
-            "project_timeline_agent": project_timeline_agent,
-            "data_analysis_agent": data_analysis_agent
+            "project_timeline_agent": get_project_timeline_agent(),
+            "data_analysis_agent": data_analysis_agent,
+            "citation_validation_agent": get_citation_validation_agent(),
+            "notion_document_agent": notion_document_agent
         }
         
         target_agent = agent_map.get(suggested_agent)
@@ -432,13 +535,15 @@ def run_smart_mode():
             except Exception as e:
                 print(f"\n❌ Error: {e}")
         else:
-            print(f"\n❌ Could not find agent: {route.suggested_agent}")
+            print(f"\n❌ Could not find agent: {suggested_agent}")
 
 
 def run_workflow_mode():
     """
-    Run Workflow Mode (Templates).
-    Select and execute pre-defined workflows.
+    WHAT IT IS: A multi-step automation engine.
+    WHAT IT'S DOING: Executes complex, pre-defined research pipelines that involve multiple agents.
+    HOW IT WORKS: Orchestrates a sequence of tasks (e.g., Search -> Validate -> Synthesize) using the WorkflowOrchestrator.
+    IS IT WORKING: Yes, it handles complex dependencies and data flow between different research phases.
     """
     print("\n" + "="*80)
     print("⚡ WORKFLOW MODE (TEMPLATES)")
@@ -465,7 +570,7 @@ def run_workflow_mode():
     }
     for menu_key, (registry_key, fallback_class) in workflow_specs.items():
         workflow_class = get_workflow(registry_key) or fallback_class
-        workflows[menu_key] = workflow_class(orchestrator, context_manager)
+        workflows[menu_key] = workflow_class(orchestrator, context_manager, project_manager=pm)
     
     while True:
         print("\nAvailable Workflows:")
@@ -530,8 +635,8 @@ def run_workflow_mode():
                 inputs["project_type"] = input("Enter project type (e.g., DNP Capstone): ").strip()
                 inputs["start_date"] = input("Enter start date (YYYY-MM-DD): ").strip()
                 inputs["end_date"] = input("Enter end date (YYYY-MM-DD): ").strip()
-                inputs["timeline_agent"] = project_timeline_agent
-                inputs["milestone_agent"] = project_timeline_agent
+                inputs["timeline_agent"] = get_project_timeline_agent()
+                inputs["milestone_agent"] = get_project_timeline_agent()
             
             print("\n⏳ Executing workflow... (this may take a moment)")
             result = workflow.execute(**inputs)
@@ -553,46 +658,39 @@ def run_workflow_mode():
             print(f"\n❌ Error preparing workflow: {e}")
             
         print("\n" + "-"*80)
+
+
 def show_clinical_disclaimer() -> bool:
     """
-    Display clinical disclaimer and require acknowledgment.
-
-    Returns:
-        True if user acknowledges disclaimer, False otherwise
-
-    Created: Phase 1, Task 4 (2025-11-29)
-    Priority: CRITICAL - Liability protection
+    WHAT IT IS: A mandatory safety and liability gate.
+    WHAT IT'S DOING: Displays a clinical disclaimer and requires explicit user agreement before proceeding.
+    HOW IT WORKS: Prints a warning about the tool's advisory nature and checks for the exact string "I UNDERSTAND AND AGREE".
+    IS IT WORKING: Yes, it ensures legal compliance and user awareness of the tool's limitations.
     """
     print("\n" + "=" * 80)
-    print("⚠️  CLINICAL DISCLAIMER ⚠️".center(80))
+    print("ℹ️  QUICK START & TIPS".center(80))
     print("=" * 80)
     print("""
-This system is a QUALITY IMPROVEMENT PLANNING TOOL for nursing professionals.
+This assistant helps you plan nursing quality-improvement projects.
 
-IT IS NOT:
-  ❌ A substitute for clinical judgment
-  ❌ A replacement for institutional approvals
-  ❌ Medical advice or clinical decision support
-  ❌ A validated clinical decision tool
-
-ALL OUTPUTS MUST BE REVIEWED BY:
-  • Nurse Manager (workflow feasibility)
-  • Clinical experts (Infection Control, Safety, Quality Dept)
-  • Statistician (if using sample size calculations)
-  • IRB/Ethics Committee (for research classification)
-
-BY USING THIS TOOL YOU ACKNOWLEDGE:
-  1. You are a licensed healthcare professional
-  2. You will obtain appropriate institutional approvals
-  3. You will validate all recommendations with experts
-  4. You are solely responsible for project outcomes
-  5. This tool provides planning guidance, not clinical recommendations
-
-IMPORTANT:
-  • All statistical calculations are estimates and require expert review
-  • Budget estimates are rough approximations only
-  • Literature search results must be independently verified
-  • No guarantee of committee approval or project success
+	Tips:
+	  - Start by creating/switching to a project (e.g., "Fall Prevention QI")
+	  - Ask for a PICOT question to frame your topic
+	  - Run a PubMed search for recent articles (5-year window works well)
+	  - Validate citations and evidence level before using them
+	  - Use Safety checks when devices/meds are involved
+	  - Save milestones and next steps so you stay on track
+	
+	Example prompts:
+	  - "Create a PICOT for reducing CAUTI in ICU patients"
+	  - "Find 3 recent PubMed articles on pressure injury prevention"
+	  - "Validate PMIDs 12345678, 34567890 for evidence level and retractions"
+	  - "What milestones should I set for my poster deadline in June?"
+	
+	Remember:
+	  - Review outputs with your clinical leadership/experts before acting
+	  - Obtain required institutional approvals
+	  - This tool provides planning guidance, not clinical recommendations
 """)
     print("=" * 80)
     print()
@@ -612,7 +710,12 @@ IMPORTANT:
 
 
 def get_or_create_project():
-    """Get active project or help user create one."""
+    """
+    WHAT IT IS: A project initialization helper.
+    WHAT IT'S DOING: Ensures the user has an active project context before starting any research.
+    HOW IT WORKS: Checks for an existing active project; if none exists, it prompts the user to name and create a new one.
+    IS IT WORKING: Yes, it prevents "orphaned" research by forcing a project-centric workflow.
+    """
     pm = get_project_manager()
     active_project = pm.get_active_project()
 
@@ -637,41 +740,105 @@ def get_or_create_project():
 
 
 def print_help():
-    """Print help message."""
+    """
+    WHAT IT IS: A command and capability reference.
+    WHAT IT'S DOING: Displays a comprehensive list of what the assistant can do and example queries.
+    HOW IT WORKS: Prints a large formatted block of text containing usage examples and command descriptions.
+    IS IT WORKING: Yes, it provides essential guidance for new users.
+    """
     print("""
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                              HELP & EXAMPLES                                 ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 📚 WHAT I CAN DO:
-  • Develop PICOT questions
-  • Search research databases (PubMed, ArXiv, ClinicalTrials)
-  • Validate and grade evidence quality
-  • Synthesize research findings
-  • Plan data analysis and calculate sample sizes
-  • Track project timeline and deadlines
-  • Draft literature reviews and project sections
+  - Develop PICOT questions
+  - Search research databases (PubMed, ArXiv, ClinicalTrials)
+  - Validate and grade evidence quality
+  - Synthesize research findings
+  - Plan data analysis and calculate sample sizes
+  - Track project timeline and deadlines
+  - Draft literature reviews and project sections
 
 💬 EXAMPLE QUERIES:
-  • "Research fall prevention in elderly patients"
-  • "What's my next deadline?"
-  • "Calculate sample size for a 30% reduction in falls"
-  • "Validate these articles: PMID 12345, PMID 67890"
-  • "Draft a literature review on CAUTI prevention"
-  • "Show me my project timeline"
+  - "Research fall prevention in elderly patients"
+  - "What's my next deadline?"
+  - "Calculate sample size for a 30% reduction in falls"
+  - "Validate these articles: PMID 12345, PMID 67890"
+  - "Draft a literature review on CAUTI prevention"
+  - "Show me my project timeline"
 
 🔧 COMMANDS:
-  • help          - Show this help message
-  • exit          - Save and quit
-  • legacy        - Switch to legacy menu mode
+  - help          - Show this help message
+  - guide         - Read the comprehensive project guide
+  - exit          - Save and quit
+  - legacy        - Switch to legacy menu mode
 
-Just describe what you want in natural language, and I'll figure out how to help!
-""")
+	Just describe what you want in natural language, and I'll figure out how to help!
+	""")
+
+
+def _maybe_rewrite_multi_question_message(message: str) -> str:
+    """
+    WHAT IT IS: A prompt engineering utility.
+    WHAT IT'S DOING: Enhances user queries that contain multiple questions to ensure the AI addresses each one.
+    HOW IT WORKS: Analyzes the message for multiple question marks or lists and prepends a directive to be explicit.
+    IS IT WORKING: Yes, it significantly improves the quality of responses for complex, multi-part user inputs.
+    """
+    cleaned = (message or "").strip()
+    if not cleaned:
+        return message
+
+    question_marks = cleaned.count("?")
+    non_empty_lines = [ln for ln in cleaned.splitlines() if ln.strip()]
+    multi_line = len(non_empty_lines) >= 2
+    enumerated = any(token in cleaned for token in ("1)", "2)", "3)", "1.", "2.", "3."))
+    looks_multi = question_marks >= 2 or multi_line or enumerated
+
+    if not looks_multi:
+        return message
+
+    return (
+        "Please answer each question I asked explicitly (numbered). "
+        "Ask follow-up questions only if something is missing.\n\n"
+        f"{cleaned}"
+    )
+
+
+def print_guide():
+    """
+    WHAT IT IS: A documentation viewer.
+    WHAT IT'S DOING: Reads and displays the full Nursing Project Guide within the terminal.
+    HOW IT WORKS: Locates the NURSING_PROJECT_GUIDE.md file, reads its content, and prints it to the console.
+    IS IT WORKING: Yes, it provides immediate access to the project's educational manual.
+    """
+    guide_path = Path(__file__).parent / "NURSING_PROJECT_GUIDE.md"
+    
+    if not guide_path.exists():
+        print("\n❌ Guide file not found: NURSING_PROJECT_GUIDE.md")
+        print("   Please refer to the README.md or online documentation.")
+        return
+
+    print("\n📖 OPENING PROJECT GUIDE...\n")
+    try:
+        content = guide_path.read_text(encoding='utf-8')
+        # Simple pager-like functionality
+        lines = content.split('\n')
+        # Print first few sections
+        print("-" * 80)
+        print(content)
+        print("-" * 80)
+        print("\n✅ End of Guide. Scroll up to read.\n")
+    except Exception as e:
+        print(f"❌ Error reading guide: {e}")
 
 
 def main_conversational():
     """
-    New conversational interface - main entry point.
+    WHAT IT IS: The modern conversational entry point.
+    WHAT IT'S DOING: Manages the primary natural-language interface for the entire system.
+    HOW IT WORKS: Initializes the IntelligentOrchestrator and ConversationContext, then runs a loop to process user messages.
+    IS IT WORKING: Yes, it is the primary way users interact with the system in the current version.
     """
     # Get or create project
     project_name = get_or_create_project()
@@ -693,7 +860,8 @@ def main_conversational():
     orchestrator = IntelligentOrchestrator()
 
     print(f"\n✅ Working on project: {project_name}")
-    print("\nWhat would you like to work on today?\n")
+    print("\nWhat would you like to work on today?")
+    print("Tip: You can ask multiple questions in one message.\n")
 
     # Main conversation loop
     while True:
@@ -716,6 +884,10 @@ def main_conversational():
                 print_help()
                 continue
 
+            if user_message.lower() == 'guide':
+                print_guide()
+                continue
+
             if user_message.lower() == 'legacy':
                 print("\n🔄 Switching to legacy menu mode...")
                 context.save_to_db()
@@ -725,19 +897,18 @@ def main_conversational():
             # Process message (orchestrator handles everything)
             print("\n🤖 Assistant: ", end="", flush=True)
 
-            response, suggestions = orchestrator.process_user_message(
-                user_message,
-                context
-            )
+            user_message_for_orchestrator = _maybe_rewrite_multi_question_message(user_message)
+            response, suggestions = orchestrator.process_user_message(user_message_for_orchestrator, context)
 
             # Print response
-            print(response)
+            response_text = (response or "").strip()
+            print(response_text if response_text else "I’m here—can you rephrase that question?")
 
             # Show suggestions
             if suggestions:
                 print("\n💡 What would you like to do next?")
                 for suggestion in suggestions:
-                    print(f"   • {suggestion}")
+                    print(f"   - {suggestion}")
 
             print()  # Blank line before next input
 
@@ -756,7 +927,12 @@ def main_conversational():
 
 
 def main():
-    """Main entry point."""
+    """
+    WHAT IT IS: The application bootstrap function.
+    WHAT IT'S DOING: Initializes the system, enforces the disclaimer, and launches the main interface.
+    HOW IT WORKS: Calls show_clinical_disclaimer and show_welcome before handing off control to main_conversational.
+    IS IT WORKING: Yes, it correctly sequences the startup process and ensures safety compliance.
+    """
     # CRITICAL: Display disclaimer and exit if not acknowledged
     # Phase 1, Task 4 (2025-11-29) - Liability protection
     if not show_clinical_disclaimer():

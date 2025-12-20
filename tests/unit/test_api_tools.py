@@ -15,6 +15,8 @@ from src.services.api_tools import (
     create_doaj_tools_safe,
     build_tools_list,
     get_api_status,
+    call_with_breaker,
+    CircuitBreakerError,
 )
 
 
@@ -237,6 +239,38 @@ class TestBuildToolsList:
         """Test build_tools_list with all None values"""
         result = build_tools_list(None, None, None)
         assert len(result) == 0
+
+
+class TestCallWithBreaker:
+    """Tests for the circuit-breaker helper."""
+
+    def test_call_with_breaker_uses_breaker(self):
+        breaker = Mock()
+        breaker.call.side_effect = lambda fn: fn()
+        func = Mock(return_value="ok")
+
+        result = call_with_breaker(func, breaker=breaker)
+
+        assert result == "ok"
+        breaker.call.assert_called_once()
+        func.assert_called_once()
+
+    def test_call_with_breaker_fallback_on_open_breaker(self):
+        breaker = Mock()
+        breaker.call.side_effect = CircuitBreakerError("open")
+        func = Mock()
+        fallback = Mock(return_value={"error": "service_unavailable", "message": "down"})
+
+        result = call_with_breaker(
+            func,
+            breaker=breaker,
+            fallback=fallback,
+            fallback_message="down",
+        )
+
+        assert result == {"error": "service_unavailable", "message": "down"}
+        func.assert_not_called()
+        fallback.assert_called_once()
 
     def test_build_tools_list_all_valid(self):
         """Test build_tools_list with all valid tools"""

@@ -64,6 +64,17 @@ class AgnoLogger(logging.Logger):
         super().info(msg, *args, **kwargs)
 
 
+def _parse_log_level(level: Optional[str]) -> int:
+    if not level:
+        return logging.INFO
+    level_str = str(level).strip()
+    if not level_str:
+        return logging.INFO
+    if level_str.isdigit():
+        return int(level_str)
+    return logging._nameToLevel.get(level_str.upper(), logging.INFO)
+
+
 def build_logger(logger_name: str, source_type: Optional[str] = None) -> Any:
     # If a logger with the name "agno.{source_type}" is already set, we want to use that one
     _logger = logging.getLogger(f"agno.{logger_name}")
@@ -96,7 +107,7 @@ def build_logger(logger_name: str, source_type: Optional[str] = None) -> Any:
     )
 
     _logger.addHandler(rich_handler)
-    _logger.setLevel(logging.INFO)
+    _logger.setLevel(_parse_log_level(getenv("AGNO_LOG_LEVEL")))
     _logger.propagate = False
     return _logger
 

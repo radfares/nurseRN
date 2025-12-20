@@ -8,7 +8,10 @@ PHASE 2 COMPLETE (2025-11-26): Refactored to use BaseAgent inheritance
 """
 
 from textwrap import dedent
-from typing import Any
+import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple
+import re
 
 # Module exports
 __all__ = ['ProjectTimelineAgent', 'project_timeline_agent']
@@ -195,14 +198,28 @@ class ProjectTimelineAgent(BaseAgent):
         """Execute the agent with database grounding enforcement."""
         import traceback
 
-        project_name = kwargs.get("project_name")
+        agent_kwargs = dict(kwargs)
+        project_name = agent_kwargs.pop("project_name", None)
         if self.audit_logger:
             self.audit_logger.log_query_received(query, project_name)
 
-        stream_requested = bool(kwargs.get("stream"))
+        stream_requested = bool(agent_kwargs.get("stream"))
 
         try:
-            response = self.agent.run(query, **kwargs)
+            milestone_snapshot = self._get_milestone_snapshot(project_name=project_name)
+            self._last_milestone_snapshot = milestone_snapshot
+
+            if milestone_snapshot is None:
+                raise ValueError("Unable to query milestones table (no milestone snapshot available).")
+
+            if len(milestone_snapshot) == 0:
+                raise ValueError(
+                    "Milestones table is empty for the active project. "
+                    "I cannot provide timeline dates without database records."
+                )
+
+            grounded_query = self._build_grounded_query(query, milestone_snapshot)
+            response = self.agent.run(grounded_query, **agent_kwargs)
 
             if stream_requested:
                 return response
@@ -253,15 +270,21 @@ class ProjectTimelineAgent(BaseAgent):
         import re
 
         content = str(run_output.content) if hasattr(run_output, 'content') else str(run_output)
-        tools = getattr(run_output, 'tools', None) or []
+        snapshot = getattr(self, "_last_milestone_snapshot", None)
+        allowed_dates, allowed_month_years = self._allowed_dates_from_snapshot(snapshot)
+        if not allowed_dates:
+            allowed_dates, allowed_month_years = self._allowed_dates_from_run_output(run_output)
 
-        date_pattern = r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,?\s*\d{4})?|202\d-\d{2}-\d{2}"
+        date_pattern = r"(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,?\s*\d{4})?|202\d-\d{2}-\d{2}"
         dates_found = re.findall(date_pattern, content, re.IGNORECASE)
 
-        milestone_keywords = ["milestone", "deliverable", "deadline", "due date", "due by"]
+        month_year_pattern = r"(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+202\d"
+        month_years_found = re.findall(month_year_pattern, content, re.IGNORECASE)
+
+        milestone_keywords = ("milestone", "deliverable", "deadline", "due date", "due by", "next deadline", "next milestone")
         has_milestone_content = any(kw in content.lower() for kw in milestone_keywords)
 
-        if (dates_found or has_milestone_content) and not tools:
+        if (dates_found or month_years_found or has_milestone_content) and not allowed_dates:
             if self.audit_logger:
                 self.audit_logger.log_validation_check(
                     "database_grounding",
@@ -269,21 +292,173 @@ class ProjectTimelineAgent(BaseAgent):
                     {
                         "dates_found": dates_found,
                         "has_milestone_content": has_milestone_content,
-                        "reason": "Timeline data mentioned without database query"
+                        "reason": "Timeline data mentioned without milestones table verification"
                     }
                 )
 
             raise ValueError(
                 f"DATABASE GROUNDING VIOLATION\n"
-                f"Timeline information provided without querying the database.\n"
+                f"Timeline information provided without querying/verifying against the milestones table.\n"
                 f"Dates found: {dates_found}\n"
                 f"REQUIRED: Query milestones table before providing timeline information."
+            )
+
+        unverified_dates = self._find_unverified_dates(dates_found, allowed_dates)
+        unverified_month_years = {
+            my for my in (self._normalize_month_year(m) for m in month_years_found) if my and my not in allowed_month_years
+        }
+
+        if unverified_dates or unverified_month_years:
+            if self.audit_logger:
+                self.audit_logger.log_validation_check(
+                    "database_grounding",
+                    False,
+                    {
+                        "unverified_dates": sorted(unverified_dates),
+                        "unverified_month_years": sorted(unverified_month_years),
+                        "reason": "Timeline dates/months not verified against milestones table",
+                    },
+                )
+            raise ValueError(
+                "DATABASE GROUNDING VIOLATION\n"
+                "Timeline information included dates/months that are not present in the milestones table.\n"
+                f"Unverified dates: {sorted(unverified_dates)}\n"
+                f"Unverified months: {sorted(unverified_month_years)}\n"
+                "REQUIRED: Only mention milestone dates returned by the database."
             )
 
         if self.audit_logger:
             self.audit_logger.log_validation_check("database_grounding", True, {})
 
         return True
+
+    def _get_milestone_snapshot(self, project_name: Optional[str]) -> Optional[List[Dict[str, Any]]]:
+        """
+        Query the milestones table (source of truth) and return a list of milestone dicts.
+
+        This is the grounding requirement: timeline answers must be based on the DB.
+        """
+        try:
+            from src.tools.milestone_tools import MilestoneTools
+
+            tool = MilestoneTools(project_name=project_name)
+            raw = tool.get_all_milestones()
+            parsed = json.loads(raw) if isinstance(raw, str) else raw
+            if isinstance(parsed, dict) and parsed.get("error"):
+                return None
+            if isinstance(parsed, list):
+                return parsed
+            return None
+        except Exception:
+            return None
+
+    @staticmethod
+    def _build_grounded_query(user_query: str, milestones: List[Dict[str, Any]]) -> str:
+        snapshot = json.dumps(milestones, indent=2, default=str)
+        return (
+            f"{user_query}\n\n"
+            "DATABASE GROUNDING (milestones table snapshot):\n"
+            f"{snapshot}\n\n"
+            "Rules:\n"
+            "- Use ONLY milestone names/dates/status from the snapshot above.\n"
+            "- If the snapshot does not contain the requested timeframe, say so and suggest using a date range query.\n"
+            "- Do not invent dates/months. If unsure, ask a follow-up question.\n"
+        )
+
+    @staticmethod
+    def _allowed_dates_from_snapshot(
+        milestones: Optional[List[Dict[str, Any]]],
+    ) -> Tuple[Set[str], Set[str]]:
+        if not milestones:
+            return set(), set()
+
+        allowed_dates: Set[str] = set()
+        allowed_month_years: Set[str] = set()
+
+        for m in milestones:
+            for key in ("due_date", "completion_date"):
+                val = m.get(key)
+                if isinstance(val, str) and val:
+                    allowed_dates.add(val)
+                    try:
+                        dt = datetime.strptime(val, "%Y-%m-%d")
+                        allowed_month_years.add(dt.strftime("%B %Y"))
+                    except Exception:
+                        continue
+
+        return allowed_dates, allowed_month_years
+
+    @staticmethod
+    def _normalize_month_year(value: str) -> Optional[str]:
+        val = (value or "").strip()
+        if not val:
+            return None
+        # Normalize capitalization: "january 2026" -> "January 2026"
+        parts = val.split()
+        if len(parts) != 2:
+            return None
+        month, year = parts
+        return f"{month.capitalize()} {year}"
+
+    def _find_unverified_dates(self, raw_dates: List[str], allowed_dates: Set[str]) -> Set[str]:
+        unverified: Set[str] = set()
+        for raw in raw_dates:
+            normalized = self._normalize_date_to_iso(raw)
+            if normalized is None:
+                unverified.add(raw)
+                continue
+            if normalized not in allowed_dates:
+                unverified.add(normalized)
+        return unverified
+
+    @staticmethod
+    def _normalize_date_to_iso(value: str) -> Optional[str]:
+        val = (value or "").strip()
+        if not val:
+            return None
+
+        # ISO already
+        if re.match(r"^202\d-\d{2}-\d{2}$", val):
+            return val
+
+        # Month Day, Year (year required for grounding)
+        try:
+            cleaned = val.replace(",", "")
+            dt = datetime.strptime(cleaned, "%B %d %Y")
+            return dt.strftime("%Y-%m-%d")
+        except Exception:
+            return None
+
+    @staticmethod
+    def _allowed_dates_from_run_output(run_output: Any) -> Tuple[Set[str], Set[str]]:
+        """
+        Best-effort extraction of allowed milestone dates from tool outputs embedded in RunOutput.
+
+        This keeps grounding enforcement working even when callers bypass run_with_grounding_check
+        (e.g., calling the underlying agno Agent directly).
+        """
+        text = ""
+        if hasattr(run_output, "messages") and run_output.messages:
+            try:
+                text = "\n".join(str(m) for m in run_output.messages)
+            except Exception:
+                text = str(run_output)
+        else:
+            text = str(run_output.content) if hasattr(run_output, "content") else str(run_output)
+
+        due_dates = set(re.findall(r"\"due_date\"\\s*:\\s*\"(\\d{4}-\\d{2}-\\d{2})\"", text))
+        completion_dates = set(re.findall(r"\"completion_date\"\\s*:\\s*\"(\\d{4}-\\d{2}-\\d{2})\"", text))
+        allowed_dates = due_dates | completion_dates
+
+        allowed_month_years: Set[str] = set()
+        for d in allowed_dates:
+            try:
+                dt = datetime.strptime(d, "%Y-%m-%d")
+                allowed_month_years.add(dt.strftime("%B %Y"))
+            except Exception:
+                continue
+
+        return allowed_dates, allowed_month_years
 
     def show_usage_examples(self) -> None:
         """Display usage examples for the Project Timeline Assistant."""
