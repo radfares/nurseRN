@@ -71,3 +71,8 @@ project agents status check/
 data/projects/
 .env
 .env
+data/chroma_db/
+out_dated/
+data/chroma_db/
+data/cache/
+out_dated/

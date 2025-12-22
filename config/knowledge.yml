@@ -57,6 +57,18 @@ cache:
   max_entries: 100000
   ttl_days: 30
 
+# Personal library search defaults
+personal_library:
+  max_results: 20
+  min_score: 0.1
+
+# RAG Enhancement settings (Phase 1 Fix)
+rag:
+  default_k: 10              # Default number of results to retrieve
+  max_k: 50                  # Hard cap on retrieval count
+  score_threshold: 0.1       # Minimum relevance score
+  cache_ttl_seconds: 300     # Cache TTL in seconds
+
 # Supported file extensions for ingestion
 supported_extensions:
   - ".pdf"

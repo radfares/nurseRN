@@ -72,41 +72,63 @@ class RAGEnhancer:
         files = refs['filenames']
     """
     
-    def __init__(self, cache_ttl: int = 300, db_path: str = "data/chroma_db", embedder: Optional[Any] = None):
+    def __init__(self, cache_ttl: Optional[int] = None, db_path: str = "data/chroma_db", embedder: Optional[Any] = None):
         """
         Initialize RAG enhancer.
-        
+
         Args:
-            cache_ttl: Cache time-to-live in seconds (default 5 minutes)
+            cache_ttl: Cache time-to-live in seconds (uses config if None)
             db_path: Path to ChromaDB storage
+            embedder: Optional embedder override
         """
+        # Load config for RAG settings (Phase 1 Fix)
+        try:
+            from src.knowledge.config import get_config
+            config = get_config()
+            self._default_k = config.rag.default_k
+            self._max_k = config.rag.max_k
+            self._score_threshold = config.rag.score_threshold
+            if cache_ttl is None:
+                cache_ttl = config.rag.cache_ttl_seconds
+        except Exception as e:
+            logger.warning(f"Failed to load RAG config, using defaults: {e}")
+            self._default_k = 10
+            self._max_k = 50
+            self._score_threshold = 0.1
+            if cache_ttl is None:
+                cache_ttl = 300
+
         self.cache = RAGCache(maxsize=100, ttl_seconds=cache_ttl)
         self.db_path = db_path
         self._embedder = embedder
-        logger.info(f"RAGEnhancer initialized (cache_ttl={cache_ttl}s, db_path={db_path})")
+        logger.info(f"RAGEnhancer initialized (default_k={self._default_k}, max_k={self._max_k}, cache_ttl={cache_ttl}s, db_path={db_path})")
     
     def retrieve(
         self,
         query: str,
         agent_hint: str = "general",
-        k: int = 5,
+        k: Optional[int] = None,
         ttl: Optional[int] = None,
         use_cache: bool = True
     ) -> List[RetrievalResult]:
         """
         Retrieve relevant content from appropriate collections.
-        
+
         Args:
             query: Search query string
             agent_hint: Agent context hint for collection routing
                        (e.g., "nursing_research", "medical_research", "document_synthesis")
-            k: Number of results to return
+            k: Number of results to return (uses config default if None)
             ttl: Optional TTL override for this query (seconds)
             use_cache: Whether to use cache (default True)
-        
+
         Returns:
             List of RetrievalResult objects, sorted by relevance
         """
+        # Apply default and enforce max_k (Phase 1 Fix)
+        if k is None:
+            k = self._default_k
+        k = min(max(1, int(k)), self._max_k)
         # Check cache first
         if use_cache:
             cache_key = self._build_cache_key(query, agent_hint, k)

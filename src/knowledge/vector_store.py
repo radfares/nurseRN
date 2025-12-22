@@ -22,6 +22,10 @@ from src.knowledge.document_ingester import ChunkRecord
 
 logger = logging.getLogger(__name__)
 
+# Default search limit (used when config unavailable)
+DEFAULT_SEARCH_LIMIT = 20
+
+
 
 # Collection names (designed for Phase C expansion)
 COLLECTION_PERSONAL = "personal_docs"
@@ -153,7 +157,12 @@ class PersonalLibraryVectorStore:
                 cfg = get_config()
                 dims = cfg.embedder.dimensions if cfg.embedder.dimensions != 1536 else None
                 self.embedder = OpenAIEmbedder(id=cfg.embedder.model, dimensions=dims)
-            except Exception:
+            except Exception as e:
+                # Phase 1 Fix: Explicit logging for embedder config failures
+                logger.warning(
+                    f"Failed to load embedder from config (using default text-embedding-3-small): {e}. "
+                    "Ensure OPENAI_API_KEY is set and config/knowledge.yml is valid."
+                )
                 self.embedder = OpenAIEmbedder(id="text-embedding-3-small")
 
         # Initialize ChromaDb
@@ -254,7 +263,7 @@ class PersonalLibraryVectorStore:
     def search(
         self,
         query: str,
-        limit: int = 5,
+        limit: Optional[int] = None,
         filters: Optional[Dict[str, Any]] = None,
         include_inactive: bool = False
     ) -> List[SearchResult]:
@@ -271,6 +280,14 @@ class PersonalLibraryVectorStore:
             List of SearchResult objects, sorted by relevance (highest first)
         """
         self.initialize()
+
+        # Use config default if limit not specified
+        if limit is None:
+            try:
+                from src.knowledge.config import get_config
+                limit = get_config().personal_library.max_results
+            except Exception:
+                limit = DEFAULT_SEARCH_LIMIT
 
         self._trace("TRACE-B2-003", query=query[:50], limit=limit)
 
@@ -302,9 +319,10 @@ class PersonalLibraryVectorStore:
                     distance = 0.0
                 score = 1.0 / (1.0 + distance)
 
+                doc_id = doc.content_id or meta.get("doc_id") or meta.get("doc_key", "")
                 result = SearchResult(
                     chunk_id=doc.id or meta.get("chunk_id", ""),
-                    doc_id=doc.content_id or meta.get("doc_id", ""),
+                    doc_id=doc_id,
                     text=doc.content,
                     score=score,
                     source_path=meta.get("source_path", ""),
@@ -341,6 +359,12 @@ class PersonalLibraryVectorStore:
             # Use content_id deletion
             result = self.db.delete_by_content_id(doc_id)
             self._trace("TRACE-B2-005", doc_id=doc_id, deleted=result)
+
+            if not result:
+                # Fallback to metadata-based deletion for doc_key/doc_id indexed chunks
+                result = self.db.delete_by_metadata({"doc_id": doc_id})
+                if not result:
+                    result = self.db.delete_by_metadata({"doc_key": doc_id})
 
             if result:
                 logger.info(f"Deleted document: {doc_id}")
@@ -407,38 +431,62 @@ class PersonalLibraryVectorStore:
         """
         List all unique documents in the store.
 
+        Phase 2 Fix: Now calls list_all_documents() for reliable full-collection scan.
+        This method previously used semantic search which missed documents with low
+        similarity to the query word "document".
+
         Returns:
             List of document info dictionaries
         """
+        # Delegate to list_all_documents() for reliable full scan
+        return self.list_all_documents()
+
+    def list_all_documents(self) -> List[Dict[str, Any]]:
+        """
+        List ALL unique documents in the store using native Chroma scan.
+
+        Unlike list_documents() which uses semantic search, this method
+        performs a full collection scan and is guaranteed to find all documents.
+
+        Returns:
+            List of document info dictionaries with doc_id, filename, chunk_count, etc.
+        """
         self.initialize()
 
-        # Search with empty-ish query to get all documents
-        # This is a workaround since ChromaDB doesn't have a direct "list all" method
         try:
-            # Get a large number of results
-            docs = self.db.search(query="document", limit=1000)
+            # Get raw collection for native Chroma operations
+            if self.db._collection is None:
+                self.db._collection = self.db.client.get_collection(name=self.collection_name)
+            collection = self.db._collection
 
-            # Group by doc_id
+            # Fetch all documents (no query, just metadata)
+            result = collection.get(include=["metadatas"])
+
+            # Group by doc_id/doc_key
             doc_map: Dict[str, Dict[str, Any]] = {}
-            for doc in docs:
-                meta = doc.meta_data or {}
-                doc_id = doc.content_id or meta.get("doc_id", "unknown")
+            for i, meta in enumerate(result.get("metadatas", [])):
+                if not meta:
+                    continue
+
+                doc_id = meta.get("doc_id") or meta.get("doc_key", f"unknown_{i}")
 
                 if doc_id not in doc_map:
                     doc_map[doc_id] = {
                         "doc_id": doc_id,
                         "source_path": meta.get("source_path", ""),
-                        "filename": Path(meta.get("source_path", "")).name,
+                        "filename": Path(meta.get("source_path", "")).name if meta.get("source_path") else "",
                         "chunk_count": 0,
                         "total_chunks": meta.get("total_chunks", 0),
                         "ingested_at": meta.get("ingested_at", ""),
-                        "file_hash": meta.get("file_hash", "")
+                        "file_hash": meta.get("file_hash", ""),
+                        "is_active": meta.get("is_active", True),
                     }
                 doc_map[doc_id]["chunk_count"] += 1
 
             return list(doc_map.values())
+
         except Exception as e:
-            logger.error(f"Failed to list documents: {e}")
+            logger.error(f"Failed to list all documents: {e}")
             return []
 
     def get_chunks_by_doc_id(self, doc_id: str) -> List[Dict[str, Any]]:
@@ -458,13 +506,19 @@ class PersonalLibraryVectorStore:
         try:
             # Search with high limit to get all chunks
             # Use doc_id as query since it's in the metadata
-            all_docs = self.db.search(query=doc_id, limit=500)
+            all_docs = self.db.search(query="document", limit=500, filters={"doc_id": doc_id})
+            if not all_docs:
+                all_docs = self.db.search(query="document", limit=500, filters={"doc_key": doc_id})
 
             # Filter to only chunks matching this doc_id
             matching_chunks = []
             for doc in all_docs:
                 meta = doc.meta_data or {}
-                if meta.get("doc_id") == doc_id or doc.content_id == doc_id:
+                if (
+                    meta.get("doc_id") == doc_id
+                    or meta.get("doc_key") == doc_id
+                    or doc.content_id == doc_id
+                ):
                     matching_chunks.append({
                         "chunk_id": meta.get("chunk_id", doc.id),
                         "doc_id": doc_id,

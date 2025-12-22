@@ -10,6 +10,7 @@ FIXED: 2025-12-12 - Improved planner prompt to handle conversational queries
 
 import json
 import logging
+import os
 from typing import Any, Dict, List, Tuple, Optional
 from dataclasses import dataclass, field
 

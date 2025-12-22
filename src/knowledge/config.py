@@ -69,6 +69,24 @@ class CacheConfig(BaseModel):
     ttl_days: int = Field(default=30, description="Cache entry TTL in days")
 
 
+# Default search limit (used when config unavailable)
+DEFAULT_MAX_RESULTS = 20
+
+
+class PersonalLibraryConfig(BaseModel):
+    """Configuration for personal library search defaults."""
+    max_results: int = Field(default=DEFAULT_MAX_RESULTS, description="Default max results for personal library search")
+    min_score: float = Field(default=0.1, description="Minimum relevance score threshold")
+
+
+class RAGConfig(BaseModel):
+    """Configuration for RAG enhancement service."""
+    default_k: int = Field(default=10, description="Default number of results to retrieve")
+    max_k: int = Field(default=50, description="Hard cap on retrieval count")
+    score_threshold: float = Field(default=0.1, description="Minimum relevance score")
+    cache_ttl_seconds: int = Field(default=300, description="Cache TTL in seconds")
+
+
 class KnowledgeConfig(BaseModel):
     """
     Root configuration for the knowledge module.
@@ -108,6 +126,12 @@ class KnowledgeConfig(BaseModel):
 
     # Cache configuration
     cache: CacheConfig = Field(default_factory=CacheConfig)
+
+    # Personal library search defaults
+    personal_library: PersonalLibraryConfig = Field(default_factory=PersonalLibraryConfig)
+
+    # RAG enhancement settings
+    rag: RAGConfig = Field(default_factory=RAGConfig)
 
     # Ingestion settings
     supported_extensions: List[str] = Field(
@@ -166,6 +190,12 @@ def _apply_env_overrides(config_dict: Dict[str, Any], prefix: str = "KNOWLEDGE")
         f"{prefix}_CACHE_ENABLED": ("cache", "enabled"),
         f"{prefix}_CACHE_DB_PATH": ("cache", "db_path"),
         f"{prefix}_CACHE_TTL_DAYS": ("cache", "ttl_days"),
+        f"{prefix}_PERSONAL_LIBRARY_MAX_RESULTS": ("personal_library", "max_results"),
+        f"{prefix}_PERSONAL_LIBRARY_MIN_SCORE": ("personal_library", "min_score"),
+        f"{prefix}_RAG_DEFAULT_K": ("rag", "default_k"),
+        f"{prefix}_RAG_MAX_K": ("rag", "max_k"),
+        f"{prefix}_RAG_SCORE_THRESHOLD": ("rag", "score_threshold"),
+        f"{prefix}_RAG_CACHE_TTL_SECONDS": ("rag", "cache_ttl_seconds"),
     }
 
     for env_var, path in env_mappings.items():
@@ -178,10 +208,14 @@ def _apply_env_overrides(config_dict: Dict[str, Any], prefix: str = "KNOWLEDGE")
                     result[path[0]] = {}
 
                 # Type conversion based on field name
-                if path[1] in ("dimensions", "batch_size", "ttl_days", "max_entries"):
+                if path[1] in ("dimensions", "batch_size", "ttl_days", "max_entries", "default_k", "max_k", "cache_ttl_seconds"):
                     value = int(value)
                 elif path[1] == "enabled":
                     value = value.lower() in ("true", "1", "yes")
+                elif path[1] == "max_results":
+                    value = int(value)
+                elif path[1] in ("min_score", "score_threshold"):
+                    value = float(value)
 
                 result[path[0]][path[1]] = value
             else:

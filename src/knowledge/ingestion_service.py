@@ -637,6 +637,7 @@ class KnowledgeIngestionService:
 
             # Add extra metadata
             meta_dict = metadata.to_dict()
+            meta_dict["doc_id"] = doc_key
             if extra_metadata:
                 meta_dict.update(extra_metadata)
 
